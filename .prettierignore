@@ -1,0 +1,11 @@
+# Ignore things from node
+/node_modules
+package.json
+package-lock.json
+
+# Ingore configuation files (including this one)
+.eslintrc.json
+.gitignore
+.prettierignore
+.prettierrc.json
+tsconfig.json
