@@ -9,3 +9,7 @@ package-lock.json
 .prettierignore
 .prettierrc.json
 tsconfig.json
+
+# Ignore readme and github workflows
+/.github
+README.md

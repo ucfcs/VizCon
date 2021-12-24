@@ -1,0 +1,183 @@
+# This GitHub work flow will automatically build the project on every push, and create a release when the push is for a tag that starts with 'v'
+# Authored by: Joseph Terribile
+
+name: Build and Release
+
+on:
+  push:
+
+jobs:
+  # this job is responsible for building the application on every push
+  build:
+    name: Build
+    
+    # sets up a matrix of operating systems to run on
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    
+    # sets up the steps to run when this job runs
+    steps:
+      - name: GitHub Context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      # gives us access to the files of the repository
+      - uses: actions/checkout@v2
+
+      # sets up node and then later prints the versions
+      - name: Setup Node 16
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      - name: node version
+        run: node -v
+
+      - name: npm version
+        run: npm -v
+
+      # responsible for actually building the application
+      - name: Build
+        run: |
+          npm ci
+          npm run make
+
+      # uploads the various generated files on the matrix of operating systems
+      - name: Upload artificats [macOS]
+        if: matrix.os == 'macOS-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: macOS
+          path: out/make/*.dmg
+      
+      - name: Upload artificats [Ubuntu]
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: Ubuntu
+          path: |
+            out/make/deb/x64/*.deb
+            out/make/rpm/x64/*.rpm
+      
+      - name: Upload artificats [Windows]
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: Windows
+          path: out/make/squirrel.windows/x64/*.exe
+  
+  # this job is responsible for creating a GitHub release for the application given a tag starting with 'v' was pushed
+  release:
+    needs: build
+    name: Release
+
+    # ensures that the job only runs when the pushed ref is a tag that starts with v
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    # the generation of the release only needs to happen on 
+    runs-on: ubuntu-latest
+    
+    # sets up the steps to run when this job runs
+    steps:
+      - name: Context
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      # used to obtain the npm package version later
+      - uses: actions/checkout@v2
+      - name: Setup node 16
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
+      # used to modularly get the name of the package, must be lowercase
+      - name: Get Application Name
+        id: get_name
+        run: echo ::set-output name=PACKAGE_NAME::sdcstghatbe
+
+      # used to get the version listed in package.json. the calls to sed are using ':' as the regex delimiter
+      - name: Get Release Version
+        id: get_version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: echo ::set-output name=PACKAGE_VERSION::$(npm list 2>/dev/null | grep ${{ steps.get_name.outputs.PACKAGE_NAME }} | sed 's:${{ steps.get_name.outputs.PACKAGE_NAME }}\@::' | sed 's:\s${{ steps.get_dir.outputs.CURRENT_DIR }}::')
+
+      # downloads all of the uploaded artificats
+      - uses: actions/download-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: Ubuntu
+      - uses: actions/download-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: Windows
+      - uses: actions/download-artifact@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: macOS
+      
+      # creates the GitHub release for this tag
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # uploads all of the assets created by the build step individually
+      - name: Upload Release Asset [macOS-dmg]
+        if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.get_name.outputs.PACKAGE_NAME }}-${{ steps.get_version.outputs.PACKAGE_VERSION }}-x64.dmg
+          asset_name: ${{ steps.get_name.outputs.PACKAGE_NAME }}-${{ steps.get_version.outputs.PACKAGE_VERSION }}-x64.dmg
+          asset_content_type: application/octet-stream
+      
+      - name: Upload Release Asset [Linux-deb]
+        if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./deb/x64/${{ steps.get_name.outputs.PACKAGE_NAME }}_${{ steps.get_version.outputs.PACKAGE_VERSION }}_amd64.deb
+          asset_name: ${{ steps.get_name.outputs.PACKAGE_NAME }}_${{ steps.get_version.outputs.PACKAGE_VERSION }}_amd64.deb
+          asset_content_type: application/vnd.debian.binary-package
+      
+      - name: Upload Release Asset [Linux-rpm]
+        if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./rpm/x64/${{ steps.get_name.outputs.PACKAGE_NAME }}-${{ steps.get_version.outputs.PACKAGE_VERSION }}-1.x86_64.rpm
+          asset_name: ${{ steps.get_name.outputs.PACKAGE_NAME }}-${{ steps.get_version.outputs.PACKAGE_VERSION }}-1.x86_64.rpm
+          asset_content_type: application/x-rpm
+      
+      - name: Upload Release Asset [Windows-squirrel]
+        if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "./${{ steps.get_name.outputs.PACKAGE_NAME }}-${{ steps.get_version.outputs.PACKAGE_VERSION }} Setup.exe"
+          asset_name: ${{ steps.get_name.outputs.PACKAGE_NAME }}-${{ steps.get_version.outputs.PACKAGE_VERSION }} Setup.exe"
+          asset_content_type: application/octet-stream
