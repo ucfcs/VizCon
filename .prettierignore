@@ -13,3 +13,7 @@ tsconfig.json
 # Ignore readme and github workflows
 /.github
 README.md
+
+# Ignore any outputs
+/.webpack
+/out
