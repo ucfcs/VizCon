@@ -19,5 +19,5 @@ contextBridge.exposeInMainWorld('platform', {
   },
   isMaximized: async (): Promise<boolean> => {
     return await ipcRenderer.invoke('isMaximized');
-  }
+  },
 });
