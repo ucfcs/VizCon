@@ -6,7 +6,9 @@ declare global {
       getPlatform: () => string,
       minimize: () => void,
       maximize: () => void,
-      close: () => void
+      restore: () => void,
+      close: () => void,
+      isMaximized: () => Promise<boolean>
     }
   }
 }

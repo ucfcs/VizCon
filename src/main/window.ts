@@ -10,7 +10,17 @@ ipcMain.handle('maximize', (e) => {
   window.maximize();
 });
 
+ipcMain.handle('restore', (e) => {
+  const window = BrowserWindow.fromWebContents(e.sender);
+  window.restore();
+});
+
 ipcMain.handle('close', (e) => {
   const window = BrowserWindow.fromWebContents(e.sender);
   window.close();
+});
+
+ipcMain.handle('isMaximized', (e) => {
+  const window = BrowserWindow.fromWebContents(e.sender);
+  return window.isMaximized();
 });

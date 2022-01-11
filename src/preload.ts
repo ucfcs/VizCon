@@ -1,8 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { platform } from 'process';
 
-console.log('Hello from preload.ts');
-
 contextBridge.exposeInMainWorld('platform', {
   getPlatform: (): string => {
     return platform;
@@ -13,7 +11,13 @@ contextBridge.exposeInMainWorld('platform', {
   maximize: (): void => {
     ipcRenderer.invoke('maximize');
   },
+  restore: (): void => {
+    ipcRenderer.invoke('restore');
+  },
   close: (): void => {
     ipcRenderer.invoke('close');
   },
+  isMaximized: async (): Promise<boolean> => {
+    return await ipcRenderer.invoke('isMaximized');
+  }
 });
