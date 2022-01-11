@@ -1,9 +1,11 @@
-import * as React from 'react';
+import React, { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom';
+import { MemoryRouter } from 'react-router-dom';
 
 ReactDOM.render(
-  <React.StrictMode>
-    <h1>Hello from react</h1>
-  </React.StrictMode>,
-  document.body
+  <StrictMode>
+    <MemoryRouter>
+    </MemoryRouter>
+  </StrictMode>,
+  document.getElementById('root')
 );
