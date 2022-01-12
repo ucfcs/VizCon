@@ -90,3 +90,6 @@ out/
 
 # VS Code settings
 .vscode/
+
+# Platform folder
+platform/
