@@ -40,7 +40,7 @@ jobs:
         run: npm -v
 
       # copy system dependent files to ./platform so they get included in the build
-      - name: Make ./platform
+      - name: Make the ./platform directory
         run: mkdir platform
 
       - name: Copy Files [Windows]
