@@ -1,0 +1,2 @@
+Included in this directory will be the macOS versions GDB and GCC
+Also included will be the shell file to codesign gdb

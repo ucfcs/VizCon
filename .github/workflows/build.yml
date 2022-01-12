@@ -39,6 +39,18 @@ jobs:
       - name: npm version
         run: npm -v
 
+      # copy system dependent files to ./platform so they get included in the build
+      - name: Make ./platform
+        run: mkdir platform
+
+      - name: Copy Files [Windows]
+        if: matrix.os == 'windows-latest'
+        run: echo "d" | xcopy .\.system\windows .\platform /E /C /H /Y
+
+      - name: Copy Files [Ubuntu, macOS]
+        if: matrix.os != 'windows-latest'
+        run: cp -r ./.system/linux ./platform
+
       # responsible for actually building the application
       - name: Build
         run: |
