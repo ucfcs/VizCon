@@ -1,30 +1,88 @@
 #vizcon .titlebar {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 70px;
+  overflow: hidden;
+  flex-shrink: 0;
+  flex-grow: 0;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  zoom: 1;
+  line-height: 22px;
+  height: 22px;
   display: flex;
-  z-index: 3000;
-  width: 100vw;
+
+  .win32 &,
+  .linux & {
+    padding: 0;
+    height: 30px;
+    line-height: 30px;
+    justify-content: left;
+    overflow: visible;
+  }
+
+  // TODO: make dynamic
+  background-color: rgb(60, 60, 60);
+  color: rgb(204, 204, 204);
+
+  .titlebar-drag-region {
+    top: 0;
+    left: 0;
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 22px;
+    -webkit-app-region: drag;
+
+    .win32 &,
+    .linux & {
+      height: 30px;
+    }
+  }
 
   .appicon {
     -webkit-app-region: drag;
     background-image: none; // TODO: add an image here
     background-repeat: no-repeat;
     background-position: 50%;
+    background-size: 16px;
+    width: 35px;
+    height: 100%;
+    position: relative;
+    z-index: 3000;
+    flex-shrink: 0;
   }
 
   .window-title {
+    flex: 0 1 auto;
+    font-size: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin-left: auto;
+    margin-right: auto;
+    zoom: 1;
+
+    // TODO: this might be a win and linux only thing
     position: absolute;
     left: 50%;
     transform: translate(-50%, 0px);
-    z-index: 3000;
+    max-width: calc(100vw - 296px);
   }
 
   .window-controls {
-    -webkit-app-region: no-drag;
     display: flex;
-    position: relative;
-    margin-left: auto;
+    flex-grow: 0;
+    flex-shrink: 0;
     text-align: center;
+    position: relative;
+    z-index: 3000;
+    -webkit-app-region: no-drag;
     height: 100%;
     width: 138px;
+    margin-left: auto;
 
     .window-icon {
       display: inline-block;
@@ -33,6 +91,14 @@
       width: 46px;
       font-size: 16px;
       user-select: none;
+
+      &:hover {
+        background-color: hsla(0, 0, 100%, .1);
+      }
+
+      &.codicon-chrome-close:hover {
+        background-color: rgba(232, 17, 35, .9);
+      }
     }
   }
 }
