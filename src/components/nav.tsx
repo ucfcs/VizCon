@@ -3,7 +3,11 @@ import WindowControls from './nav/windowcontrols';
 import MenuItem from './nav/menuitem';
 import '../styles/nav.scss';
 
-export default function Nav(): React.ReactElement {
+interface NavProps {
+  openFile: (file: string) => boolean; // TODO: this will be used later
+}
+
+export default function Nav({openFile}: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
 
   return (
