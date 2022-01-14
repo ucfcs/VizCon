@@ -7,10 +7,10 @@ export default function Nav(): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
 
   return (
-    <div className="titlebar" style={{height: '30px'}}>
+    <div className="titlebar" style={{ height: '30px' }}>
       {showMenu && (
         <>
-          <div className='titlebar-drag-region'></div>
+          <div className="titlebar-drag-region"></div>
           <a className="appicon"></a>
           <div className="menubar" role="menubar">
             <MenuItem />
