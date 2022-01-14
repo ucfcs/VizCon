@@ -38,19 +38,6 @@ export default function IDE({ files }: IDEProps): React.ReactElement {
   const [editors, setEditors] = useState<{ [key: string]: React.ReactElement }>({});
 
   useEffect(() => {
-    // Create the tabs for the files
-    setTabination(
-      <div className="tabination">
-        {files.map(file => {
-          // for each file in the file map, return a new tab with the key being the file name
-          const setActive = () => {
-            setCurrent(file);
-          };
-          return <Tab setActive={setActive} name={file} current={current} key={file} />;
-        })}
-      </div>
-    );
-
     // Updates the editors
     const newEditors: { [key: string]: React.ReactElement } = {};
     files.forEach(file => {
@@ -65,6 +52,21 @@ export default function IDE({ files }: IDEProps): React.ReactElement {
     });
     setEditors(newEditors);
   }, [files]);
+
+  useEffect(() => {
+    // Create the tabs for the files
+    setTabination(
+      <div className="tabination">
+        {files.map(file => {
+          // for each file in the file map, return a new tab with the key being the file name
+          const setActive = () => {
+            setCurrent(file);
+          };
+          return <Tab setActive={setActive} name={file} current={current} key={file} />;
+        })}
+      </div>
+    );
+  }, [current, files]);
 
   return (
     <div id="ide">
