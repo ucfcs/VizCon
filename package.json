@@ -21,7 +21,10 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "extraResource": ["./concurrency", "./platform"]
+        "extraResource": [
+          "./concurrency",
+          "./platform"
+        ]
       },
       "makers": [
         {
@@ -85,6 +88,7 @@
     "eslint": "^7.32.0",
     "eslint-plugin-import": "^2.25.3",
     "fork-ts-checker-webpack-plugin": "^6.5.0",
+    "monaco-editor-webpack-plugin": "^7.0.1",
     "node-loader": "^2.0.0",
     "prettier": "^2.5.1",
     "style-loader": "^3.3.1",
