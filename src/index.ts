@@ -19,6 +19,7 @@ const createWindow = (): void => {
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
+    frame: process.platform === 'darwin',
   });
 
   // and load the index.html of the app.
@@ -52,3 +53,6 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+
+// import the ipc handlers setup in other files
+import './main/window.ts';

@@ -1,0 +1,129 @@
+#vizcon .titlebar {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 70px;
+  overflow: hidden;
+  flex-shrink: 0;
+  flex-grow: 0;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  zoom: 1;
+  line-height: 22px;
+  height: 22px;
+  display: flex;
+
+  .win32 &,
+  .linux & {
+    padding: 0;
+    height: 30px;
+    line-height: 30px;
+    justify-content: left;
+    overflow: visible;
+  }
+
+  // TODO: make dynamic
+  background-color: rgb(60, 60, 60);
+  color: rgb(204, 204, 204);
+
+  .titlebar-drag-region {
+    top: 0;
+    left: 0;
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 22px;
+    -webkit-app-region: drag;
+
+    .win32 &,
+    .linux & {
+      height: 30px;
+    }
+  }
+
+  .appicon {
+    -webkit-app-region: drag;
+    background-image: none; // TODO: add an image here
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 16px;
+    width: 35px;
+    height: 100%;
+    position: relative;
+    z-index: 3000;
+    flex-shrink: 0;
+  }
+
+  .window-title {
+    flex: 0 1 auto;
+    font-size: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin-left: auto;
+    margin-right: auto;
+    zoom: 1;
+
+    // TODO: this might be a win and linux only thing
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0px);
+    max-width: calc(100vw - 296px);
+  }
+
+  .menubar {
+    display: flex;
+    flex-shrink: 1;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex-wrap: wrap;
+    z-index: 2500;
+    height: 30px;
+
+    .menu-item {
+      align-items: center;
+      box-sizing: border-box;
+      padding: 0 8px;
+      cursor: default;
+      -webkit-app-region: no-drag;
+      zoom: 1;
+      outline: 0;
+      font-size: 13px;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
+  .window-controls {
+    display: flex;
+    flex-grow: 0;
+    flex-shrink: 0;
+    text-align: center;
+    position: relative;
+    z-index: 3000;
+    -webkit-app-region: no-drag;
+    height: 100%;
+    width: 138px;
+    margin-left: auto;
+
+    .window-icon {
+      display: inline-block;
+      line-height: 30px;
+      height: 100%;
+      width: 46px;
+      font-size: 16px;
+      user-select: none;
+
+      &:hover {
+        background-color: hsla(0, 0, 100%, 0.1);
+      }
+
+      &.codicon-chrome-close:hover {
+        background-color: rgba(232, 17, 35, 0.9);
+      }
+    }
+  }
+}
