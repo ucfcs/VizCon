@@ -47,9 +47,13 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: echo "d" | xcopy .\.system\windows .\platform /E /C /H /Y
 
-      - name: Copy Files [Ubuntu, macOS]
-        if: matrix.os != 'windows-latest'
+      - name: Copy Files [Ubuntu]
+        if: matrix.os == 'ubuntu-latest'
         run: cp -r ./.system/linux ./platform
+
+      - name: Copy Files[macOS]
+        if: matrix.os == 'macos-latest'
+        run: cp -r ./.system/macos ./platform
 
       # responsible for actually building the application
       - name: Build
