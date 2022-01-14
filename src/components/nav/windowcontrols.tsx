@@ -10,9 +10,10 @@ export default function WindowControls(): React.ReactElement {
     checkMaximized();
   });
 
+  // TODO remove the text inside the divs, it is present for testing
   return (
     <div className="window-controls">
-      <div className="window-icon codicon codicon-chrome-minimize" onClick={window.platform.minimize}></div>
+      <div className="window-icon codicon codicon-chrome-minimize" onClick={window.platform.minimize}>_</div>
       {maximized && (
         <>
           <div
@@ -21,7 +22,7 @@ export default function WindowControls(): React.ReactElement {
               window.platform.restore();
               setMaximized(false);
             }}
-          ></div>
+          >|</div>
         </>
       )}
       {!maximized && (
@@ -32,10 +33,10 @@ export default function WindowControls(): React.ReactElement {
               window.platform.maximize();
               setMaximized(true);
             }}
-          ></div>
+          >||</div>
         </>
       )}
-      <div className="window-icon codicon codicon-chrome-close" onClick={window.platform.close}></div>
+      <div className="window-icon codicon codicon-chrome-close" onClick={window.platform.close}>X</div>
     </div>
   );
 }

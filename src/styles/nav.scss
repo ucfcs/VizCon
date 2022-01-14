@@ -72,6 +72,31 @@
     max-width: calc(100vw - 296px);
   }
 
+  .menubar {
+    display: flex;
+    flex-shrink: 1;
+    box-sizing: border-box;
+    overflow: hidden;
+    flex-wrap: wrap;
+    z-index: 2500;
+    height: 30px;
+
+    .menu-item {
+      align-items: center;
+      box-sizing: border-box;
+      padding: 0 8px;
+      cursor: default;
+      -webkit-app-region: no-drag;
+      zoom: 1;
+      outline: 0;
+      font-size: 13px;
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+
   .window-controls {
     display: flex;
     flex-grow: 0;

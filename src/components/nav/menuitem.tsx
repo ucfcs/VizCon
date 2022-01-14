@@ -1,5 +1,6 @@
 import React from 'react';
 
 export default function MenuItem(): React.ReactElement {
-  return <div className="menu-item"></div>;
+  // TODO: make dynamic, this is temp for testing
+  return <div className="menu-item">File</div>;
 }
