@@ -1,6 +1,12 @@
 #ide {
   box-sizing: border-box;
   font-size: 13px;
+  height: calc(100vh);
+
+  .win32 &,
+  .linux & {
+    height: calc(100vh - 30px);
+  }
 
   // TODO make this scrollable
   .tabination {
@@ -45,6 +51,15 @@
         margin-bottom: auto;
         width: 28px;
       }
+    }
+  }
+
+  .active-editor {
+    height: calc(100% - 35px);
+
+    .editor {
+      width: 100%;
+      height: 100%;
     }
   }
 }
