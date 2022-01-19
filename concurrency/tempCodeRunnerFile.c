@@ -1,0 +1,1 @@
+printf("Thread retrieved: %c\n", ((char*)arr)[i]);
