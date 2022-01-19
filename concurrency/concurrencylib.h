@@ -56,6 +56,7 @@ typedef struct CSMutex {
     MUTEX_TYPE mutex;
     int available;
     struct CSMutex* next;
+    // FIXME: int holderID; // ID of thread that locked the mutex, if it's locked.
 } CSMutex;
 
 //Thread functions

@@ -257,6 +257,7 @@ void semClose(CSSem* sem)
 //Create a mutex lock
 CSMutex* mutexCreate(char* name)
 {
+    // FIXME: Return an error here?
     if(name == NULL)
     {
         return NULL;
@@ -290,6 +291,8 @@ CSMutex* mutexCreate(char* name)
 //Attain a mutex lock, or wait until it becomes available
 void mutexLock(CSMutex* mutex)
 {
+    // FIXME: Check whether this lock has already been locked by the caller.
+
     #if defined(_WIN32) // windows
     DWORD ret = WaitForSingleObject(mutex->mutex, INFINITE);
     if(ret == WAIT_FAILED)
@@ -355,6 +358,15 @@ int mutexTryLock(CSMutex* mutex)
 //Release a mutex lock
 void mutexUnlock(CSMutex* mutex)
 {
+    // FIXME: Check whether the lock is already unlocked.
+    if(mutexStatus(mutex))
+    {
+        vizconError(11, 502);
+        return;
+    }
+
+    // FIXME: Check whether the unlocker was the group that placed the lock.
+    
     #if defined(_WIN32) // windows
     if(!ReleaseMutex(mutex->mutex))
     {
@@ -498,6 +510,13 @@ void vizconError(int func, int err)
                 message = "An unexpected wait timeout occurred.";
                 break;
             }
+            case 502:
+            {
+                message = "A thread attempted to unlock an already-unlocked mutex.";
+                break;
+            }
+            // case 503: A thread attempted to lock a mutex that it previously locked.
+            // case 504: A thread attempted to unlock a mutex locked by a different thread.
             default:
             {
                 message = "An unknown error has occurred.";
