@@ -54,6 +54,7 @@ typedef struct CSSem {
 // concurrency simulator mutex structure
 typedef struct CSMutex {
     MUTEX_TYPE mutex;
+    int available;
     struct CSMutex* next;
 } CSMutex;
 

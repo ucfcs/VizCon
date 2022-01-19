@@ -1,13 +1,13 @@
 #include "concurrencylib.h"
 
-extern CSSem* vizconThreadSem; //Blocks createthread threads, released by waitforcompletion/waitforreturn. Count used for number of threads created
-extern CSThread* vizconCobeginList; // List of all cobegin threads
+extern CSSem* vizconThreadSem;
+extern CSThread* vizconCobeginList;
 extern CSThread* vizconCobeginListInitial;
-extern CSThread* vizconThreadList; //Linked list of all threads
+extern CSThread* vizconThreadList;
 extern CSThread* vizconThreadListInitial;
-extern CSSem* vizconSemList; //Linked list of all semaphores
+extern CSSem* vizconSemList;
 extern CSSem* vizconSemListInitial;
-extern CSMutex* vizconMutexList; //Linked list of all mutexes
+extern CSMutex* vizconMutexList;
 extern CSMutex* vizconMutexListInitial;
 
 //Create a thread instance of the createThread function
@@ -267,6 +267,7 @@ CSMutex* mutexCreate(char* name)
         vizconError(8, 8);
     }
     mutex->next = NULL;
+    mutex->available = 1;
     #if defined(_WIN32) // windows
     mutex->mutex = CreateMutexA(NULL, FALSE, name);
     if(mutex->mutex == NULL)
@@ -306,17 +307,21 @@ void mutexLock(CSMutex* mutex)
     #elif defined(__linux__) || defined(__APPLE__)
     if(!pthread_mutex_lock(mutex->mutex))
     {
+        mutex->available = 0;
         return;
     }
     #endif
+    mutex->available = 0;
 }
 
 //Try to obtain a mutex lock
 //Returns immediately if the mutex lock is unavailable
-//returns 1 if available, else 0
+//returns 1 if lock is available, else 0
 int mutexTryLock(CSMutex* mutex)
 {
     #if defined(_WIN32) // windows
+    // FIXME: Check whether the thread already owns this lock.
+    // If so, then immediately return 0 to circumvent a recursive lock.
     DWORD ret = WaitForSingleObject(mutex->mutex, 0);
     if(ret == WAIT_FAILED)
     {
@@ -324,6 +329,7 @@ int mutexTryLock(CSMutex* mutex)
     }
     else if(ret == WAIT_OBJECT_0)
     {
+        mutex->available = 0;
         return 1;
     }
     else if(ret == WAIT_ABANDONED)
@@ -333,6 +339,7 @@ int mutexTryLock(CSMutex* mutex)
     #elif defined(__linux__) || defined(__APPLE__)
     if(!pthread_mutex_trylock(mutex->mutex))
     {
+        mutex->available = 0;
         return 1;
     }
     else
@@ -356,6 +363,7 @@ void mutexUnlock(CSMutex* mutex)
     #elif defined(__linux__) || defined(__APPLE__)
     pthread_mutex_unlock(mutex->mutex);
     #endif
+    mutex->available = 1;
 }
 
 //Close a mutex lock
@@ -375,23 +383,13 @@ void mutexClose(CSMutex* mutex)
 }
 
 //Check if a mutex lock is available
-//Returns 1 if true, else 0
+//Returns 1 if so, else 0
 int mutexStatus(CSMutex* mutex)
 {
-    #if defined(_WIN32) // windows
-    if(mutexTryLock(mutex))
-    {
-        mutexUnlock(mutex);
-        return 1;
-    }
-    #elif defined(__linux__) || defined(__APPLE__)
-    if(!pthread_mutex_trylock(mutex->mutex))
-    {
-        mutexUnlock(mutex);
-        return 1;
-    }
-    #endif
-    return 0;
+    // A variable is used here because obtaining in real-time is unreliable with Windows.
+    // Because Windows mutexes are recursive, it will always be "available" if
+    // the thread calling mutexStatus has already locked it.
+    return mutex->available;
 }
 
 //Handles error from concurrencylib and vcuserlibrary

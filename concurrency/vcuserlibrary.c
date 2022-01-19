@@ -75,6 +75,14 @@ void vcWaitForCompletion()
     }
     semClose(vizconThreadSem);
 
+    //Free all mutex locks
+    while(vizconMutexList != NULL)
+    {
+        vizconMutexList = vizconMutexListInitial->next;
+        mutexClose(vizconMutexListInitial);
+        vizconMutexListInitial = vizconMutexList;
+    }
+
     return;
 }
 
