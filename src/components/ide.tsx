@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/ide.scss';
 import Editor from './ide/editor';
+import Landing from './ide/landing';
 
 interface IDEProps {
   files: string[];
@@ -33,9 +34,11 @@ function Tab({ setActive, name, current }: TabProps): React.ReactElement {
 }
 
 export default function IDE({ files }: IDEProps): React.ReactElement {
-  const [current, setCurrent] = useState<string>(files.length > 0 ? files[0] : '');
-  const [tabination, setTabination] = useState<React.ReactElement>(<div className="tabination"></div>);
+  const [landing] = useState(<Landing />);
+  const [current, setCurrent] = useState(files.length > 0 ? files[0] : '');
   const [editors, setEditors] = useState<{ [key: string]: React.ReactElement }>({});
+  const [tabination, setTabination] = useState(<div className="tabination"></div>);
+  const [currentEditor, setCurrentEditor] = useState(landing);
 
   useEffect(() => {
     // Updates the editors
@@ -68,10 +71,19 @@ export default function IDE({ files }: IDEProps): React.ReactElement {
     );
   }, [current, files]);
 
+  useEffect(() => {
+    console.log('Setting editor to:', current, editors[current], editors);
+    if (current && current !== '' && editors[current]) {
+      setCurrentEditor(editors[current]);
+    } else {
+      setCurrentEditor(landing)
+    }
+  }, [current, editors]);
+
   return (
     <div id="ide">
       {tabination}
-      <div className="active-editor">{editors[current]}</div>
+      <div className="active-editor">{currentEditor}</div>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import React, { StrictMode, useState } from 'react';
 import * as ReactDOM from 'react-dom';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import Nav from './components/nav';
 import IDE from './components/ide';
 
