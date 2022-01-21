@@ -1,4 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
+import { readFileSync } from 'fs';
 
 ipcMain.handle('minimize', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
@@ -23,4 +24,13 @@ ipcMain.handle('close', e => {
 ipcMain.handle('isMaximized', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
   return window.isMaximized();
+});
+
+ipcMain.handle('readFileSync', (e, file: string) => {
+  try {
+    const contents = readFileSync(file, 'utf-8');
+    return contents;
+  } catch (error) {
+    return 'ERROR:' + error;
+  }
 });

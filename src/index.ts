@@ -58,4 +58,4 @@ app.on('activate', () => {
 // code. You can also put them in separate files and import them here.
 
 // import the ipc handlers setup in other files
-import './main/window.ts';
+import './main/platform.ts';
