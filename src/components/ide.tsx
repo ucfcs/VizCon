@@ -2,35 +2,10 @@ import React, { useEffect, useState } from 'react';
 import '../styles/ide.scss';
 import Editor from './ide/editor';
 import Landing from './ide/landing';
+import Tab from './ide/tab';
 
 interface IDEProps {
   files: string[];
-}
-
-interface TabProps {
-  setActive: () => void;
-  name: string;
-  current: string;
-}
-
-function Tab({ setActive, name, current }: TabProps): React.ReactElement {
-  const [cls, setCls] = useState<string>('tab');
-  // TODO: fancy name reduction so it is only the file name and not the whole path
-  // TODO: the start simulation button
-
-  // TODO RESUME: fix the tab problem
-  useEffect(() => {
-    setCls('tab' + (current === name ? ' active' : ''));
-  }, [current]);
-
-  return (
-    <div className={cls} onClick={setActive} draggable>
-      {/* TODO: Icon goes here */}
-      <div className="tab-label">{name}</div>
-      {/* TODO: the actions area */}
-      <div className="tab-actions"></div>
-    </div>
-  );
 }
 
 export default function IDE({ files }: IDEProps): React.ReactElement {
@@ -51,7 +26,7 @@ export default function IDE({ files }: IDEProps): React.ReactElement {
       }
 
       // else make a new editor
-      newEditors[file] = <Editor file={file}/>;
+      newEditors[file] = <Editor file={file} />;
     });
     setEditors(newEditors);
   }, [files]);
@@ -76,13 +51,13 @@ export default function IDE({ files }: IDEProps): React.ReactElement {
     if (current && current !== '' && editors[current]) {
       setCurrentEditor(editors[current]);
     } else {
-      setCurrentEditor(landing)
+      setCurrentEditor(landing);
     }
   }, [current, editors]);
 
   return (
     <div id="ide">
-      {tabination}
+      {files.length > 1 && tabination}
       <div className="active-editor">{currentEditor}</div>
     </div>
   );

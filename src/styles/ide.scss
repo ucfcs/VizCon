@@ -57,6 +57,12 @@
   .active-editor {
     height: calc(100% - 35px);
 
+    .landing {
+      text-align: center;
+      height: 100%;
+      user-select: none;
+    }
+
     .editor-container {
       width: 100%;
       height: 100%;
