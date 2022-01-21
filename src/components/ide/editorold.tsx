@@ -7,30 +7,32 @@ interface EditorProps {
   file: string;
 }
 
-export default function Editor({ file }: EditorProps): React.ReactElement {
+export default function EditorOld({ file }: EditorProps): React.ReactElement {
   const div = useRef<HTMLDivElement>(null);
   const [monacoInstance, setMonacoInstance] = useState<monaco.editor.IStandaloneCodeEditor>(null);
 
   useEffect(() => {
     if (div.current) {
-      div.current.id="file"+file;
+      div.current.id = 'file' + file;
       // TODO: file reading
       // TODO: allow unique monaco instances (this doesnt work right now)
-      console.log(file)
+      console.log(file);
       const editor = monaco.editor.create(div.current, {
         value: ['int main(void) {', '    return 0;', '}', '// ' + file].join('\n'),
         language: 'c',
-        automaticLayout: true
+        automaticLayout: true,
       });
       setMonacoInstance(editor);
     }
 
     return () => {
       monacoInstance.dispose();
-    }
+    };
   }, []);
 
-  return <div id={file} className='editor-container'>
-    <div ref={div}></div>
-  </div>;
+  return (
+    <div id={file} className="editor-container">
+      <div ref={div}></div>
+    </div>
+  );
 }
