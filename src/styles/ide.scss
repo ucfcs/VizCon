@@ -55,7 +55,11 @@
   }
 
   .active-editor {
-    height: calc(100% - 35px);
+    height: 100%;
+
+    &.tabination-active {
+      height: calc(100% - 35px);
+    }
 
     .landing {
       text-align: center;
