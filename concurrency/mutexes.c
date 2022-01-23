@@ -128,7 +128,8 @@ int mutexTryLock(VCMutex* mutex)
     // Windows uses recursive locks, so a Windows thread can obtain a lock
     // on an already-locked mutex if it was the one that originally locked it.
     // To circumvent, immediately leave if the holder is the current thread.
-    // FIXME: Compare mutex->holderID to threadID. Error out if applicable.
+    if (mutex->holderID == GetCurrentThreadId())
+        return 0;
 
     DWORD ret = WaitForSingleObject(mutex->mutex, 0);
     switch(ret)
