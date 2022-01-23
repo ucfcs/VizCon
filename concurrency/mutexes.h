@@ -1,4 +1,4 @@
-// Universal libraries
+//universal libraries
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,10 +6,12 @@
 #ifdef _WIN32 // Windows version
 #include <windows.h>
 #define MUTEX_TYPE HANDLE
+#define THREAD_ID_TYPE DWORD
 #elif __linux__ || __APPLE__ // POSIX version
 #include <pthread.h>
 #include <errno.h>
 #define MUTEX_TYPE pthread_mutex_t*
+#define THREAD_ID_TYPE pthread_t
 #endif
 
 // Constants used for VizCon function codes.
@@ -30,10 +32,10 @@
 // VCMutex - Wrapper for the system's mutex type.
 typedef struct VCMutex
 {
-    MUTEX_TYPE mutex;     // Mutex object
-    int available;        // Flag for whether the mutex is currently available.
-    int holderID;         // If locked, ID of thread that placed the lock.
-    struct VCMutex* next; // Next VCMutex struct in the mutex list
+    MUTEX_TYPE mutex;        // Mutex object
+    int available;           // Flags whether the mutex is currently available.
+    THREAD_ID_TYPE holderID; // If locked, ID of thread that placed the lock.
+    struct VCMutex* next;    // Next VCMutex struct in the mutex list
 } VCMutex;
 
 // Mutex function prototypes.

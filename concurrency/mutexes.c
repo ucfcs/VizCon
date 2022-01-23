@@ -28,10 +28,10 @@ VCMutex* mutexCreate(char* name)
         return NULL;
     }
 
-    // Set non-mutex properties
+    // Set non-mutex properties.
     mutex->next = NULL;
     mutex->available = 1;
-    // FIXME: Set mutex->holderID to a garbage value.
+    mutex->holderID = (THREAD_ID_TYPE) 0;
 
     // Platform-dependent mutex creation.
     // Create a mutex with default settings. Error out where needed.
@@ -78,7 +78,7 @@ void mutexLock(VCMutex* mutex)
         case WAIT_OBJECT_0:
         {
             mutex->available = 0;
-            // FIXME: Set mutex->holderID to current thread ID.
+            mutex->holderID = GetCurrentThreadId();
             break;
         }
         
@@ -109,7 +109,7 @@ void mutexLock(VCMutex* mutex)
     if(!pthread_mutex_lock(mutex->mutex))
     {
         mutex->available = 0;
-        // FIXME: Set mutex->holderID to current thread ID.
+        mutex->holderID = pthread_self();
     }
     else
         vizconError(FUNC_MUTEX_LOCK, errno);
@@ -137,7 +137,7 @@ int mutexTryLock(VCMutex* mutex)
         case WAIT_OBJECT_0:
         {
             mutex->available = 0;
-            // FIXME: Set mutex->holderID to current thread ID.
+            mutex->holderID = GetCurrentThreadId();
             return 1;
         }
 
@@ -170,7 +170,7 @@ int mutexTryLock(VCMutex* mutex)
         case 0:
         {
             mutex->available = 0;
-            // FIXME: Set mutex->holderID to current thread ID.
+            mutex->holderID = pthread_self();
             return 1;
         }
 
@@ -200,18 +200,27 @@ void mutexUnlock(VCMutex* mutex)
         vizconError(FUNC_MUTEX_UNLOCK, ERROR_MUTEX_DOUBLE_UNLOCK);
         return;
     }
-
-    // Check whether the lock was placed by the thread trying to unlock it.
-    // If not, error out.
-    // FIXME: Compare mutex->holderID to threadID. Error out if applicable.
-    
+        
     // Platform-dependent mutex unlocking.
-    // Create a release request. Error out where needed.
+    // Check whether the lock was placed by the thread trying to unlock it.
+    // If so, create a release request. Error out where needed.
     #ifdef _WIN32 // Windows version
+    if(mutex->holderID != GetCurrentThreadId())
+    {
+        vizconError(FUNC_MUTEX_UNLOCK, ERROR_MUTEX_CROSS_THREAD_UNLOCK);
+        return;
+    }
+
     if(!ReleaseMutex(mutex->mutex))
         vizconError(FUNC_MUTEX_UNLOCK, GetLastError());
 
     #elif __linux__ || __APPLE__ // POSIX version
+    if(mutex->holderID != pthread_self())
+    {
+        vizconError(FUNC_MUTEX_UNLOCK, ERROR_MUTEX_CROSS_THREAD_UNLOCK);
+        return;
+    }
+
     if(pthread_mutex_unlock(mutex->mutex))
         vizconError(FUNC_MUTEX_UNLOCK, errno);
 
@@ -219,7 +228,7 @@ void mutexUnlock(VCMutex* mutex)
 
     // Mark the mutex as available.
     mutex->available = 1;
-    // FIXME: set holderID to a garbage value.
+    mutex->holderID = (THREAD_ID_TYPE) 0;
 }
 
 // mutexClose - Close the mutex lock and free the struct.
