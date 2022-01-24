@@ -28,6 +28,7 @@
 #define ERROR_MUTEX_DOUBLE_UNLOCK 502
 #define ERROR_MUTEX_DOUBLE_LOCK 503
 #define ERROR_MUTEX_CROSS_THREAD_UNLOCK 504
+#define ERROR_MUTEX_UNNAMED 505
 
 // VCMutex - Wrapper for the system's mutex type.
 typedef struct VCMutex

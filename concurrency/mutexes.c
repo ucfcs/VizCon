@@ -5,10 +5,12 @@
 //               Returns: a pointer to the mutex struct.
 VCMutex* mutexCreate(char* name)
 {
-    // A name is required, so leave without one.
-    // FIXME: Should an error be returned here?
+    // A name is required, so error out without one.
     if(name == NULL)
+    {
+        vizconError(FUNC_MUTEX_CREATE, ERROR_MUTEX_UNNAMED);
         return NULL;
+    }
 
     // Attempt to allocate the struct. Error out on failure.
     VCMutex* mutex = (VCMutex*) malloc(sizeof(VCMutex));
