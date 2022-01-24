@@ -64,13 +64,16 @@ VCMutex* mutexCreate(char* name)
 //             If a lock is not available yet, wait until it is.
 void mutexLock(VCMutex* mutex)
 {
-    // To prevent deadlocking, check whether the caller
-    // has already obtained this lock. If so, error out.
-    // FIXME: Compare mutex->holderID to thread ID.
-
     // Platform-dependent mutex locking.
-    // Create a wait request of infinite timeout. Error out where needed.
+    // Check whether the caller has obtained this lock already.
+    // If not, create a non-timeout wait request. Error out where needed.
     #ifdef _WIN32 // Windows version
+    if(mutex->holderID == GetCurrentThreadId())
+    {
+        vizconError(FUNC_MUTEX_LOCK, ERROR_MUTEX_DOUBLE_LOCK);
+        return;
+    }
+
     DWORD ret = WaitForSingleObject(mutex->mutex, INFINITE);
     switch(ret)
     {
@@ -104,6 +107,12 @@ void mutexLock(VCMutex* mutex)
     }
 
     #elif __linux__ || __APPLE__ // POSIX version
+    if(mutex->holderID == pthread_self())
+    {
+        vizconError(FUNC_MUTEX_LOCK, ERROR_MUTEX_DOUBLE_LOCK);
+        return;
+    }
+
     // pthread_mutex_lock returns 0 on success.
     // With success, mark lock as unavailable.
     if(!pthread_mutex_lock(mutex->mutex))
