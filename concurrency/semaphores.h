@@ -1,4 +1,4 @@
-#include "concurrency.h"
+#include "utils.h"
 
 #ifdef _WIN32 // window's libraries and definitions
 #define SEM_TYPE HANDLE

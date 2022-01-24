@@ -1,5 +1,5 @@
-#ifndef CONCURRENCYLIB_H
-#define CONCURRENCYLIB_H
+#ifndef UTILS_H
+#define UTILS_H
 //universal libraries
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,9 +10,6 @@
 #include <errno.h>
 #include <unistd.h>
 #endif
-
-// meta: proto type for the compiled name of the user function so we have access to it in our program
-int userMain(void); 
 
 //Functions
 void vizconError(int func, int err);
