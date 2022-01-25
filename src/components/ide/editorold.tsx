@@ -12,27 +12,31 @@ export default function EditorOld({ file }: EditorProps): React.ReactElement {
   const [monacoInstance, setMonacoInstance] = useState<monaco.editor.IStandaloneCodeEditor>(null);
 
   useEffect(() => {
-    if (div.current) {
-      div.current.id = 'file' + file;
-      // TODO: file reading
-      // TODO: allow unique monaco instances (this doesnt work right now)
+    async function run() {
       console.log(file);
-      const editor = monaco.editor.create(div.current, {
-        value: ['int main(void) {', '    return 0;', '}', '// ' + file].join('\n'),
-        language: 'c',
-        automaticLayout: true,
-      });
-      setMonacoInstance(editor);
+      if (div.current) {
+        let fileContent = await window.platform.openFileSync(file);
+        console.log(fileContent);
+        if (fileContent.length == 0 || fileContent.startsWith('ERROR:')) {
+          fileContent = ['int main(void) {', '    return 0;', '}', '// ' + file].join('\n');
+        }
+
+        // TODO: allow unique monaco instances (this doesnt work right now)
+        const editor = monaco.editor.create(div.current, {
+          value: fileContent,
+          language: 'c',
+          automaticLayout: true,
+          theme: 'vs-dark',
+        });
+        setMonacoInstance(editor);
+      }
     }
+    run();
 
     return () => {
       monacoInstance.dispose();
     };
   }, []);
 
-  return (
-    <div id={file} className="editor-container">
-      <div ref={div}></div>
-    </div>
-  );
+  return <div id={file} className="editor-container" ref={div}></div>;
 }
