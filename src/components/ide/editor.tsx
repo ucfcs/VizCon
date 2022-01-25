@@ -1,5 +1,5 @@
 import React from 'react';
-import MonacoEditor from "react-monaco-editor";
+import {default as MonacoEditor} from "@monaco-editor/react";
 
 interface EditorProps {
   file: string;
@@ -7,6 +7,6 @@ interface EditorProps {
 
 export default function Editor({ file }: EditorProps): React.ReactElement {
   return <div id={file} className='editor-container'>
-    <MonacoEditor language='c' value={['int main(void) {', '    return 0;', '}', '// ' + file].join('\n')}/>
+    <MonacoEditor language='c' value={['int main(void) {', '    return 0;', '}', '// ' + file].join('\n')} />
   </div>;
 }
