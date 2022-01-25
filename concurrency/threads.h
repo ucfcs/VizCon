@@ -37,7 +37,7 @@ typedef struct VCThread
 #endif
 
 // Thread Function Prototypes
-THREAD_RET createThread(void *arg);
-void joinThread(VCThread *thread);
+THREAD_RET createVCThread(threadFunc func, void *arg);
+void joinVCThread(VCThread *thread);
 void freeVCThread(VCThread *thread);
-void sleepThread (int milliseconds);
+void sleepVCThread (int milliseconds);
