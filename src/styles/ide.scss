@@ -2,6 +2,7 @@
   box-sizing: border-box;
   font-size: 13px;
   height: calc(100vh);
+  overflow: hidden;
 
   .win32 &,
   .linux & {

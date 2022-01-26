@@ -29,7 +29,7 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
       }
 
       // else make a new editor
-      newEditors[file] = <EditorOld file={file} />;
+      newEditors[file] = <Editor file={file} />;
     });
     setEditors(newEditors);
   }, [files]);
@@ -51,7 +51,6 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
   }, [current, files]);
 
   useEffect(() => {
-    console.log('Setting editor to:', current, editors[current], editors);
     if (current && current !== '' && editors[current]) {
       setCurrentEditor(editors[current]);
     } else {
