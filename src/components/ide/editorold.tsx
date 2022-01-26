@@ -15,7 +15,7 @@ export default function EditorOld({ file }: EditorProps): React.ReactElement {
     async function run() {
       console.log(file);
       if (div.current) {
-        let fileContent = await window.platform.openFileSync(file);
+        let fileContent = await window.platform.readFileSync(file);
         console.log(fileContent);
         if (fileContent.length == 0 || fileContent.startsWith('ERROR:')) {
           fileContent = ['int main(void) {', '    return 0;', '}', '// ' + file].join('\n');

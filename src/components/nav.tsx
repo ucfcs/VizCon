@@ -4,15 +4,11 @@ import MenuItem from './nav/menuitem';
 import '../styles/nav.scss';
 
 interface NavProps {
-  openFile: (file: string) => boolean; // TODO: this will be used later
+  openFile: () => void; // TODO: this will be used later
 }
 
 export default function Nav({ openFile }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
-
-  function openFileDialog() {
-    openFile('');
-  }
 
   return (
     <div className="titlebar" style={{ height: '30px' }}>
@@ -21,7 +17,7 @@ export default function Nav({ openFile }: NavProps): React.ReactElement {
           <div className="titlebar-drag-region"></div>
           <a className="appicon"></a>
           <div className="menubar" role="menubar">
-            <MenuItem title="File" options={[{ name: 'Open File', action: openFileDialog }]} />
+            <MenuItem title="File" options={[{ name: 'Open File', action: openFile }]} />
             <MenuItem
               title="View"
               options={[

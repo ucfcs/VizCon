@@ -16,7 +16,7 @@ export default function Editor({ file }: EditorProps): React.ReactElement {
 
   useEffect(() => {
     async function run() {
-      const fileContent = await window.platform.openFileSync(file);
+      const fileContent = await window.platform.readFileSync(file);
       if (fileContent?.length == 0 || fileContent.startsWith('ERROR:')) {
         // TODO: open modal here and prevent loading of the entire component
         // This might be better acomplished by changing the call to just read file,
@@ -25,11 +25,12 @@ export default function Editor({ file }: EditorProps): React.ReactElement {
         return;
       }
 
-      // setDefaultValue(fileContent);
+      setDefaultValue(fileContent);
     }
     run();
   })
 
+  // TODO: This solution still does not generate a unique monaco instance per file, more investigation needed
   return (
     <div id={file} className="editor-container">
       <MonacoEditor
