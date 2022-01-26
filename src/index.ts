@@ -36,13 +36,31 @@ const createWindow = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
     frame: process.platform === 'darwin',
+    titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default'
   });
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // Open the DevTools when in dev mode
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools();
+  }
+
+  // track the fullsreen state of the window for darwin
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow.webContents.executeJavaScript(`
+    document.getElementById('vizcon').classList.add('fullscreen')
+    document.getElementById('vizcon').classList.remove('normal')
+    `);
+  });
+
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.webContents.executeJavaScript(`
+    document.getElementById('vizcon').classList.remove('fullscreen')
+    document.getElementById('vizcon').classList.add('normal')
+    `);
+  });
 };
 
 // This method will be called when Electron has finished

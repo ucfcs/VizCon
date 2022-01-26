@@ -1,4 +1,4 @@
-#vizcon .titlebar {
+.titlebar {
   box-sizing: border-box;
   width: 100%;
   padding: 0 70px;
@@ -10,17 +10,21 @@
   user-select: none;
   -webkit-user-select: none;
   zoom: 1;
-  line-height: 22px;
-  height: 22px;
+  line-height: 30px;
+  height: 30px;
   display: flex;
 
-  .win32 &,
-  .linux & {
+  .win32 #vizcon &,
+  .linux #vizcon & {
     padding: 0;
     height: 30px;
     line-height: 30px;
     justify-content: left;
     overflow: visible;
+  }
+
+  .darwin #vizcon.fullscreen & {
+    display: none;
   }
 
   // TODO: make dynamic

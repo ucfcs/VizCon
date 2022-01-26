@@ -9,12 +9,13 @@ interface NavProps {
 
 export default function Nav({ openFile }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
+  // const showMenu = true;
 
   return (
-    <div className="titlebar" style={{ height: '30px' }}>
+    <div className="titlebar">
+      <div className="titlebar-drag-region"></div>
       {showMenu && (
         <>
-          <div className="titlebar-drag-region"></div>
           <a className="appicon"></a>
           <div className="menubar" role="menubar">
             <MenuItem title="File" options={[{ name: 'Open File', action: openFile }]} />
@@ -39,7 +40,6 @@ export default function Nav({ openFile }: NavProps): React.ReactElement {
         </>
       )}
       {/* TODO: have this title be dynamic, and when it updates, update window.title */}
-      {/* Also TODO: the visibility of this on macOS needs to be reevaluated */}
       <div className="window-title">Temporary Title</div>
       {showMenu && (
         <>
