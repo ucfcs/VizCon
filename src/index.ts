@@ -21,11 +21,11 @@ const createWindow = (): void => {
       callback({
         responseHeaders: {
           ...details.responseHeaders,
-          'Content-Security-Policy': "script-src 'self' 'unsafe-eval' 'unsafe-inline' file: blob: https://cdn.jsdelivr.net/ http://localhost:3000"
-        }
-      })
+          'Content-Security-Policy':
+            "script-src 'self' 'unsafe-eval' 'unsafe-inline' file: blob: https://cdn.jsdelivr.net/ http://localhost:3000",
+        },
+      });
     });
-
   }
 
   // Create the browser window.

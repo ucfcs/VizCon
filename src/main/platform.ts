@@ -26,11 +26,11 @@ ipcMain.handle('isMaximized', e => {
   return window.isMaximized();
 });
 
-ipcMain.handle('openFileDialog', (e) => {
+ipcMain.handle('openFileDialog', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
   const results = dialog.showOpenDialogSync(window, {
-    filters: [{name: 'C Language File', extensions: ['c']}],
-    properties: ['openFile']
+    filters: [{ name: 'C Language File', extensions: ['c'] }],
+    properties: ['openFile'],
   });
   if (!results) {
     return 'EMPTY: No file selected';

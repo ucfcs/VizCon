@@ -47,7 +47,7 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
         })}
       </div>
     );
-    setClassName(files.length > 1 ? 'tabination-active' : '')
+    setClassName(files.length > 1 ? 'tabination-active' : '');
   }, [current, files]);
 
   useEffect(() => {

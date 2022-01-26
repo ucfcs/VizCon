@@ -28,16 +28,12 @@ export default function Editor({ file }: EditorProps): React.ReactElement {
       setDefaultValue(fileContent);
     }
     run();
-  })
+  });
 
   // TODO: This solution still does not generate a unique monaco instance per file, more investigation needed
   return (
     <div id={file} className="editor-container">
-      <MonacoEditor
-        defaultLanguage="c"
-        defaultValue={defaultValue}
-        onMount={onEditorMount}
-      />
+      <MonacoEditor defaultLanguage="c" defaultValue={defaultValue} onMount={onEditorMount} theme="vs-dark" />
     </div>
   );
 }
