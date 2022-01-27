@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/ide.scss';
-import Editor from './ide/editor';
 import EditorOld from './ide/editorold';
 import Landing from './ide/landing';
 import Tab from './ide/tab';
@@ -29,7 +28,7 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
       }
 
       // else make a new editor
-      newEditors[file] = <Editor file={file} />;
+      newEditors[file] = <EditorOld file={file} key={file}/>;
     });
     setEditors(newEditors);
   }, [files]);
@@ -43,7 +42,7 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
           const setActive = () => {
             setCurrent(file);
           };
-          return <Tab setActive={setActive} name={file} current={current} key={file} />;
+          return <Tab setActive={setActive} name={file} current={current} key={'tab' + file} />;
         })}
       </div>
     );
