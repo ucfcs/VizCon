@@ -1,14 +1,17 @@
 #include "threads.h"
 
 // Create a thread, passing in a function
-THREAD_RET createVCThread(threadFunc func, void *arg)
+VCThread *createThread(threadFunc func, void *arg)
 {
+	// Attempts to create the Thread data type. If it fails, print an error
     VCThread *thread = (VCThread*)malloc(sizeof(VCThread));
+	if (thread == NULL)
+	{
+		vizconError("vcThreadQueue", 8);
+	}
 
     // Sets the next value in the linked list to NULL
     thread->next = NULL;
-
-    void **arr = (void**)arg;
 
     // Create thread function for Windows
     #if defined(_WIN32) 
@@ -16,23 +19,39 @@ THREAD_RET createVCThread(threadFunc func, void *arg)
 
     // Create thread function for POSIX
     #elif defined(_APPLE_) || defined(_linux_)
-    // Attempts to create a pthread. If it fails, print an error
-        int err = pthread_create(&thread->thread, NULL, func, arg);
-        if (err)
-        {
-            free(thread);
-        }
-
-        free(funct);
-        return 1;
+		// Passes in the parameters as arguments for future creation
+		thread->func = arr[0];
+		thread->arg = arr[1];
     #endif
+	
+	return thread;
 }
 
-void joinVCThread(VCThread *thread)
+void joinThread(VCThread *thread)
 {
     // Windows join thread function
     #if defined(_WIN32)
+		// Attempt to wait for the object, rpnting the appropriate error if it fails
         DWORD ret = WaitForSingleObject(thread->thread, INFINITE);
+		if (ret == WAIT_FAILED)
+		{
+			vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+		}
+		else if (ret == WAIT_OBJECT_0)
+		{
+			if (!GetExitCodeThread(thread->thread, &thread->returnVal))
+			{
+				vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+			}
+		}
+		else if(ret == WAIT_ABANDONED)
+		{
+			vizconError("vcThreadStart/vcThreadReturn", 500);
+		}
+		else if (ret == WAIT_TIMEOUT)
+		{
+			vizconError("vcThreadStart/vcThreadReturn", 501);
+		}
 
     // POSIX join thread function
     #elif defined(__APPLE__) || defined(__linux__)
@@ -41,29 +60,42 @@ void joinVCThread(VCThread *thread)
     if (err)
     {
         free(thread);
+		vizconError("vcThreadStart/vcThreadReturn", err);
     }
     #endif
 }
 
-void freeVCThread(VCThread *thread)
+void freeThread(VCThread *thread)
 {
     // Windows free thread function
     #if defined(_WIN32) 
-        CloseHandle(thread->thread);
+		// Attempts to close the thread. If it fails, print an error
+        if (!CloseHandle(thread->thread))
+		{
+			vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+		}
     #endif
 
     // Frees the struct
     free(thread);
 }
 
-void sleepVCThread(int milliseconds)
+//Start a given thread that was in a suspended state
+void startThread(CSThread* thread)
 {
-    // Windows sleep function
-    #if defined(_WIN32)
-        Sleep(milliseconds);
-        
-    // POSIX sleep function
+    #if defined(_WIN32) // windows
+	// Attempts to resume a thread. If it fails, print an error
+    if (ResumeThread(thread->thread) == -1)
+    {
+        vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+    }
     #elif defined(__APPLE__) || defined(__linux__)
-        usleep(milliseconds * 1000);
+	// Attempts to create a pthread using the previously passed in parameters. If it fails, print an error
+    int err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
+    if (err)
+    {
+        free(thread);
+        vizconError("vcThreadQueue", err);
+    }
     #endif
 }
