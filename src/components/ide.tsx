@@ -15,7 +15,6 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
   const [editors, setEditors] = useState<{ [key: string]: React.ReactElement }>({});
   const [tabination, setTabination] = useState(<div className="tabination"></div>);
   const [currentEditor, setCurrentEditor] = useState(landing);
-  const [className, setClassName] = useState('');
 
   useEffect(() => {
     // Updates the editors
@@ -46,7 +45,6 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
         })}
       </div>
     );
-    setClassName(files.length > 1 ? 'tabination-active' : '');
   }, [current, files]);
 
   useEffect(() => {
@@ -58,8 +56,8 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
   }, [current, editors]);
 
   return (
-    <div id="ide" className={className}>
-      {files.length > 1 && tabination}
+    <div id="ide">
+      {tabination}
       <div className="active-editor">{currentEditor}</div>
     </div>
   );

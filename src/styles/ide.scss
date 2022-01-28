@@ -57,14 +57,8 @@
     }
   }
 
-  &.tabination-active {
-    .active-editor {
-      height: calc(100% - 35px);
-    }
-  }
-
   .active-editor {
-    height: 100%;
+    height: calc(100% - 35px);
 
     .landing {
       text-align: center;
