@@ -1,6 +1,5 @@
 // this file is currently just a save of the old way of dong the editor component, for if it is ever needed again
 // DONT USE IT
-// Scratch that, this is the one we are going to use, as it allows us to have more granular control
 import React, { useEffect, useRef, useState } from 'react';
 import * as monaco from 'monaco-editor';
 
