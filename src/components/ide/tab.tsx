@@ -10,6 +10,7 @@ export default function Tab({ setActive, name, current }: TabProps): React.React
   const [cls, setCls] = useState<string>('tab');
   // TODO: fancy name reduction so it is only the file name and not the whole path
   // TODO: the start simulation button
+  // TODO: the close button
 
   // TODO RESUME: fix the tab problem
   useEffect(() => {

@@ -22,7 +22,7 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
           const setActive = () => {
             setCurrent(file);
           };
-          return <Tab setActive={setActive} name={file.path} current={current} key={'tab' + file} />;
+          return <Tab setActive={setActive} name={file.path} current={current} key={'tab' + file.path} />;
         })}
       </div>
     );
