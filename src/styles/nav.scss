@@ -1,4 +1,4 @@
-#vizcon .titlebar {
+.titlebar {
   box-sizing: border-box;
   width: 100%;
   padding: 0 70px;
@@ -10,17 +10,21 @@
   user-select: none;
   -webkit-user-select: none;
   zoom: 1;
-  line-height: 22px;
-  height: 22px;
+  line-height: 30px;
+  height: 30px;
   display: flex;
 
-  .win32 &,
-  .linux & {
+  .win32 #vizcon &,
+  .linux #vizcon & {
     padding: 0;
     height: 30px;
     line-height: 30px;
     justify-content: left;
     overflow: visible;
+  }
+
+  .darwin #vizcon.fullscreen & {
+    display: none;
   }
 
   // TODO: make dynamic
@@ -91,8 +95,75 @@
       outline: 0;
       font-size: 13px;
 
-      &:hover {
+      &:hover,
+      &.open {
         background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .menu-actions {
+        display: none;
+        position: fixed;
+        outline: 0;
+        border: none;
+        top: 30px; // must be equavilent to the height of the menu bar
+        z-index: 2000;
+        overflow: hidden;
+        box-shadow: rgb(0 0 0 / 36%) 0px 2px 4px;
+        max-height: 975px;
+        font-size: 13px;
+
+        // colors, need to be changed later
+        color: rgb(204, 204, 204);
+        background-color: rgb(37, 37, 38);
+
+        &.visible {
+          display: block;
+        }
+
+        .menu-container {
+          height: 100%;
+          text-align: left;
+          white-space: nowrap;
+          overflow: visible;
+          padding: 0.5em 0px;
+
+          ul {
+            display: block;
+            margin: 0 auto;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            list-style-type: none;
+
+            .menu-action {
+              display: flex;
+              transform: none;
+              padding: 0;
+              position: static;
+              overflow: visible;
+              border: thin solid transparent;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              height: 1.8em;
+
+              &.disabled {
+                cursor: default;
+              }
+
+              .action-label {
+                font-size: inherit;
+                padding: 0 2em;
+                display: inline-block;
+                box-sizing: border-box;
+                flex: 1 1 auto;
+                background: none;
+                text-decoration: none;
+                line-height: 1;
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -118,7 +189,7 @@
       user-select: none;
 
       &:hover {
-        background-color: hsla(0, 0, 100%, 0.1);
+        background-color: hsla(0, 0%, 100%, 0.1);
       }
 
       &.codicon-chrome-close:hover {

@@ -9,3 +9,11 @@ body {
 .win32 {
   font-family: Segoe WPC, Segoe UI, sans-serif;
 }
+
+.darwin {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.linux {
+  font-family: system-ui, Ubuntu, Droid Sans, sans-serif;
+}

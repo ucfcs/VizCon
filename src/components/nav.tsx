@@ -3,17 +3,46 @@ import WindowControls from './nav/windowcontrols';
 import MenuItem from './nav/menuitem';
 import '../styles/nav.scss';
 
-export default function Nav(): React.ReactElement {
+interface NavProps {
+  openFile: () => void;
+  openBlankFile: () => void;
+}
+
+export default function Nav({ openFile, openBlankFile }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
+  // const showMenu = true;
 
   return (
-    <div className="titlebar" style={{ height: '30px' }}>
+    <div className="titlebar">
+      <div className="titlebar-drag-region"></div>
       {showMenu && (
         <>
-          <div className="titlebar-drag-region"></div>
           <a className="appicon"></a>
           <div className="menubar" role="menubar">
-            <MenuItem />
+            <MenuItem
+              title="File"
+              options={[
+                { name: 'Open File', action: openFile },
+                { name: 'New File', action: openBlankFile },
+              ]}
+            />
+            <MenuItem
+              title="View"
+              options={[
+                {
+                  name: 'Zoom In',
+                  action: () => {
+                    console.log('zoom in');
+                  },
+                },
+                {
+                  name: 'Zoom Out',
+                  action: () => {
+                    console.log('zoom out');
+                  },
+                },
+              ]}
+            />
           </div>
         </>
       )}

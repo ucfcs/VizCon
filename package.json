@@ -21,7 +21,10 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "extraResource": ["./concurrency", "./platform"]
+        "extraResource": [
+          "./concurrency",
+          "./platform"
+        ]
       },
       "makers": [
         {
@@ -80,11 +83,15 @@
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "@vercel/webpack-asset-relocator-loader": "^1.7.0",
+    "@vscode/codicons": "^0.0.27",
     "css-loader": "^6.5.1",
     "electron": "16.0.5",
+    "electron-devtools-installer": "^3.2.0",
     "eslint": "^7.32.0",
     "eslint-plugin-import": "^2.25.3",
     "fork-ts-checker-webpack-plugin": "^6.5.0",
+    "monaco-editor": "^0.31.1",
+    "monaco-editor-webpack-plugin": "^7.0.1",
     "node-loader": "^2.0.0",
     "prettier": "^2.5.1",
     "style-loader": "^3.3.1",
@@ -92,6 +99,7 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.3.1",
     "electron-squirrel-startup": "^1.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

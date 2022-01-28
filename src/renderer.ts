@@ -27,4 +27,5 @@
  */
 
 import './styles/global.scss';
+import '@vscode/codicons/dist/codicon.css';
 import './app-renderer';
