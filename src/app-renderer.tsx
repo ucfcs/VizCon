@@ -14,9 +14,9 @@ function App(): React.ReactElement {
   const [current, setCurrent] = useState(files.length > 0 ? files[0] : '');
 
   function openFile(): void {
-    window.platform.openFileDialog().then(file => {
-      setFiles([...files, file]);
-      setCurrent(file);
+    window.platform.openFileDialog().then(newFiles => {
+      setFiles([...files, ...newFiles]);
+      setCurrent(newFiles[newFiles.length - 1]);
     });
   }
 

@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('platform', {
   readFileSync: async (file: string): Promise<string> => {
     return await ipcRenderer.invoke('readFileSync', file);
   },
-  openFileDialog: async (): Promise<string> => {
+  openFileDialog: async (): Promise<string[]> => {
     const test = await ipcRenderer.invoke('openFileDialog');
     return test;
   },
