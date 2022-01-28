@@ -3,7 +3,7 @@
 
 // mutexCreate - Create a mutex struct with the given name.
 //               Returns: a pointer to the mutex struct.
-VCMutex* mutexCreate(char* name)
+CSMutex* mutexCreate(char* name)
 {
     // A name is required, so error out without one.
     if(name == NULL)
@@ -13,7 +13,7 @@ VCMutex* mutexCreate(char* name)
     }
 
     // Attempt to allocate the struct. Error out on failure.
-    VCMutex* mutex = (VCMutex*) malloc(sizeof(VCMutex));
+    CSMutex* mutex = (CSMutex*) malloc(sizeof(CSMutex));
     if (mutex == NULL)
     {
         // Platform-dependent error code retrieval.
@@ -64,7 +64,7 @@ VCMutex* mutexCreate(char* name)
 
 // mutexLock - Obtain a lock on the mutex.
 //             If a lock is not available yet, wait until it is.
-void mutexLock(VCMutex* mutex)
+void mutexLock(CSMutex* mutex)
 {
     // Platform-dependent mutex locking.
     // Check whether the caller has obtained this lock already.
@@ -131,7 +131,7 @@ void mutexLock(VCMutex* mutex)
 // mutexTryLock - Try to obtain the mutex.
 //                If it's unavailable, return without waiting.
 //                Returns: 1 if lock is available, 0 otherwise.
-int mutexTryLock(VCMutex* mutex)
+int mutexTryLock(CSMutex* mutex)
 {
     // Platform-dependent mutex lock trying.
     // Create a wait request with 0 timeout. Error out where needed.
@@ -204,7 +204,7 @@ int mutexTryLock(VCMutex* mutex)
 }
 
 // mutexUnlock - Release a mutex lock.
-void mutexUnlock(VCMutex* mutex)
+void mutexUnlock(CSMutex* mutex)
 {
     // Check whether the lock is already unlocked. If so, error out.
     if(mutexStatus(mutex))
@@ -244,7 +244,7 @@ void mutexUnlock(VCMutex* mutex)
 }
 
 // mutexClose - Close the mutex lock and free the struct.
-void mutexClose(VCMutex* mutex)
+void mutexClose(CSMutex* mutex)
 {
     // Platform-dependent mutex destruction.
     // Create a release request, then free the rest of the struct. 
@@ -267,7 +267,7 @@ void mutexClose(VCMutex* mutex)
 //               Use the mutex->available value to avoid issues
 //               with the recursive locks used by Windows.
 //               Returns: 1 if lock is available, 0 otherwise.
-int mutexStatus(VCMutex* mutex)
+int mutexStatus(CSMutex* mutex)
 {
     return mutex->available;
 }

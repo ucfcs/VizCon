@@ -30,20 +30,20 @@
 #define ERROR_MUTEX_CROSS_THREAD_UNLOCK 504
 #define ERROR_MUTEX_UNNAMED 505
 
-// VCMutex - Wrapper for the system's mutex type.
-typedef struct VCMutex
+// CSMutex - Wrapper for the system's mutex type.
+typedef struct CSMutex
 {
     MUTEX_TYPE mutex;        // Mutex object
     int available;           // Flags whether the mutex is currently available.
     THREAD_ID_TYPE holderID; // If locked, ID of thread that placed the lock.
-    struct VCMutex* next;    // Next VCMutex struct in the mutex list
-} VCMutex;
+    struct CSMutex* next;    // Next CSMutex struct in the mutex list
+} CSMutex;
 
 // Mutex function prototypes.
 // Function contents can be found in mutexes.c.
-VCMutex* mutexCreate(char* name); // Creates a mutex with the given name.
-void mutexLock(VCMutex* mutex);   // Waits for mutex availability, then locks.
-int mutexTryLock(VCMutex* mutex); // Attempts to lock without waiting.
-void mutexUnlock(VCMutex* mutex); // Unlocks mutex.
-void mutexClose(VCMutex* mutex);  // Closes and destroys the mutex struct.
-int mutexStatus(VCMutex* mutex);  // Returns whether the mutex is available.
+CSMutex* mutexCreate(char* name); // Creates a mutex with the given name.
+void mutexLock(CSMutex* mutex);   // Waits for mutex availability, then locks.
+int mutexTryLock(CSMutex* mutex); // Attempts to lock without waiting.
+void mutexUnlock(CSMutex* mutex); // Unlocks mutex.
+void mutexClose(CSMutex* mutex);  // Closes and destroys the mutex struct.
+int mutexStatus(CSMutex* mutex);  // Returns whether the mutex is available.
