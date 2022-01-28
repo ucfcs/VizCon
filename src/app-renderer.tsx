@@ -8,6 +8,9 @@ document.body.classList.add(window.platform.getPlatform());
 
 ReactDOM.render(<App />, root);
 
+// TODO: better management of untitled filess, when the 1st is deleted, it should be the next to be openeded
+let untitledCount = 1;
+
 function App(): React.ReactElement {
   // TODO: system to account for a new blank file
   const [files, setFiles] = useState<Array<OpenFileData>>([]);
@@ -29,9 +32,19 @@ function App(): React.ReactElement {
     });
   }
 
+  function openBlankFile(): void {
+    const blank: OpenFileData = {
+      path: 'Untitled ' + untitledCount,
+      content: '', // TODO: do we enable a default template?
+    };
+    untitledCount++;
+    setFiles([...files, blank]);
+    setCurrent(blank);
+  }
+
   return (
     <StrictMode>
-      <Nav openFile={openFile} />
+      <Nav openFile={openFile} openBlankFile={openBlankFile} />
       <IDE files={files} current={current} setCurrent={setCurrent} />
     </StrictMode>
   );

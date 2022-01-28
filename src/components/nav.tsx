@@ -4,10 +4,11 @@ import MenuItem from './nav/menuitem';
 import '../styles/nav.scss';
 
 interface NavProps {
-  openFile: () => void; // TODO: this will be used later
+  openFile: () => void;
+  openBlankFile: () => void;
 }
 
-export default function Nav({ openFile }: NavProps): React.ReactElement {
+export default function Nav({ openFile, openBlankFile }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
 
@@ -18,7 +19,13 @@ export default function Nav({ openFile }: NavProps): React.ReactElement {
         <>
           <a className="appicon"></a>
           <div className="menubar" role="menubar">
-            <MenuItem title="File" options={[{ name: 'Open File', action: openFile }]} />
+            <MenuItem
+              title="File"
+              options={[
+                { name: 'Open File', action: openFile },
+                { name: 'New File', action: openBlankFile },
+              ]}
+            />
             <MenuItem
               title="View"
               options={[

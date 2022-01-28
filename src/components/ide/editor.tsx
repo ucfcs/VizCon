@@ -1,11 +1,11 @@
 import React, { useRef } from 'react';
-import { default as MonacoEditor, Monaco } from '@monaco-editor/react';
+import { default as MonacoEditor } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 
 export default function Editor({ current }: EditorProps): React.ReactElement {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
 
-  function onEditorMount(editor: monaco.editor.IStandaloneCodeEditor, monaco: Monaco) {
+  function onEditorMount(editor: monaco.editor.IStandaloneCodeEditor) {
     editorRef.current = editor;
   }
 
