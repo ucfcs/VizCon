@@ -9,13 +9,13 @@
 #define THREAD_RET DWORD
 #define THREAD_PARAM LPVOID
 
-typedef struct VCThread
+typedef struct CSThread
 {
     HANDLE thread;
     THREAD_RET id;
     THREAD_RET returnVal;
-    struct VCThread *next;
-} VCThread;
+    struct CSThread *next;
+} CSThread;
 
 #elif __linux__ || __APPLE__
 #include <pthread.h>
@@ -28,19 +28,19 @@ typedef void* (*threadFunc) (void* param);
 #define THREAD_RET void*
 #define THREAD_PARAM void*
 
-typedef struct VCThread
+typedef struct CSThread
 {
     pthread_t thread;
 	threadFunc func;
 	void *arg;
     THREAD_RET returnVal;
-    struct VCThread *next;
-} VCThread;
+    struct CSThread *next;
+} CSThread;
 
 #endif
 
 // Thread Function Prototypes
 THREAD_RET createThread(threadFunc func, void *arg);
-void joinThread(VCThread *thread);
-void freeThread(VCThread *thread);
+void joinThread(CSThread *thread);
+void freeThread(CSThread *thread);
 void startThread(CSThread* thread);

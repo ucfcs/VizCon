@@ -1,10 +1,10 @@
 #include "threads.h"
 
 // Create a thread, passing in a function
-VCThread *createThread(threadFunc func, void *arg)
+CSThread *createThread(threadFunc func, void *arg)
 {
 	// Attempts to create the Thread data type. If it fails, print an error
-    VCThread *thread = (VCThread*)malloc(sizeof(VCThread));
+    CSThread *thread = (CSThread*)malloc(sizeof(CSThread));
 	if (thread == NULL)
 	{
 		vizconError("vcThreadQueue", 8);
@@ -27,7 +27,7 @@ VCThread *createThread(threadFunc func, void *arg)
 	return thread;
 }
 
-void joinThread(VCThread *thread)
+void joinThread(CSThread *thread)
 {
     // Windows join thread function
     #if defined(_WIN32)
@@ -65,7 +65,7 @@ void joinThread(VCThread *thread)
     #endif
 }
 
-void freeThread(VCThread *thread)
+void freeThread(CSThread *thread)
 {
     // Windows free thread function
     #if defined(_WIN32) 
