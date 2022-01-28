@@ -38,11 +38,13 @@ ipcMain.handle('openFileDialog', e => {
   return results;
 });
 
-ipcMain.handle('readFileSync', (e, file: string) => {
-  try {
-    const contents = readFileSync(file, 'utf-8');
-    return contents;
-  } catch (error) {
-    return 'ERROR:' + error;
-  }
+ipcMain.handle('readFilesSync', (e, files: string[]) => {
+  return files.map(file => {
+    try {
+      const contents = readFileSync(file, 'utf-8');
+      return contents;
+    } catch (error) {
+      return 'ERROR:' + error;
+    }
+  });
 });

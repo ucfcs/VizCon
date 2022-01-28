@@ -9,7 +9,7 @@ declare global {
       restore: () => void;
       close: () => void;
       isMaximized: () => Promise<boolean>;
-      readFileSync: (string) => Promise<string>;
+      readFilesSync: (files: string[]) => Promise<string[]>;
       openFileDialog: () => Promise<string[]>;
     };
   }

@@ -20,8 +20,8 @@ contextBridge.exposeInMainWorld('platform', {
   isMaximized: async (): Promise<boolean> => {
     return await ipcRenderer.invoke('isMaximized');
   },
-  readFileSync: async (file: string): Promise<string> => {
-    return await ipcRenderer.invoke('readFileSync', file);
+  readFilesSync: async (files: string[]): Promise<string[]> => {
+    return await ipcRenderer.invoke('readFilesSync', files);
   },
   openFileDialog: async (): Promise<string[]> => {
     const test = await ipcRenderer.invoke('openFileDialog');

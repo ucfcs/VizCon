@@ -36,9 +36,9 @@ export default function EditorOld({ file }: EditorProps): React.ReactElement {
     async function run() {
       // only run if monaco has been loaded
       if (!monacoInstance) return;
-      const fileContent = await window.platform.readFileSync(file);
+      const fileContent = await window.platform.readFilesSync([file]);
       console.log(fileContent);
-      if (fileContent?.length == 0 || fileContent.startsWith('ERROR:')) {
+      if (fileContent?.length == 0 || fileContent[0].startsWith('ERROR:')) {
         // TODO: open modal here and prevent loading of the entire component
         // This might be better acomplished by changing the call to just read file,
         // and instead making the open modal happen somewhere higher up the FC call stack
@@ -46,8 +46,8 @@ export default function EditorOld({ file }: EditorProps): React.ReactElement {
         console.error('Bad file or path', file, fileContent);
         return;
       }
-      setFileContent(fileContent);
-      monacoInstance.setValue(fileContent);
+      setFileContent(fileContent[0]);
+      monacoInstance.setValue(fileContent[0]);
     }
   }, [file, monacoInstance]);
 
