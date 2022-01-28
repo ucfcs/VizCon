@@ -10,13 +10,22 @@ ReactDOM.render(<App />, root);
 
 function App(): React.ReactElement {
   // TODO: system to account for a new blank file
-  const [files, setFiles] = useState<Array<string>>([]);
-  const [current, setCurrent] = useState(files.length > 0 ? files[0] : '');
+  const [files, setFiles] = useState<Array<OpenFileData>>([]);
+  // TODO: remove the files length check, that is for when we hard code the initial files
+  // Unless we allow the initial content of the files array to be the files they previously had open
+  const [current, setCurrent] = useState(files.length > 0 ? files[0] : { path: 'Landing', content: '' });
 
   function openFile(): void {
-    window.platform.openFileDialog().then(newFiles => {
-      setFiles([...files, ...newFiles]);
-      setCurrent(newFiles[newFiles.length - 1]);
+    window.platform.openFileDialog().then(async newFiles => {
+      const newFileContents = await window.platform.readFilesSync(newFiles);
+      const newFileData = newFileContents.map((fileContent, i): OpenFileData => {
+        return {
+          path: newFiles[i],
+          content: fileContent,
+        };
+      });
+      setFiles([...files, ...newFileData]);
+      setCurrent(newFileData[newFileData.length - 1]);
     });
   }
 

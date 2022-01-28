@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 interface TabProps {
   setActive: () => void;
   name: string;
-  current: string;
+  current: OpenFileData;
 }
 
 export default function Tab({ setActive, name, current }: TabProps): React.ReactElement {
@@ -13,7 +13,7 @@ export default function Tab({ setActive, name, current }: TabProps): React.React
 
   // TODO RESUME: fix the tab problem
   useEffect(() => {
-    setCls('tab' + (current === name ? ' active' : ''));
+    setCls('tab' + (current?.path === name ? ' active' : ''));
   }, [current]);
 
   return (
