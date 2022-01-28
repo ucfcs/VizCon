@@ -33,7 +33,7 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
       {tabination}
       <div className="active-editor">
         {files.length == 0 && <Landing />}
-        {files.length >= 1 && <Editor current={current}/>}
+        {files.length >= 1 && <Editor current={current} />}
       </div>
     </div>
   );

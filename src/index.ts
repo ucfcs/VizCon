@@ -36,7 +36,7 @@ const createWindow = (): void => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
     frame: process.platform === 'darwin',
-    titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default'
+    titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default',
   });
 
   // and load the index.html of the app.

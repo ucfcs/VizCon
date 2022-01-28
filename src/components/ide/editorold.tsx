@@ -11,7 +11,9 @@ interface EditorProps {
 export default function EditorOld({ file }: EditorProps): React.ReactElement {
   const div = useRef<HTMLDivElement>(null);
   // TODO: better default content
-  const [fileContent, setFileContent] = useState<string>(['int main(void) {', '    return 0;', '}', '// ' + file].join('\n'));
+  const [fileContent, setFileContent] = useState<string>(
+    ['int main(void) {', '    return 0;', '}', '// ' + file].join('\n')
+  );
   const [monacoInstance, setMonacoInstance] = useState<monaco.editor.IStandaloneCodeEditor>(null);
 
   // this use effect is pureley here for the initial mount of the component
@@ -19,7 +21,7 @@ export default function EditorOld({ file }: EditorProps): React.ReactElement {
   // to do that, we *might* need to do some hacky call backs and what not to propigate the dispose call
   // to the tab closing
   useEffect(() => {
-    console.log(monacoInstance)
+    console.log(monacoInstance);
     if (div.current && !monacoInstance) {
       const editor = monaco.editor.create(div.current, {
         value: fileContent,
