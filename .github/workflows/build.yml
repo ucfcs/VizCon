@@ -115,6 +115,12 @@ jobs:
         id: get_name
         run: echo ::set-output name=PACKAGE_NAME::vizcon
 
+      # used to get the current working directory, enabling the removal of it from npm list
+      - name: Get Job Working Directory
+        id: get_dir
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: echo ::set-output name=CURRENT_DIR::$(pwd)
+
       # used to get the version listed in package.json. the calls to sed are using ':' as the regex delimiter
       - name: Get Release Version
         id: get_version
