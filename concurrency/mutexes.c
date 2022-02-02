@@ -31,7 +31,6 @@ CSMutex* mutexCreate(char* name)
     }
 
     // Set non-mutex properties.
-    mutex->next = NULL;
     mutex->available = 1;
     mutex->holderID = (THREAD_ID_TYPE) 0;
 
