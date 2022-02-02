@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain, dialog } from 'electron';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 
 ipcMain.handle('minimize', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
@@ -33,7 +33,7 @@ ipcMain.handle('openFileDialog', e => {
     properties: ['openFile', 'multiSelections'],
   });
   if (!results) {
-    return 'EMPTY: No file selected';
+    return ['EMPTY: No file selected'];
   }
   return results;
 });
@@ -47,4 +47,23 @@ ipcMain.handle('readFilesSync', (e, files: string[]) => {
       return 'ERROR:' + error;
     }
   });
+});
+
+ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?: boolean) => {
+  if (forceDialog || path.includes('tacking://')) {
+    const window = BrowserWindow.fromWebContents(e.sender);
+    const newPath = dialog.showSaveDialogSync(window, {
+      filters: [{ name: 'C Language File', extensions: ['c'] }],
+      properties: ['createDirectory', 'showOverwriteConfirmation']
+    })
+
+    // if cancelled, dont do anything
+    if (!newPath) {
+      return path;
+    }
+
+    path = newPath;
+  }
+
+  writeFileSync(path, content, 'utf-8');
 });

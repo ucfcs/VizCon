@@ -6,9 +6,12 @@ import '../styles/nav.scss';
 interface NavProps {
   openFile: () => void;
   openBlankFile: () => void;
+  saveFile: () => void;
+  saveAll: () => void;
+  saveAs: () => void;
 }
 
-export default function Nav({ openFile, openBlankFile }: NavProps): React.ReactElement {
+export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
 
@@ -24,6 +27,9 @@ export default function Nav({ openFile, openBlankFile }: NavProps): React.ReactE
               options={[
                 { name: 'Open File', action: openFile },
                 { name: 'New File', action: openBlankFile },
+                { name: 'Save File', action: saveFile },
+                { name: 'Save All', action: saveAll },
+                { name: 'Save As', action: saveAs}
               ]}
             />
             <MenuItem

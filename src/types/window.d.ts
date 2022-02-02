@@ -11,6 +11,7 @@ declare global {
       isMaximized: () => Promise<boolean>;
       readFilesSync: (files: string[]) => Promise<string[]>;
       openFileDialog: () => Promise<string[]>;
+      saveFileToDisk: (path: string, content: string, forceDialog?: boolean) => Promise<string>;
     };
   }
 }

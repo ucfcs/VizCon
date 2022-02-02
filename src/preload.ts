@@ -27,4 +27,7 @@ contextBridge.exposeInMainWorld('platform', {
     const test = await ipcRenderer.invoke('openFileDialog');
     return test;
   },
+  saveFileToDisk: async (path: string, content: string, forceDialog?: boolean): Promise<string> => {
+    return await ipcRenderer.invoke('saveFileToDisk', path, content, forceDialog);
+  },
 });

@@ -20,6 +20,10 @@ function App(): React.ReactElement {
   function openFile(): void {
     window.platform.openFileDialog().then(async newFiles => {
       const newFileContents = await window.platform.readFilesSync(newFiles);
+      // if no files were selected, dont attempt to read anything
+      if (newFileContents[0].includes('EMPTY:')) {
+        return;
+      }
       const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
         return {
           path: newFiles[i],
@@ -34,7 +38,7 @@ function App(): React.ReactElement {
 
   function openBlankFile(): void {
     const blank: OpenFileData = {
-      path: 'Untitled ' + untitledCount,
+      path: 'tacking://Untitled-' + untitledCount,
       fileContent: '', // TODO: do we enable a default template?
       currentContent: ''
     };
@@ -43,9 +47,29 @@ function App(): React.ReactElement {
     setCurrent(blank);
   }
 
+  async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<void> {
+    const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, forceDialog);
+    console.log(`saving file ${file.path}, satatus ${writtenPath}`);
+    current.path = writtenPath;
+  }
+
+  async function saveFile(): Promise<void> {
+    saveFileImpl(current);
+  }
+
+  async function saveAs(): Promise<void> {
+    saveFileImpl(current, true);
+  }
+
+  function saveAll(): void {
+    files.forEach(async file =>  {
+      saveFileImpl(file);
+    });
+  }
+
   return (
     <StrictMode>
-      <Nav openFile={openFile} openBlankFile={openBlankFile} />
+      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} />
       <IDE files={files} current={current} setCurrent={setCurrent} />
     </StrictMode>
   );
