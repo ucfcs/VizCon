@@ -8,11 +8,14 @@ interface TabProps {
 
 export default function Tab({ setActive, name, current }: TabProps): React.ReactElement {
   const [cls, setCls] = useState<string>('tab');
-  // TODO: fancy name reduction so it is only the file name and not the whole path
   // TODO: the start simulation button
   // TODO: the close button
 
-  // TODO RESUME: fix the tab problem
+  let shortName = name.replace(/\\/g, '/');
+  if (shortName.lastIndexOf('/')) {
+    shortName = shortName.substring(shortName.lastIndexOf('/') + 1);
+  }
+
   useEffect(() => {
     setCls('tab' + (current?.path === name ? ' active' : ''));
   }, [current]);
@@ -20,7 +23,7 @@ export default function Tab({ setActive, name, current }: TabProps): React.React
   return (
     <div className={cls} onClick={setActive} draggable>
       {/* TODO: Icon goes here */}
-      <div className="tab-label">{name}</div>
+      <div className="tab-label">{shortName}</div>
       {/* TODO: the actions area */}
       <div className="tab-actions"></div>
     </div>
