@@ -5,8 +5,14 @@ import * as monaco from 'monaco-editor';
 export default function Editor({ current }: EditorProps): React.ReactElement {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
 
-  function onEditorMount(editor: monaco.editor.IStandaloneCodeEditor) {
+  function onEditorMount(editor: monaco.editor.IStandaloneCodeEditor): void {
     editorRef.current = editor;
+  }
+
+  function onContentChange(content: string, event: monaco.editor.IModelContentChangedEvent): void {
+    current.currentContent = content;
+    // for debugging, remove this later
+    console.log(event)
   }
 
   return (
@@ -14,9 +20,10 @@ export default function Editor({ current }: EditorProps): React.ReactElement {
       <MonacoEditor
         theme="vs-dark"
         defaultLanguage="c"
-        defaultValue={current.content}
+        defaultValue={current.fileContent}
         path={current.path}
         onMount={onEditorMount}
+        onChange={onContentChange}
       />
     </div>
   );

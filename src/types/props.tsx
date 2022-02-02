@@ -1,6 +1,7 @@
 interface OpenFileData {
   path: string;
-  content: string;
+  fileContent: string;
+  currentContent: string;
 }
 
 interface EditorProps {

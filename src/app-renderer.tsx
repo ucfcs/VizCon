@@ -12,19 +12,19 @@ ReactDOM.render(<App />, root);
 let untitledCount = 1;
 
 function App(): React.ReactElement {
-  // TODO: system to account for a new blank file
   const [files, setFiles] = useState<Array<OpenFileData>>([]);
   // TODO: remove the files length check, that is for when we hard code the initial files
   // Unless we allow the initial content of the files array to be the files they previously had open
-  const [current, setCurrent] = useState(files.length > 0 ? files[0] : { path: 'Landing', content: '' });
+  const [current, setCurrent] = useState(files.length > 0 ? files[0] : { path: 'Landing', fileContent: '', currentContent: '' });
 
   function openFile(): void {
     window.platform.openFileDialog().then(async newFiles => {
       const newFileContents = await window.platform.readFilesSync(newFiles);
-      const newFileData = newFileContents.map((fileContent, i): OpenFileData => {
+      const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
         return {
           path: newFiles[i],
-          content: fileContent,
+          fileContent: diskContent,
+          currentContent: diskContent
         };
       });
       setFiles([...files, ...newFileData]);
@@ -35,7 +35,8 @@ function App(): React.ReactElement {
   function openBlankFile(): void {
     const blank: OpenFileData = {
       path: 'Untitled ' + untitledCount,
-      content: '', // TODO: do we enable a default template?
+      fileContent: '', // TODO: do we enable a default template?
+      currentContent: ''
     };
     untitledCount++;
     setFiles([...files, blank]);
