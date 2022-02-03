@@ -15,7 +15,7 @@ export default function Editor({ current, regenTabination }: EditorProps): React
     regenTabination();
 
     // for debugging, remove this later
-    console.log(event)
+    console.log(event);
   }
 
   return (
@@ -27,7 +27,7 @@ export default function Editor({ current, regenTabination }: EditorProps): React
         path={current.path}
         onMount={onEditorMount}
         onChange={onContentChange}
-        loading={<div></div>} 
+        loading={<div></div>}
         // TODO: add more content to that loading
       />
     </div>

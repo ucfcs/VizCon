@@ -54,8 +54,8 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
     const window = BrowserWindow.fromWebContents(e.sender);
     const newPath = dialog.showSaveDialogSync(window, {
       filters: [{ name: 'C Language File', extensions: ['c'] }],
-      properties: ['createDirectory', 'showOverwriteConfirmation']
-    })
+      properties: ['createDirectory', 'showOverwriteConfirmation'],
+    });
 
     // if cancelled, dont do anything
     if (!newPath) {

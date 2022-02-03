@@ -46,7 +46,9 @@
         }
       }
 
-      &.dirty, &.active, &:hover {
+      &.dirty,
+      &.active,
+      &:hover {
         .tab-actions .tab-actions-container .action-item .action-label {
           opacity: 1;
         }
@@ -107,7 +109,7 @@
               align-items: center;
 
               &:hover {
-                background-color: rgba(90, 93, 94, 0.31);;
+                background-color: rgba(90, 93, 94, 0.31);
               }
             }
           }

@@ -34,5 +34,5 @@ module.exports = [
     test: /\.svg$/,
     issuer: /\.tsx?$/,
     use: ['@svgr/webpack'],
-  }
+  },
 ];

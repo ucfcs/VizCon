@@ -10,7 +10,6 @@ const defaultCurrent = { path: 'Landing', fileContent: '', currentContent: '', d
 // TODO: better management of untitled filess, when the 1st is deleted, it should be the next to be openeded
 let untitledCount = 1;
 
-
 function App(): React.ReactElement {
   const [files, setFiles] = useState<Array<OpenFileData>>([]);
   // TODO: remove the files length check, that is for when we hard code the initial files

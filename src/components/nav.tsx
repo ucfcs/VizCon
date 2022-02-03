@@ -29,7 +29,7 @@ export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs
                 { name: 'New File', action: openBlankFile },
                 { name: 'Save File', action: saveFile },
                 { name: 'Save All', action: saveAll },
-                { name: 'Save As', action: saveAs}
+                { name: 'Save As', action: saveAs },
               ]}
             />
             <MenuItem

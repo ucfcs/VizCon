@@ -25,8 +25,17 @@ export default function IDE({ files, current, setCurrent, closeFile }: IDEProps)
           };
           const close = () => {
             closeFile(file);
-          }
-          return <Tab setActive={setActive} close={close} name={file.path} dirty={file.dirty} current={current} key={'tab' + file.path} />;
+          };
+          return (
+            <Tab
+              setActive={setActive}
+              close={close}
+              name={file.path}
+              dirty={file.dirty}
+              current={current}
+              key={'tab' + file.path}
+            />
+          );
         })}
       </div>
     );

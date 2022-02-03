@@ -17,3 +17,6 @@ README.md
 # Ignore any outputs
 /.webpack
 /out
+
+# Ignore files from seti-ui
+/src/imgs/seti-ui
