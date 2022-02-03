@@ -1,0 +1,1 @@
+The files included in this directory are from [jesseweed/seti-ui](https://github.com/jesseweed/seti-ui) on GitHub. Included is the license for the files and this readme linking to the original work. VizCon does not claim owner ship of any files in this folder ecept for this readme.
