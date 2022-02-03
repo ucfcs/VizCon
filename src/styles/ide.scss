@@ -37,9 +37,23 @@
 
       &.active {
         background-color: rgb(30, 30, 30);
+        color: white;
+      }
+
+      &.dirty {
+        .action-label:not(:hover):before {
+          content: '\ea71'; // equavilent to codicon-circle-full
+        }
+      }
+
+      &.dirty, &.active, &:hover {
+        .tab-actions .tab-actions-container .action-item .action-label {
+          opacity: 1;
+        }
       }
 
       .tab-label {
+        display: flex;
         overflow: visible;
         min-width: 0;
         text-overflow: ellipsis;
@@ -47,12 +61,57 @@
         margin-top: auto;
         margin-bottom: auto;
         line-height: 35px;
+
+        .icon {
+          height: 35px;
+          width: 16px;
+          padding-right: 6px;
+          display: inline-block;
+          flex-shrink: 0;
+          vertical-align: top;
+          fill: #519aba;
+        }
       }
 
       .tab-actions {
         margin-top: auto;
         margin-bottom: auto;
         width: 28px;
+        white-space: nowrap;
+
+        .tab-actions-container {
+          display: flex;
+          justify-content: center;
+          margin: 0 auto;
+          padding: 0;
+          height: 100%;
+          width: 100%;
+          align-items: center;
+
+          .action-item {
+            display: block;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+
+            .action-label {
+              color: inherit;
+              font-size: 16px;
+              padding: 2px;
+              width: 16px;
+              height: 16px;
+              opacity: 0;
+              border-radius: 5px;
+              display: flex;
+              align-items: center;
+
+              &:hover {
+                background-color: rgba(90, 93, 94, 0.31);;
+              }
+            }
+          }
+        }
       }
     }
   }

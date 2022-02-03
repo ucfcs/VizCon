@@ -5,30 +5,42 @@ import IDE from './components/ide';
 
 const root = document.getElementById('vizcon');
 document.body.classList.add(window.platform.getPlatform());
-
-ReactDOM.render(<App />, root);
+const defaultCurrent = { path: 'Landing', fileContent: '', currentContent: '', dirty: false };
 
 // TODO: better management of untitled filess, when the 1st is deleted, it should be the next to be openeded
 let untitledCount = 1;
+
 
 function App(): React.ReactElement {
   const [files, setFiles] = useState<Array<OpenFileData>>([]);
   // TODO: remove the files length check, that is for when we hard code the initial files
   // Unless we allow the initial content of the files array to be the files they previously had open
-  const [current, setCurrent] = useState(files.length > 0 ? files[0] : { path: 'Landing', fileContent: '', currentContent: '' });
+  const [current, setCurrent] = useState(defaultCurrent);
 
   function openFile(): void {
     window.platform.openFileDialog().then(async newFiles => {
-      const newFileContents = await window.platform.readFilesSync(newFiles);
       // if no files were selected, dont attempt to read anything
-      if (newFileContents[0].includes('EMPTY:')) {
+      if (newFiles[0].includes('EMPTY:')) {
         return;
       }
+
+      // filter out already open files
+      const filteredFiles = newFiles.filter(file => {
+        for (let i = 0; i < files.length; i++) {
+          if (files[i].path === file) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      const newFileContents = await window.platform.readFilesSync(filteredFiles);
       const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
         return {
-          path: newFiles[i],
+          path: filteredFiles[i],
           fileContent: diskContent,
-          currentContent: diskContent
+          currentContent: diskContent,
+          dirty: false,
         };
       });
       setFiles([...files, ...newFileData]);
@@ -40,7 +52,8 @@ function App(): React.ReactElement {
     const blank: OpenFileData = {
       path: 'tracking://Untitled-' + untitledCount,
       fileContent: '', // TODO: do we enable a default template?
-      currentContent: ''
+      currentContent: '',
+      dirty: false,
     };
     untitledCount++;
     setFiles([...files, blank]);
@@ -62,15 +75,52 @@ function App(): React.ReactElement {
   }
 
   function saveAll(): void {
-    files.forEach(async file =>  {
+    files.forEach(async file => {
       saveFileImpl(file);
     });
   }
 
+  function closeFile(file: OpenFileData): void {
+    const filesNew = files.filter(f => {
+      return f !== file;
+    });
+
+    setFiles(filesNew);
+
+    // dont worry about checking the current, there is no current to set
+    if (filesNew.length === 0) {
+      setCurrent(defaultCurrent);
+      return;
+    }
+
+    console.log(current, file);
+    if (current.path === file.path) {
+      let nextSibling = files.indexOf(file);
+      if (nextSibling >= filesNew.length) {
+        nextSibling = filesNew.length - 1;
+      }
+
+      const newCurrent = filesNew[nextSibling];
+      console.log('current is file', nextSibling, newCurrent);
+
+      // lets be clear, this is a hack. For what ever reason though, react is not updating which file is current when i call this
+      setTimeout(() => {
+        setCurrent(newCurrent);
+      }, 5);
+    }
+  }
+
   return (
-    <StrictMode>
+    <>
       <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} />
-      <IDE files={files} current={current} setCurrent={setCurrent} />
-    </StrictMode>
+      <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} />
+    </>
   );
 }
+
+ReactDOM.render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+  root
+);

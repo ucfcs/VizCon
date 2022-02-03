@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import Icon from '../../imgs/seti-ui/c.svg';
 
 interface TabProps {
   setActive: () => void;
+  close: () => void;
   name: string;
+  dirty: boolean;
   current: OpenFileData;
 }
 
-export default function Tab({ setActive, name, current }: TabProps): React.ReactElement {
+export default function Tab({ setActive, close, name, dirty, current }: TabProps): React.ReactElement {
   const [cls, setCls] = useState<string>('tab');
+  const [title, setTitle] = useState(name);
   // TODO: the start simulation button
-  // TODO: the close button
 
   let shortName = name.replace(/\\/g, '/');
   if (shortName.lastIndexOf('/')) {
@@ -17,15 +20,29 @@ export default function Tab({ setActive, name, current }: TabProps): React.React
   }
 
   useEffect(() => {
-    setCls('tab' + (current?.path === name ? ' active' : ''));
-  }, [current]);
+    setCls('tab' + (current.path === name ? ' active' : '') + (dirty ? ' dirty' : ''));
+  }, [current, dirty]);
+
+  useEffect(() => {
+    if (dirty) {
+      setTitle(name + ' • Modified');
+    }
+  }, [dirty]);
 
   return (
-    <div className={cls} onClick={setActive} draggable>
-      {/* TODO: Icon goes here */}
-      <div className="tab-label">{shortName}</div>
-      {/* TODO: the actions area */}
-      <div className="tab-actions"></div>
+    <div className={cls} onClick={setActive} draggable title={title}>
+      <div className="tab-label">
+        <Icon className="icon" />
+        {shortName}
+      </div>
+      <div className="tab-actions">
+        <ul className="tab-actions-container">
+          <li className="action-item">
+            {/* TODO: tab index tracking */}
+            <a className="action-label codicon codicon-close" role="button" title="Close" onClick={close} />
+          </li>
+        </ul>
+      </div>
     </div>
   );
 }

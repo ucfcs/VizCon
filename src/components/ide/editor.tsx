@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { default as MonacoEditor } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 
-export default function Editor({ current }: EditorProps): React.ReactElement {
+export default function Editor({ current, regenTabination }: EditorProps): React.ReactElement {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
 
   function onEditorMount(editor: monaco.editor.IStandaloneCodeEditor): void {
@@ -11,6 +11,9 @@ export default function Editor({ current }: EditorProps): React.ReactElement {
 
   function onContentChange(content: string, event: monaco.editor.IModelContentChangedEvent): void {
     current.currentContent = content;
+    current.dirty = current.currentContent !== current.fileContent;
+    regenTabination();
+
     // for debugging, remove this later
     console.log(event)
   }
@@ -24,6 +27,8 @@ export default function Editor({ current }: EditorProps): React.ReactElement {
         path={current.path}
         onMount={onEditorMount}
         onChange={onContentChange}
+        loading={<div></div>} 
+        // TODO: add more content to that loading
       />
     </div>
   );

@@ -8,12 +8,13 @@ interface IDEProps {
   files: OpenFileData[];
   current: OpenFileData;
   setCurrent: (_: OpenFileData) => void;
+  closeFile: (_: OpenFileData) => void;
 }
 
-export default function IDE({ files, current, setCurrent }: IDEProps): React.ReactElement {
+export default function IDE({ files, current, setCurrent, closeFile }: IDEProps): React.ReactElement {
   const [tabination, setTabination] = useState(<div className="tabination"></div>);
 
-  useEffect(() => {
+  function regenTabination() {
     // Create the tabs for the files
     setTabination(
       <div className="tabination">
@@ -22,18 +23,25 @@ export default function IDE({ files, current, setCurrent }: IDEProps): React.Rea
           const setActive = () => {
             setCurrent(file);
           };
-          return <Tab setActive={setActive} name={file.path} current={current} key={'tab' + file.path} />;
+          const close = () => {
+            closeFile(file);
+          }
+          return <Tab setActive={setActive} close={close} name={file.path} dirty={file.dirty} current={current} key={'tab' + file.path} />;
         })}
       </div>
     );
-  }, [current, files]);
+  }
+
+  useEffect(() => {
+    regenTabination();
+  }, [current, current.dirty, files]);
 
   return (
     <div id="ide">
       {tabination}
       <div className="active-editor">
         {files.length == 0 && <Landing />}
-        {files.length >= 1 && <Editor current={current} />}
+        {files.length >= 1 && <Editor current={current} regenTabination={regenTabination} />}
       </div>
     </div>
   );
