@@ -38,7 +38,7 @@ function App(): React.ReactElement {
 
   function openBlankFile(): void {
     const blank: OpenFileData = {
-      path: 'tacking://Untitled-' + untitledCount,
+      path: 'tracking://Untitled-' + untitledCount,
       fileContent: '', // TODO: do we enable a default template?
       currentContent: ''
     };

@@ -50,7 +50,7 @@ ipcMain.handle('readFilesSync', (e, files: string[]) => {
 });
 
 ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?: boolean) => {
-  if (forceDialog || path.includes('tacking://')) {
+  if (forceDialog || path.includes('tracking://')) {
     const window = BrowserWindow.fromWebContents(e.sender);
     const newPath = dialog.showSaveDialogSync(window, {
       filters: [{ name: 'C Language File', extensions: ['c'] }],
