@@ -93,7 +93,6 @@ function App(): React.ReactElement {
       return;
     }
 
-    console.log(current, file);
     if (current.path === file.path) {
       let nextSibling = files.indexOf(file);
       if (nextSibling >= filesNew.length) {
@@ -101,12 +100,20 @@ function App(): React.ReactElement {
       }
 
       const newCurrent = filesNew[nextSibling];
-      console.log('current is file', nextSibling, newCurrent);
 
       // lets be clear, this is a hack. For what ever reason though, react is not updating which file is current when i call this
       setTimeout(() => {
         setCurrent(newCurrent);
       }, 5);
+    } else {
+      for (let i = 0; i < filesNew.length; i++) {
+        if (filesNew[i].path === current.path) {
+          setTimeout(() => {
+            setCurrent(filesNew[i]);
+          }, 5);
+          break;
+        }
+      }
     }
   }
 
