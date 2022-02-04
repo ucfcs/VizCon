@@ -5,7 +5,7 @@ import IDE from './components/ide';
 
 const root = document.getElementById('vizcon');
 document.body.classList.add(window.platform.getPlatform());
-const defaultCurrent = { path: 'Landing', fileContent: '', currentContent: '', dirty: false };
+const defaultCurrent = { path: 'tracking://Landing', fileContent: '', currentContent: '', dirty: false };
 
 // TODO: better management of untitled filess, when the 1st is deleted, it should be the next to be openeded
 let untitledCount = 1;
@@ -88,7 +88,9 @@ function App(): React.ReactElement {
 
     // dont worry about checking the current, there is no current to set
     if (filesNew.length === 0) {
-      setCurrent(defaultCurrent);
+      setTimeout(() => {
+        setCurrent(defaultCurrent);
+      }, 5);
       return;
     }
 
@@ -100,7 +102,7 @@ function App(): React.ReactElement {
 
       const newCurrent = filesNew[nextSibling];
 
-      // lets be clear, this is a hack. For what ever reason though, react is not updating which file is current when i call this
+      // lets be clear, this is a hack. For what ever reason though, react is not updating which file is current without this
       setTimeout(() => {
         setCurrent(newCurrent);
       }, 5);
@@ -118,7 +120,7 @@ function App(): React.ReactElement {
 
   return (
     <>
-      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} />
+      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} />
       <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} />
     </>
   );

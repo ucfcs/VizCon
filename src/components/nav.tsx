@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { filePathToShortName } from './ide/tab';
 import WindowControls from './nav/windowcontrols';
 import MenuItem from './nav/menuitem';
 import '../styles/nav.scss';
@@ -9,11 +10,26 @@ interface NavProps {
   saveFile: () => void;
   saveAll: () => void;
   saveAs: () => void;
+  current: OpenFileData;
 }
 
-export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs }: NavProps): React.ReactElement {
+export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs, current }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
+  
+  const [title, setTitle] = useState('');
+
+  useEffect(() => {
+    let reactTitle = '';
+    if (current.path !== 'tracking://Landing') {
+      const shortName = filePathToShortName(current.path);
+      const titlePrefix = current.dirty ? '• ' : '';
+      reactTitle = titlePrefix + shortName + ' - ';
+    }
+    
+    setTitle(reactTitle);
+    document.title = reactTitle + 'VizCon';
+  }, [current, current.dirty]);
 
   return (
     <div className="titlebar">
@@ -52,8 +68,8 @@ export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs
           </div>
         </>
       )}
-      {/* TODO: have this title be dynamic, and when it updates, update window.title */}
-      <div className="window-title">Temporary Title</div>
+      {/* TODO: have this track if the Editor or Visualizer is open, append it to the end ot title */}
+      <div className="window-title">{title}VizCon</div>
       {showMenu && (
         <>
           <WindowControls />
