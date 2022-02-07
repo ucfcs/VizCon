@@ -15,13 +15,13 @@ CSThread *createThread(threadFunc func, void *arg)
 
     // Create thread function for Windows
     #if defined(_WIN32) 
-        thread->thread = CreateThread(NULL, 0, func, arg, 0, 0)
+        thread->thread = CreateThread(NULL, 0, func, arg, CREATE_SUSPENDED, 0)
 
     // Create thread function for POSIX
     #elif defined(_APPLE_) || defined(_linux_)
 		// Passes in the parameters as arguments for future creation
-		thread->func = arr[0];
-		thread->arg = arr[1];
+		thread->func = func;
+		thread->arg = arg;
     #endif
 	
 	return thread;

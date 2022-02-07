@@ -1,4 +1,14 @@
 #include "threads.h"
 #include "semaphores.h"
 #include "mutexes.h"
-// TODO fill this file out and remove this comment. This is hear so the file exists
+
+#define main userMain
+
+// Lists used to track all threads and semaphores
+CSThread* vizconThreadList;
+CSThread* vizconThreadListInitial;
+
+// Thread functions
+void vcThreadQueue(threadFunc func, void *arg);
+void vcThreadStart();
+THREAD_RET *vcThreadReturn();
