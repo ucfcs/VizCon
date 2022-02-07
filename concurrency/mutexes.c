@@ -222,8 +222,19 @@ void mutexUnlock(CSMutex* mutex)
         return;
     }
 
+    // Mark the mutex as available.
+    // This occurs before the release to correct a sequencing issue.
+    // If there is an error, the action will be un-done.
+    int oldHolderID = mutex->holderID;
+    mutex->available = 1;
+    mutex->holderID = (THREAD_ID_TYPE) 0;
+
     if(!ReleaseMutex(mutex->mutex))
+    {
+        mutex->available = 0;
+        mutex->holderID = oldHolderID;
         vizconError(FUNC_MUTEX_UNLOCK, GetLastError());
+    }
 
     #elif __linux__ || __APPLE__ // POSIX version
     if(mutex->holderID != pthread_self())
@@ -235,11 +246,10 @@ void mutexUnlock(CSMutex* mutex)
     if(pthread_mutex_unlock(mutex->mutex))
         vizconError(FUNC_MUTEX_UNLOCK, errno);
 
-    #endif
-
-    // Mark the mutex as available.
     mutex->available = 1;
     mutex->holderID = (THREAD_ID_TYPE) 0;
+
+    #endif
 }
 
 // mutexClose - Close the mutex lock and free the struct.
@@ -254,6 +264,12 @@ void mutexClose(CSMutex* mutex)
     free(mutex);
 
     #elif __linux__ || __APPLE__ // POSIX version
+    // Forcibly unlock to ensure the destruction works.
+    // This won't cause an error since the underlying mutex is unsecured.
+    // This is not needed in Windows, which tracks abandonment by threads.
+    if(pthread_mutex_unlock(mutex->mutex))
+        vizconError(FUNC_MUTEX_CLOSE, errno);
+
     if(pthread_mutex_destroy(mutex->mutex))
         vizconError(FUNC_MUTEX_CLOSE, errno);
     free(mutex->mutex);

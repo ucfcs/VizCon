@@ -2,16 +2,16 @@
 #include "semaphores.h"
 #include "mutexes.h"
 
-// VCMutex - Wrapper for the CSMutex type.
+// VCMutex - A node for a mutex in the global mutex list.
 typedef struct VCMutex
 {
-    CSMutex* mutex;       // Mutex object
-    struct VCMutex* next; // Next VCMutex struct in the mutex list
+    CSMutex* mutex;       // The corresponding mutex.
+    struct VCMutex* next; // The next mutex in the list.
 } VCMutex;
 
 // Mutex functions
-VCMutex* vcMutexCreate(char* name);
-void vcMutexLock(VCMutex* mutex);
-int vcMutexTrylock(VCMutex* mutex);
-void vcMutexUnlock(VCMutex* mutex);
-int vcMutexStatus(VCMutex* mutex);
+VCMutex* vcMutexCreate(char* name); // Creates a VCMutex with the given name.
+void vcMutexLock(VCMutex* mutex);   // Waits for availability, then locks.
+int vcMutexTrylock(VCMutex* mutex); // Attempts to lock without waiting.
+void vcMutexUnlock(VCMutex* mutex); // Unlocks mutex.
+int vcMutexStatus(VCMutex* mutex);  // Returns whether the mutex is available.

@@ -29,6 +29,7 @@
 #define ERROR_MUTEX_DOUBLE_LOCK 503
 #define ERROR_MUTEX_CROSS_THREAD_UNLOCK 504
 #define ERROR_MUTEX_UNNAMED 505
+#define ERROR_MUTEX_DESTROY_IN_USE 506
 
 // CSMutex - Wrapper for the system's mutex type.
 typedef struct CSMutex
