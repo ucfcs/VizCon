@@ -30,4 +30,7 @@ contextBridge.exposeInMainWorld('platform', {
   saveFileToDisk: async (path: string, content: string, forceDialog?: boolean): Promise<string> => {
     return await ipcRenderer.invoke('saveFileToDisk', path, content, forceDialog);
   },
+  compileFile: async (path: string): Promise<string> => {
+    return await ipcRenderer.invoke('compileFile', path);
+  },
 });

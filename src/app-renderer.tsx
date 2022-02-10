@@ -118,9 +118,25 @@ function App(): React.ReactElement {
     }
   }
 
+  async function compile(): Promise<void> {
+    if (current.path === 'tracking://Landing') {
+      return;
+    }
+
+    if (current.dirty) {
+      await saveFile();
+    }
+
+    const results = await window.platform.compileFile(current.path);
+    console.log(results);
+    if (results !== '') {
+      // TODO: failure, show error info
+    }
+  }
+
   return (
     <>
-      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} />
+      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} compile={compile} />
       <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} />
     </>
   );

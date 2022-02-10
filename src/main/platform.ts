@@ -1,5 +1,21 @@
-import { BrowserWindow, ipcMain, dialog } from 'electron';
+import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
+import { exec } from 'child_process';
+import { sep as pathSep } from 'path';
+import { filePathToFileName } from '../util/utils';
+
+// determine where the concurrency folder is
+let resourcesPrefix = '.';
+if (app.isPackaged) {
+  // replace \\\\ (two escaped \\) with / to simplify things
+  resourcesPrefix = process.resourcesPath.replace(/\\\\/g, pathSep);
+}
+
+// TODO: add vcuserlibrary.c
+const library = ['utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
+const libraryPaths = library.map(file => {
+  return resourcesPrefix + pathSep + 'concurrency' + pathSep + file;
+});
 
 ipcMain.handle('minimize', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
@@ -66,4 +82,25 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
   }
 
   writeFileSync(path, content, 'utf-8');
+});
+
+ipcMain.handle('compileFile', async (e, path: string) => {
+  const files = [path, ...libraryPaths];
+  const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
+  
+  const commandString = `gcc -g ${files.join(' ')} -o ${outputFile}`;
+  console.log(outputFile, commandString);
+
+  const prom = new Promise(resolve => {
+    exec(commandString, (err, stdout, stderr) => {
+      console.log('err:', err, 'out:', stdout, 'err:', stderr);
+      if (err && err.code !== 0) {
+        resolve(stderr);
+        return;
+      }
+      resolve(stdout);
+    });
+  });
+
+  return await prom;
 });
