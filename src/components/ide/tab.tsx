@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Icon from '../../imgs/seti-ui/c.svg';
+import { filePathToShortName } from '../../util/utils';
 
 interface TabProps {
   setActive: () => void;
@@ -27,7 +28,7 @@ export default function Tab({ setActive, close, name, dirty, current }: TabProps
   }, [dirty]);
 
   return (
-    <div className={cls} onClick={setActive} draggable title={title}>
+    <div className={cls} onClick={setActive} title={title}>
       <div className="tab-label">
         <Icon className="icon" />
         {shortName}
@@ -43,13 +44,3 @@ export default function Tab({ setActive, close, name, dirty, current }: TabProps
     </div>
   );
 }
-
-function filePathToShortName(name: string): string {
-  let shortName = name.replace(/\\/g, '/');
-  if (shortName.lastIndexOf('/')) {
-    shortName = shortName.substring(shortName.lastIndexOf('/') + 1);
-  }
-  return shortName;
-}
-
-export { filePathToShortName };

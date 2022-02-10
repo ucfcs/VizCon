@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { filePathToShortName } from './ide/tab';
+import { filePathToShortName } from '../util/utils';
 import WindowControls from './nav/windowcontrols';
 import MenuItem from './nav/menuitem';
 import '../styles/nav.scss';
