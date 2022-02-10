@@ -7,7 +7,7 @@ const root = document.getElementById('vizcon');
 document.body.classList.add(window.platform.getPlatform());
 const defaultCurrent = { path: 'tracking://Landing', fileContent: '', currentContent: '', dirty: false };
 
-// TODO: better management of untitled filess, when the 1st is deleted, it should be the next to be openeded
+// TODO: better management of untitled files, when the 1st is deleted, it should be the next to be opened
 let untitledCount = 1;
 
 function App(): React.ReactElement {
@@ -15,6 +15,8 @@ function App(): React.ReactElement {
   // TODO: remove the files length check, that is for when we hard code the initial files
   // Unless we allow the initial content of the files array to be the files they previously had open
   const [current, setCurrent] = useState(defaultCurrent);
+  const [outputVisible, setOutputVisible] = useState(false);
+  const [compileResult, setCompileResult] = useState('');
 
   function openFile(): void {
     window.platform.openFileDialog().then(async newFiles => {
@@ -61,7 +63,7 @@ function App(): React.ReactElement {
 
   async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<void> {
     const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, forceDialog);
-    console.log(`saving file ${file.path}, satatus ${writtenPath}`);
+    console.log(`saving file ${file.path}, status ${writtenPath}`);
     current.path = writtenPath;
   }
 
@@ -130,14 +132,15 @@ function App(): React.ReactElement {
     const results = await window.platform.compileFile(current.path);
     console.log(results);
     if (results !== '') {
-      // TODO: failure, show error info
+      setOutputVisible(true);
+      setCompileResult(results);
     }
   }
 
   return (
     <>
       <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} compile={compile} />
-      <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} />
+      <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} compileResults={compileResult} showOutput={outputVisible} closeOutput={() => setOutputVisible(false)} />
     </>
   );
 }

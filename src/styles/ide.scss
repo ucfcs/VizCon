@@ -41,7 +41,7 @@
       }
 
       &.dirty {
-        .action-label:not(:hover):before {
+        .tab-actions .tab-actions-container .action-item .action-label:not(:hover):before {
           content: '\ea71'; // equavilent to codicon-circle-full
         }
       }
@@ -118,6 +118,14 @@
     }
   }
 
+  &.output-visible {
+    .active-editor {
+      height: calc(100% - 235px);
+    }
+  }
+
+  
+
   .active-editor {
     height: calc(100% - 35px);
 
@@ -132,6 +140,82 @@
     .editor-container {
       width: 100%;
       height: 100%;
+    }
+  }
+
+  .editor-console {
+    height: 200px;
+    // TODO: media query/draggable
+
+    .title-container {
+      display: flex;
+      overflow: hidden;
+      box-sizing: border-box;
+      padding: 0px 8px;
+      height: 35px;
+      border-top: 1px solid rgba(128, 128, 128, 0.35);
+      color: rgb(231, 231, 231);
+
+      .title {
+        user-select: none;
+        font-size: 11px;
+        line-height: 27px;
+        height: 35px;
+        padding: 2px 10px;
+
+        .title-border {
+          white-space: nowrap;
+          text-transform: uppercase;
+          border-bottom-color: rgb(231, 231, 231);
+          border-bottom: 1px solid;
+        }
+      }
+
+      .tab-actions {
+        margin-top: auto;
+        margin-bottom: auto;
+        width: 100%;
+        white-space: nowrap;
+        flex: 1;
+
+        .tab-actions-container {
+          display: flex;
+          justify-content: flex-end;
+          margin: 0 auto;
+          padding: 0;
+          height: 100%;
+          width: 100%;
+          align-items: center;
+
+          .action-item {
+            display: block;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+
+            .action-label {
+              color: inherit;
+              font-size: 16px;
+              padding: 2px;
+              width: 16px;
+              height: 16px;
+              opacity: 1;
+              border-radius: 5px;
+              display: flex;
+              align-items: center;
+
+              &:hover {
+                background-color: rgba(90, 93, 94, 0.31);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .output-container {
+      height: calc(100% - 35px);
     }
   }
 }

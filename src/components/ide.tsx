@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import '../styles/ide.scss';
 import Editor from './ide/editor';
 import Landing from './ide/landing';
+import Output from './ide/output';
 import Tab from './ide/tab';
 
 interface IDEProps {
@@ -9,10 +10,14 @@ interface IDEProps {
   current: OpenFileData;
   setCurrent: (_: OpenFileData) => void;
   closeFile: (_: OpenFileData) => void;
+  showOutput: boolean;
+  closeOutput: () => void;
+  compileResults: string;
 }
 
-export default function IDE({ files, current, setCurrent, closeFile }: IDEProps): React.ReactElement {
+export default function IDE({ files, current, setCurrent, closeFile, compileResults, showOutput, closeOutput }: IDEProps): React.ReactElement {
   const [tabination, setTabination] = useState(<div className="tabination"></div>);
+  const [className, setClassName] = useState('');
 
   function regenTabination() {
     // Create the tabs for the files
@@ -45,13 +50,18 @@ export default function IDE({ files, current, setCurrent, closeFile }: IDEProps)
     regenTabination();
   }, [current, current.dirty, files]);
 
+  useEffect(() => {
+    setClassName(showOutput ? 'output-visible' : '');
+  }, [showOutput]);
+
   return (
-    <div id="ide">
+    <div id="ide" className={className}>
       {tabination}
       <div className="active-editor">
         {files.length == 0 && <Landing />}
         {files.length >= 1 && <Editor current={current} regenTabination={regenTabination} />}
       </div>
+      {showOutput && <Output current={current} text={compileResults} closePanel={closeOutput} />}
     </div>
   );
 }
