@@ -1,6 +1,9 @@
-//universal libraries
+// Universal libraries
 #include <stdio.h>
 #include <stdlib.h>
+
+// Utils library
+#include "utils.h"
 
 // Platform-dependent libraries
 #ifdef _WIN32 // Windows version
@@ -14,22 +17,15 @@
 #define THREAD_ID_TYPE pthread_t
 #endif
 
-// Constants used for VizCon function codes.
-#define FUNC_MUTEX_CREATE 8
-#define FUNC_MUTEX_LOCK 9
-#define FUNC_MUTEX_TRYLOCK 10
-#define FUNC_MUTEX_UNLOCK 11
-#define FUNC_MUTEX_STATUS 12
-#define FUNC_MUTEX_CLOSE 13
+// Constant used for default name generation.
+#define NAME_ID_MUTEX 2
 
 // Constants used for VizCon error codes.
 #define ERROR_MUTEX_ABANDONED 500
 #define ERROR_MUTEX_TIMEOUT 501
-#define ERROR_MUTEX_DOUBLE_UNLOCK 502
-#define ERROR_MUTEX_DOUBLE_LOCK 503
-#define ERROR_MUTEX_CROSS_THREAD_UNLOCK 504
-#define ERROR_MUTEX_UNNAMED 505
-#define ERROR_MUTEX_DESTROY_IN_USE 506
+#define ERROR_MUTEX_DOUBLE_UNLOCK 510
+#define ERROR_MUTEX_DOUBLE_LOCK 511
+#define ERROR_MUTEX_CROSS_THREAD_UNLOCK 512
 
 // CSMutex - Wrapper for the system's mutex type.
 typedef struct CSMutex

@@ -105,6 +105,21 @@ void vizconError(int func, int err)
                 message = "An unexpected wait timeout occurred.";
                 break;
             }
+            case 510:
+            {
+                message = "A thread attempted to unlock an already-unlocked mutex.";
+                break;
+            }
+            case 511:
+            {
+                message = "A thread attempted to lock a mutex that it already locked.";
+                break;
+            }
+            case 512:
+            {
+                message = "A thread attempted to unlock an mutex that was locked by another thread.";
+                break;
+            }
             default:
             {
                 message = "An unknown error has occurred.";
