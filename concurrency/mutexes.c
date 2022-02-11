@@ -1,15 +1,18 @@
 #include "mutexes.h"
-// FIXME: include all other necessary conncurrency library files.
+
+// Tracks the number of mutexes created without names.
+// This is used to generate internal names when needed.
+int genericNames = 0;
 
 // mutexCreate - Create a mutex struct with the given name.
 //               Returns: a pointer to the mutex struct.
 CSMutex* mutexCreate(char* name)
 {
-    // A name is required, so error out without one.
+    // A name is required, so make one if the user doesn't provide it.
     if(name == NULL)
     {
-        vizconError(FUNC_MUTEX_CREATE, ERROR_MUTEX_UNNAMED);
-        return NULL;
+        name = vizconCreateName(NAME_ID_MUTEX, genericNames + 1);
+        genericNames++;
     }
 
     // Attempt to allocate the struct. Error out on failure.
@@ -26,12 +29,11 @@ CSMutex* mutexCreate(char* name)
         #endif
 
         free(mutex);
-        vizconError(FUNC_MUTEX_CREATE, err);
+        vizconError("vcMutexCreate", err);
         return NULL;
     }
 
     // Set non-mutex properties.
-    mutex->next = NULL;
     mutex->available = 1;
     mutex->holderID = (THREAD_ID_TYPE) 0;
 
@@ -43,7 +45,7 @@ CSMutex* mutexCreate(char* name)
     {
         int err = (int) GetLastError();
         free(mutex);
-        vizconError(FUNC_MUTEX_CREATE, err);
+        vizconError("vcMutexCreate", err);
         return NULL;
     }
 
@@ -53,7 +55,7 @@ CSMutex* mutexCreate(char* name)
     {
         int err = errno;
         free(mutex);
-        vizconError(FUNC_MUTEX_CREATE, err);
+        vizconError("vcMutexCreate", err);
         return NULL;
     }
 
@@ -72,7 +74,7 @@ void mutexLock(CSMutex* mutex)
     #ifdef _WIN32 // Windows version
     if(mutex->holderID == GetCurrentThreadId())
     {
-        vizconError(FUNC_MUTEX_LOCK, ERROR_MUTEX_DOUBLE_LOCK);
+        vizconError("vcMutexLock", ERROR_MUTEX_DOUBLE_LOCK);
         return;
     }
 
@@ -91,27 +93,27 @@ void mutexLock(CSMutex* mutex)
         //                  Print an error.
         case WAIT_ABANDONED:
         {
-            vizconError(FUNC_MUTEX_LOCK, ERROR_MUTEX_ABANDONED);
+            vizconError("vcMutexLock", ERROR_MUTEX_ABANDONED);
             break;
         }
         
         // WAIT_FAILED - OS-level error. Just pass it on.
         case WAIT_FAILED:
         {
-            vizconError(FUNC_MUTEX_LOCK, GetLastError());
+            vizconError("vcMutexLock", GetLastError());
             break;
         }
 
         // WAIT_TIMEOUT - Mutex was not available before timeout.
         //                This shouldn't happen, but it's here for safety.
         case WAIT_TIMEOUT:
-            vizconError(FUNC_MUTEX_LOCK, ERROR_MUTEX_TIMEOUT);
+            vizconError("vcMutexLock", ERROR_MUTEX_TIMEOUT);
     }
 
     #elif __linux__ || __APPLE__ // POSIX version
     if(mutex->holderID == pthread_self())
     {
-        vizconError(FUNC_MUTEX_LOCK, ERROR_MUTEX_DOUBLE_LOCK);
+        vizconError("vcMutexLock", ERROR_MUTEX_DOUBLE_LOCK);
         return;
     }
 
@@ -123,7 +125,7 @@ void mutexLock(CSMutex* mutex)
         mutex->holderID = pthread_self();
     }
     else
-        vizconError(FUNC_MUTEX_LOCK, errno);
+        vizconError("vcMutexLock", errno);
     
     #endif
 }
@@ -162,14 +164,14 @@ int mutexTryLock(CSMutex* mutex)
         //                  Print an error.
         case WAIT_ABANDONED:
         {
-            vizconError(FUNC_MUTEX_TRYLOCK, ERROR_MUTEX_ABANDONED);
+            vizconError("vcMutexTrylock", ERROR_MUTEX_ABANDONED);
             return 0;
         }
         
         // WAIT_FAILED - OS-level error. Just pass it on.
         case WAIT_FAILED:
         {
-            vizconError(FUNC_MUTEX_TRYLOCK, GetLastError());
+            vizconError("vcMutexTrylock", GetLastError());
             return 0;
         }
     }
@@ -193,7 +195,7 @@ int mutexTryLock(CSMutex* mutex)
         // Default - OS-level error. Just pass it on.
         default:
         {
-            vizconError(FUNC_MUTEX_TRYLOCK, errno);
+            vizconError("vcMutexTrylock", errno);
             return 0;
         }
     }
@@ -209,7 +211,7 @@ void mutexUnlock(CSMutex* mutex)
     // Check whether the lock is already unlocked. If so, error out.
     if(mutexStatus(mutex))
     {
-        vizconError(FUNC_MUTEX_UNLOCK, ERROR_MUTEX_DOUBLE_UNLOCK);
+        vizconError("vcMutexUnlock", ERROR_MUTEX_DOUBLE_UNLOCK);
         return;
     }
         
@@ -219,28 +221,38 @@ void mutexUnlock(CSMutex* mutex)
     #ifdef _WIN32 // Windows version
     if(mutex->holderID != GetCurrentThreadId())
     {
-        vizconError(FUNC_MUTEX_UNLOCK, ERROR_MUTEX_CROSS_THREAD_UNLOCK);
+        vizconError("vcMutexUnlock", ERROR_MUTEX_CROSS_THREAD_UNLOCK);
         return;
     }
 
+    // Mark the mutex as available.
+    // This occurs before the release to correct a sequencing issue.
+    // If there is an error, the action will be un-done.
+    int oldHolderID = mutex->holderID;
+    mutex->available = 1;
+    mutex->holderID = (THREAD_ID_TYPE) 0;
+
     if(!ReleaseMutex(mutex->mutex))
-        vizconError(FUNC_MUTEX_UNLOCK, GetLastError());
+    {
+        mutex->available = 0;
+        mutex->holderID = oldHolderID;
+        vizconError("vcMutexUnlock", GetLastError());
+    }
 
     #elif __linux__ || __APPLE__ // POSIX version
     if(mutex->holderID != pthread_self())
     {
-        vizconError(FUNC_MUTEX_UNLOCK, ERROR_MUTEX_CROSS_THREAD_UNLOCK);
+        vizconError("vcMutexUnlock", ERROR_MUTEX_CROSS_THREAD_UNLOCK);
         return;
     }
 
     if(pthread_mutex_unlock(mutex->mutex))
-        vizconError(FUNC_MUTEX_UNLOCK, errno);
+        vizconError("vcMutexUnlock", errno);
 
-    #endif
-
-    // Mark the mutex as available.
     mutex->available = 1;
     mutex->holderID = (THREAD_ID_TYPE) 0;
+
+    #endif
 }
 
 // mutexClose - Close the mutex lock and free the struct.
@@ -250,13 +262,19 @@ void mutexClose(CSMutex* mutex)
     // Create a release request, then free the rest of the struct. 
     #ifdef _WIN32 // Windows version
     if(!CloseHandle(mutex->mutex))
-        vizconError(FUNC_MUTEX_CLOSE, GetLastError());
+        vizconError("vcThreadStart/vcThreadReturn", GetLastError());
     // CloseHandle frees the THREAD object at mutex->mutex automatically.
     free(mutex);
 
     #elif __linux__ || __APPLE__ // POSIX version
+    // Forcibly unlock to ensure the destruction works.
+    // This won't cause an error since the underlying mutex is unsecured.
+    // This is not needed in Windows, which tracks abandonment by threads.
+    if(pthread_mutex_unlock(mutex->mutex))
+        vizconError("vcThreadStart/vcThreadReturn", errno);
+
     if(pthread_mutex_destroy(mutex->mutex))
-        vizconError(FUNC_MUTEX_CLOSE, errno);
+        vizconError("vcThreadStart/vcThreadReturn", errno);
     free(mutex->mutex);
     free(mutex);
 

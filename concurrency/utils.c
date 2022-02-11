@@ -85,6 +85,21 @@ void vizconError(char* func, int err)
                 errorMessage = "Not enough memory resources are available to process this command.";
                 break;
             }
+            case 510:
+            {
+                message = "A thread attempted to unlock an already-unlocked mutex.";
+                break;
+            }
+            case 511:
+            {
+                message = "A thread attempted to lock a mutex that it already locked.";
+                break;
+            }
+            case 512:
+            {
+                message = "A thread attempted to unlock an mutex that was locked by another thread.";
+                break;
+            }
             default:
             {
                 errorMessage = "An unknown error has occurred.";
