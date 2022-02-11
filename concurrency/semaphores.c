@@ -8,17 +8,20 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
         return NULL;
     }
     CSSem* sem = (CSSem*)malloc(sizeof(CSSem));
-    if (sem == NULL) {
-        vizconError(3, 8);
+    if (sem == NULL) 
+    {
+        vizconError("vcSemCreate", 502);
     }
     sem->next = NULL;
+    sem->name = (char*)name;
+    sem->num = -1;
     #if defined(_WIN32) // windows
     sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, name);
     if(sem->sem == NULL)
     {
         int err = (int)GetLastError();
         free(sem);
-        vizconError(3, err);
+        vizconError("vcSemCreate", err);
     }
     sem->count = maxValue;
     #elif defined(__linux__) || defined(__APPLE__)
@@ -26,12 +29,12 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     if(sem->sem == SEM_FAILED)
     {
         free(sem);
-        vizconError(3, errno);
+        vizconError("vcSemCreate", errno);
     }
     if(sem_unlink(name))
     {
         free(sem);
-        vizconError(3, errno);
+        vizconError("vcSemCreate", errno);
     }
     sem->count = maxValue;
     #endif
@@ -44,13 +47,13 @@ void semSignal(CSSem* sem)
     #if defined(_WIN32) // windows
     if(!ReleaseSemaphore(sem->sem, 1, NULL))
     {
-        vizconError(6, GetLastError());
+        vizconError("vcSemSignal", GetLastError());
     }
     sem->count = sem->count + 1;
     #elif defined(__linux__) || defined(__APPLE__)
     if(sem_post(sem->sem))
     {
-        vizconError(6, errno);
+        vizconError("vcSemSignal", errno);
     }
     sem->count = sem->count + 1;
     #endif
@@ -63,7 +66,7 @@ void semWait(CSSem* sem)
     DWORD ret = WaitForSingleObject(sem->sem, INFINITE);
     if(ret == WAIT_FAILED)
     {
-        vizconError(4, GetLastError());
+        vizconError("vcSemWait", GetLastError());
     }
     else if(ret == WAIT_OBJECT_0)
     {
@@ -71,16 +74,16 @@ void semWait(CSSem* sem)
     }
     else if(ret == WAIT_ABANDONED)
     {
-        vizconError(4, 500);
+        vizconError("vcSemWait", 500);
     }
     else if (ret == WAIT_TIMEOUT)
     {
-        vizconError(4, 501);
+        vizconError("vcSemWait", 501);
     }
     #elif defined(__linux__) || defined(__APPLE__)
     if(sem_wait(sem->sem))
     {
-        vizconError(4, errno);
+        vizconError("vcSemWait", errno);
     }
     #endif
 }
@@ -94,7 +97,7 @@ int semTryWait(CSSem* sem)
     DWORD ret = WaitForSingleObject(sem->sem, 0);
     if(ret == WAIT_FAILED)
     {
-        vizconError(5, GetLastError());
+        vizconError("vcSemTryWait", GetLastError());
     }
     else if(ret == WAIT_OBJECT_0)
     {
@@ -103,7 +106,7 @@ int semTryWait(CSSem* sem)
     }
     else if(ret == WAIT_ABANDONED)
     {
-        vizconError(5, 500);
+        vizconError("vcSemTryWait", 500);
     }
     #elif defined(__linux__) || defined(__APPLE__)
     if(!sem_trywait(sem->sem))
@@ -113,7 +116,7 @@ int semTryWait(CSSem* sem)
     }
     else if(errno != EAGAIN)
     {
-        vizconError(5, errno);
+        vizconError("vcSemTryWait", errno);
     }
     #endif
     return 0;
@@ -131,13 +134,13 @@ void semClose(CSSem* sem)
     #if defined(_WIN32) // windows
     if(!CloseHandle(sem->sem))
     {
-        vizconError(1, GetLastError());
+        vizconError("vcSemClose", GetLastError());
     }
     free(sem);
     #elif defined(__linux__) || defined(__APPLE__)
     if(sem_close(sem->sem))
     {
-        vizconError(1, errno);
+        vizconError("vcSemClose", errno);
     }
     free(sem);
     #endif
