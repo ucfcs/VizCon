@@ -12,10 +12,12 @@ CSThread *createThread(threadFunc func, void *arg)
 
     // Sets the next value in the linked list to NULL
     thread->next = NULL;
+    thread->name = NULL;
+    thread->num = -1;
 
     // Create thread function for Windows
     #if defined(_WIN32) 
-        thread->thread = CreateThread(NULL, 0, func, arg, CREATE_SUSPENDED, 0)
+        thread->thread = CreateThread(NULL, 0, func, arg, CREATE_SUSPENDED, 0);
 
     // Create thread function for POSIX
     #elif defined(_APPLE_) || defined(_linux_)
