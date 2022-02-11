@@ -2,6 +2,12 @@
 #include "semaphores.h"
 #include "mutexes.h"
 
+// Alternate function names.
+#define vcMutexLockCreate vcMutexCreate
+#define vcLock vcMutexLock
+#define vcUnlock vcMutexUnlock
+#define vcLockAvailable vcMutexStatus
+
 // VCMutex - A node for a mutex in the global mutex list.
 typedef struct VCMutex
 {
