@@ -82,6 +82,8 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
   }
 
   writeFileSync(path, content, 'utf-8');
+
+  return path;
 });
 
 ipcMain.handle('compileFile', async (e, path: string) => {

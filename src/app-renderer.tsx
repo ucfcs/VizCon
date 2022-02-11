@@ -64,7 +64,18 @@ function App(): React.ReactElement {
   async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<void> {
     const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, forceDialog);
     console.log(`saving file ${file.path}, status ${writtenPath}`);
-    current.path = writtenPath;
+
+    const newFiles = [...files];
+    for (let i = 0; i < files.length; i++) {
+      if (newFiles[i].path === current.path) {
+        newFiles[i].path = writtenPath;
+        newFiles[i].dirty = false;
+        newFiles[i].fileContent = newFiles[i].currentContent;
+        setFiles(newFiles);
+        setCurrent(newFiles[i]);
+        break;
+      }
+    }
   }
 
   async function saveFile(): Promise<void> {
