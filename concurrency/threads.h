@@ -5,12 +5,15 @@
 
 // Platform dependent libraries
 #ifdef _WIN32
+typedef DWORD (*threadFunc) (LPVOID param);
 #define THREAD_FUNC_RET DWORD WINAPI
 #define THREAD_RET DWORD
 #define THREAD_PARAM LPVOID
 
 typedef struct CSThread
 {
+    char *name;
+    int num;
     HANDLE thread;
     THREAD_RET id;
     THREAD_RET returnVal;
@@ -30,6 +33,8 @@ typedef void* (*threadFunc) (void* param);
 
 typedef struct CSThread
 {
+    char *name;
+    int num;
     pthread_t thread;
 	threadFunc func;
 	void *arg;
