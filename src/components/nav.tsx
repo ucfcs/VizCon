@@ -12,9 +12,10 @@ interface NavProps {
   saveAs: () => void;
   current: OpenFileData;
   compile: () => void;
+  showCompileOutput: () => void;
 }
 
-export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs, current, compile }: NavProps): React.ReactElement {
+export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs, current, compile, showCompileOutput }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
   
@@ -64,6 +65,10 @@ export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs
                     console.log('zoom out');
                   },
                 },
+                {
+                  name: 'Show Compile Output',
+                  action: showCompileOutput
+                }
               ]}
             />
             <MenuItem 

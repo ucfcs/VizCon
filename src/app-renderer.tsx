@@ -150,7 +150,7 @@ function App(): React.ReactElement {
 
   return (
     <>
-      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} compile={compile} />
+      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} compile={compile} showCompileOutput={() => setOutputVisible(true)} />
       <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} compileResults={compileResult} showOutput={outputVisible} closeOutput={() => setOutputVisible(false)} />
     </>
   );
