@@ -5,9 +5,9 @@ import IDE from './components/ide';
 
 const root = document.getElementById('vizcon');
 document.body.classList.add(window.platform.getPlatform());
-const defaultCurrent = { path: 'Landing', fileContent: '', currentContent: '', dirty: false };
+const defaultCurrent = { path: 'tracking://Landing', fileContent: '', currentContent: '', dirty: false };
 
-// TODO: better management of untitled filess, when the 1st is deleted, it should be the next to be openeded
+// TODO: better management of untitled files, when the 1st is deleted, it should be the next to be opened
 let untitledCount = 1;
 
 function App(): React.ReactElement {
@@ -15,6 +15,8 @@ function App(): React.ReactElement {
   // TODO: remove the files length check, that is for when we hard code the initial files
   // Unless we allow the initial content of the files array to be the files they previously had open
   const [current, setCurrent] = useState(defaultCurrent);
+  const [outputVisible, setOutputVisible] = useState(false);
+  const [compileResult, setCompileResult] = useState('');
 
   function openFile(): void {
     window.platform.openFileDialog().then(async newFiles => {
@@ -61,8 +63,19 @@ function App(): React.ReactElement {
 
   async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<void> {
     const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, forceDialog);
-    console.log(`saving file ${file.path}, satatus ${writtenPath}`);
-    current.path = writtenPath;
+    console.log(`saving file ${file.path}, status ${writtenPath}`);
+
+    const newFiles = [...files];
+    for (let i = 0; i < files.length; i++) {
+      if (newFiles[i].path === current.path) {
+        newFiles[i].path = writtenPath;
+        newFiles[i].dirty = false;
+        newFiles[i].fileContent = newFiles[i].currentContent;
+        setFiles(newFiles);
+        setCurrent(newFiles[i]);
+        break;
+      }
+    }
   }
 
   async function saveFile(): Promise<void> {
@@ -88,7 +101,9 @@ function App(): React.ReactElement {
 
     // dont worry about checking the current, there is no current to set
     if (filesNew.length === 0) {
-      setCurrent(defaultCurrent);
+      setTimeout(() => {
+        setCurrent(defaultCurrent);
+      }, 5);
       return;
     }
 
@@ -100,7 +115,7 @@ function App(): React.ReactElement {
 
       const newCurrent = filesNew[nextSibling];
 
-      // lets be clear, this is a hack. For what ever reason though, react is not updating which file is current when i call this
+      // lets be clear, this is a hack. For what ever reason though, react is not updating which file is current without this
       setTimeout(() => {
         setCurrent(newCurrent);
       }, 5);
@@ -116,10 +131,27 @@ function App(): React.ReactElement {
     }
   }
 
+  async function compile(): Promise<void> {
+    if (current.path === 'tracking://Landing') {
+      return;
+    }
+
+    if (current.dirty) {
+      await saveFile();
+    }
+
+    const results = await window.platform.compileFile(current.path);
+    console.log(results);
+    if (results !== '') {
+      setOutputVisible(true);
+      setCompileResult(results);
+    }
+  }
+
   return (
     <>
-      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} />
-      <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} />
+      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} compile={compile} showCompileOutput={() => setOutputVisible(true)} />
+      <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} compileResults={compileResult} showOutput={outputVisible} closeOutput={() => setOutputVisible(false)} />
     </>
   );
 }
