@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { default as MonacoEditor } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 
@@ -14,6 +14,10 @@ export default function Output({ text, current, closePanel }: ConsoleProps): Rea
   function onEditorMount(editor: monaco.editor.IStandaloneCodeEditor): void {
     editorRef.current = editor;
   }
+
+  useEffect(() => {
+    editorRef?.current?.setValue(text);
+  }, [text]);
 
   return (
     <div className="editor-console">
@@ -47,6 +51,18 @@ export default function Output({ text, current, closePanel }: ConsoleProps): Rea
             minimap: { enabled: false },
             readOnly: true,
             lineNumbers: 'off',
+            renderLineHighlight: 'none',
+            scrollBeyondLastLine: false,
+            detectIndentation: false,
+            tabSize: 100000,
+            folding: false,
+            guides: {
+              indentation: false,
+              bracketPairs: false,
+              bracketPairsHorizontal: false,
+              highlightActiveBracketPair: false,
+              highlightActiveIndentation: false
+            },
           }}
         />
       </div>
