@@ -13,9 +13,10 @@ interface IDEProps {
   showOutput: boolean;
   closeOutput: () => void;
   compileResults: string;
+  inVisualizer: boolean;
 }
 
-export default function IDE({ files, current, setCurrent, closeFile, compileResults, showOutput, closeOutput }: IDEProps): React.ReactElement {
+export default function IDE({ files, current, setCurrent, closeFile, compileResults, showOutput, closeOutput, inVisualizer }: IDEProps): React.ReactElement {
   const [tabination, setTabination] = useState(<div className="tabination"></div>);
   const [className, setClassName] = useState('');
 
@@ -51,8 +52,8 @@ export default function IDE({ files, current, setCurrent, closeFile, compileResu
   }, [current, current.dirty, files]);
 
   useEffect(() => {
-    setClassName(showOutput ? 'output-visible' : '');
-  }, [showOutput]);
+    setClassName((showOutput ? 'output-visible' : '') + (inVisualizer ? 'hidden' : ''));
+  }, [showOutput, inVisualizer]);
 
   return (
     <div id="ide" className={className}>
