@@ -45,7 +45,7 @@ typedef struct CSThread
 #endif
 
 // Thread Function Prototypes
-THREAD_RET createThread(threadFunc func, void *arg);
+CSThread* createThread(threadFunc func, void *arg);
 void joinThread(CSThread *thread);
 void freeThread(CSThread *thread);
 void startThread(CSThread* thread);

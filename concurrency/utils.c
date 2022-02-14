@@ -55,14 +55,14 @@ void vizconError(char* func, int err)
     if(err < 500)
     {
         FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&errorMessage, 0, NULL);
-        sprintf(message, "%ssystem error", message);
+        sprintf(message, "%ssystem error", errorMessage);
     }
     #elif defined(__linux__) || defined(__APPLE__)
     char* errorMessage;
     if(err < 500)
     {
         errorMessage = strerror(err);
-        sprintf(message, "%serrno", message);
+        sprintf(message, "%serrno", errorMessage);
     }
     #endif
     if(err >= 500)
@@ -87,17 +87,17 @@ void vizconError(char* func, int err)
             }
             case 510:
             {
-                message = "A thread attempted to unlock an already-unlocked mutex.";
+                errorMessage = "A thread attempted to unlock an already-unlocked mutex.";
                 break;
             }
             case 511:
             {
-                message = "A thread attempted to lock a mutex that it already locked.";
+                errorMessage = "A thread attempted to lock a mutex that it already locked.";
                 break;
             }
             case 512:
             {
-                message = "A thread attempted to unlock an mutex that was locked by another thread.";
+                errorMessage = "A thread attempted to unlock an mutex that was locked by another thread.";
                 break;
             }
             default:
@@ -105,8 +105,8 @@ void vizconError(char* func, int err)
                 errorMessage = "An unknown error has occurred.";
             }
         }
+        sprintf(message, "code %d: %s\n", err, errorMessage);
     }
-    sprintf(message, "%s code %d: %s\n", message, err, errorMessage);
     printf("%s", message);
     exit(0);
 }

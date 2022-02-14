@@ -4,6 +4,7 @@
 // Universal libraries
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // Windows libraries and definitions
 #ifdef _WIN32 

@@ -1,14 +1,12 @@
 #include "threads.h"
 
 // Create a thread, passing in a function
-CSThread *createThread(threadFunc func, void *arg)
+CSThread* createThread(threadFunc func, void *arg)
 {
 	// Attempts to create the Thread data type. If it fails, print an error
     CSThread *thread = (CSThread*)malloc(sizeof(CSThread));
 	if (thread == NULL)
-	{
 		vizconError("vcThreadQueue", 8);
-	}
 
     // Sets the next value in the linked list to NULL
     thread->next = NULL;

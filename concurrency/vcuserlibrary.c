@@ -1,5 +1,10 @@
 #include "vcuserlibrary.h"
 
+
+// Lists used to track all threads and semaphores
+CSThread* vizconThreadList;
+CSThread* vizconThreadListInitial;
+
 // Create a thread instance with arguments
 void vcThreadQueue(threadFunc func, void *arg)
 {
@@ -53,6 +58,7 @@ void vcThreadQueueNamed(threadFunc func, void *arg, char *name)
     }
 }
 
+void freeUserThreads();
 // Start all threads created by vcThreadQueue
 void vcThreadStart()
 {
@@ -80,7 +86,7 @@ void vcThreadStart()
         vizconThreadList = vizconThreadList->next;
     }
 
-    freeThreads();
+    freeUserThreads();
 }
 
 // Start all threads created by vcThreadQueue and return their results
@@ -88,10 +94,8 @@ THREAD_RET *vcThreadReturn()
 {
     int i = 0;
 
-    if (vizconThreadListInitial = NULL)
-    {
-        return;
-    }
+    if (vizconThreadListInitial == NULL)
+        return NULL;
 
     // Begin all threads and get the number of threads
     vizconThreadList = vizconThreadListInitial;
@@ -118,7 +122,6 @@ THREAD_RET *vcThreadReturn()
     }
 
     freeUserThreads();
-
     return arr;
 }
 
@@ -129,10 +132,11 @@ void freeUserThreads()
     {
         vizconThreadList = vizconThreadListInitial->next;
         free(vizconThreadListInitial->name);
-        threadClose(vizconThreadListInitial);
+        freeThread(vizconThreadListInitial);
         vizconThreadListInitial = vizconThreadList;
     }
 }
+
 // Lists used to track threads and semaphores.
 VCMutex* vizconMutexListHead;
 VCMutex* vizconMutexListTail;
@@ -165,7 +169,6 @@ VCMutex* vcMutexCreate(char* name)
 void vcMutexLock(VCMutex* mutex)
 {
     mutexLock(mutex->mutex);
-    sleepThread(20);
 }
 
 // vcMutexTrylock - Try to obtain the mutex.
@@ -173,20 +176,13 @@ void vcMutexLock(VCMutex* mutex)
 //                  Returns: 1 if the mutex was obtained, 0 otherwise.
 int vcMutexTrylock(VCMutex* mutex)
 {
-    if(mutexTryLock(mutex->mutex))
-    {
-        sleepThread(20);
-        return 1;
-    }
-    sleepThread(20);
-    return 0;
+    return mutexTryLock(mutex->mutex);
 }
 
 // vcMutexUnlock - Release a mutex lock.
 void vcMutexUnlock(VCMutex* mutex)
 {
     mutexUnlock(mutex->mutex);
-    sleepThread(20);
 }
 
 // vcMutexStatus - Check whether the mutex is available.
