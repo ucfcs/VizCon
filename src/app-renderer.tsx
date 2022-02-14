@@ -2,6 +2,7 @@ import React, { StrictMode, useState } from 'react';
 import * as ReactDOM from 'react-dom';
 import Nav from './components/nav';
 import IDE from './components/ide';
+import Visualizer from './components/visualizer';
 
 const root = document.getElementById('vizcon');
 document.body.classList.add(window.platform.getPlatform());
@@ -17,6 +18,9 @@ function App(): React.ReactElement {
   const [current, setCurrent] = useState(defaultCurrent);
   const [outputVisible, setOutputVisible] = useState(false);
   const [compileResult, setCompileResult] = useState('');
+
+  // TODO: replace me entirely
+  const [inVisualizerMode, setInVisualizerMode] = useState(false);
 
   function openFile(): void {
     window.platform.openFileDialog().then(async newFiles => {
@@ -150,8 +154,14 @@ function App(): React.ReactElement {
 
   return (
     <>
-      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} compile={compile} />
+      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} compile={compile} 
+        /*todo: replace me*/ launchProgram={async () => {
+          await window.platform._temp_launchProgram("path");
+          setInVisualizerMode(true);
+        }}
+      />
       <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} compileResults={compileResult} showOutput={outputVisible} closeOutput={() => setOutputVisible(false)} />
+      {inVisualizerMode && <Visualizer/>}
     </>
   );
 }

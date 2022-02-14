@@ -1,7 +1,9 @@
 import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
-import { exec } from 'child_process';
+import child_process, { exec } from 'child_process';
+import {cwd} from 'process';
 import { sep as pathSep } from 'path';
+import split2 from 'split2';
 import { filePathToFileName } from '../util/utils';
 
 // determine where the concurrency folder is
@@ -105,4 +107,48 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   });
 
   return await prom;
+});
+
+// TODO: refactor out this global if it's convenient
+let child: child_process.ChildProcess;
+let doStepResolveFunc: (msg: any) => void = null;
+let handleLldbMsg: (msg: any) => void;
+ipcMain.handle('_temp_launchProgram', (e, path: string) => {
+  return new Promise((resolve, reject) => {
+    // TODO: use executable path
+    console.log(`Current directory: ${cwd()}`);
+    child = child_process.spawn('python', ['script.py'])
+    child.on('close', (code) => {
+        console.log(`child process exited with code ${code}`);
+    });
+
+    handleLldbMsg = (msg) => {
+      console.log(`Received process hello`, msg);
+      handleLldbMsg = (msg) => {
+        if (doStepResolveFunc === null)
+          throw new Error("No response was requested!");
+        doStepResolveFunc(msg);
+        doStepResolveFunc = null;
+      };
+      if (msg.type !== 'hello') {
+        throw new Error(`Expected type 'hello', was '${msg.type}'`);
+      }
+      resolve(msg);
+    };
+    child.stdout.pipe(split2()).on('data', (data: string) => {
+      console.log(`child process data: "${data}"`);
+      const msg = JSON.parse(data);
+      handleLldbMsg(msg);  
+    })
+    child.stderr.on('data', (data) => {
+      console.log(`child process error: "${data}"`);
+    })
+  });
+});
+
+ipcMain.handle('_temp_doStep', (e, msg: any) => {
+  return new Promise((resolve, reject) => {
+    doStepResolveFunc = resolve;
+    child.stdin.write(JSON.stringify({type: 'request'})+"\n");
+  });
 });

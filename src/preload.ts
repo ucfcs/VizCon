@@ -33,4 +33,12 @@ contextBridge.exposeInMainWorld('platform', {
   compileFile: async (path: string): Promise<string> => {
     return await ipcRenderer.invoke('compileFile', path);
   },
+  _temp_launchProgram: async (path: string): Promise<any> => {
+    return await ipcRenderer.invoke('_temp_launchProgram', path);
+  },
+  _temp_doStep: async (): Promise<any> => {
+    // Returns an object representing a message from the debugger
+    // TODO: add type
+    return await ipcRenderer.invoke('_temp_doStep');
+  },
 });
