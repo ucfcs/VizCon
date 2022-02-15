@@ -1,93 +1,68 @@
 #include "utils.h"
 
-void vizconError(int func, int err)
+//Creates a name for a concurrency structure
+char* vizconCreateName(int type, int value)
 {
-    printf("\nError from ");
-    switch(func)
+    int i = 1, temp = value/10;
+    while(temp != 0)
+    {
+        i++;
+        temp = temp / 10;
+    }
+    char* ret = (char*)malloc(sizeof(char) * (11+i));
+    if(ret == NULL)
+    {
+        vizconError("create function", 502);
+    }
+    switch(type)
     {
         case 0:
         {
-            printf("vcThreadAdd\n");
-            break;
+            sprintf(ret, "Thread %d", value);
+            return ret;
         }
         case 1:
         {
-            printf("vcThreadStart\n");
-            break;
+            sprintf(ret, "Semaphore %d", value);
+            return ret;
         }
         case 2:
         {
-            printf("vcThreadReturn\n");
-            break;
-        }
-        case 3:
-        {
-            printf("vcSemCreate\n");
-            break;
-        }
-        case 4:
-        {
-            printf("vcSemWait\n");
-            break;
-        }
-        case 5:
-        {
-            printf("vcSemTryWait\n");
-            break;
-        }
-        case 6:
-        {
-            printf("vcSemSignal\n");
-            break;
-        }
-        case 7:
-        {
-            printf("vcSemValue\n");
-            break;
-        }
-        case 8:
-        {
-            printf("vcMutexCreate\n");
-            break;
-        }
-        case 9:
-        {
-            printf("vcMutexLock\n");
-            break;
-        }
-        case 10:
-        {
-            printf("vcMutexTryLock\n");
-            break;
-        }
-        case 11:
-        {
-            printf("vcMutexUnlock\n");
-            break;
-        }
-        case 12:
-        {
-            printf("vcMutexStatus\n");
-            break;
+            sprintf(ret, "Mutex %d", value);
+            return ret;
         }
         default:
         {
-            printf("unknown function\n");
+            return NULL;
         }
     }
+}
+
+int vizconStringLength(char* name)
+{
+    int i;
+    for(i=0; name[i] != '\0'; i++);
+    return i;
+}
+
+//Handles error from concurrencylib and vcuserlibrary
+void vizconError(char* func, int err)
+{
+    char message[200];
+    sprintf(message, "\nError from %s.\n", func);
     #if defined(_WIN32) // windows
-    LPSTR message;
+    LPSTR errorMessage;
     if(err < 500)
     {
-        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&message, 0, NULL);
-        printf("system error ");
+        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&errorMessage, 0, NULL);
+        sprintf(message, "%ssystem error", message);
     }
     #elif defined(__linux__) || defined(__APPLE__)
-    char* message;
+    char* errorMessage;
     if(err < 500)
     {
-        message = strerror(err);
-        printf("errno ");
+        errorMessage = strerror(err);
+        sprintf(message, "%serrno", message);
     }
     #endif
     if(err >= 500)
@@ -97,20 +72,41 @@ void vizconError(int func, int err)
         {
             case 500:
             {
-                message = "A thread terminated without releasing its mutex lock.";
+                errorMessage = "A thread terminated without releasing its mutex lock.";
                 break;
             }
             case 501:
             {
-                message = "An unexpected wait timeout occurred.";
+                errorMessage = "An unexpected wait timeout occurred.";
+                break;
+            }
+            case 502:
+            {
+                errorMessage = "Not enough memory resources are available to process this command.";
+                break;
+            }
+            case 510:
+            {
+                message = "A thread attempted to unlock an already-unlocked mutex.";
+                break;
+            }
+            case 511:
+            {
+                message = "A thread attempted to lock a mutex that it already locked.";
+                break;
+            }
+            case 512:
+            {
+                message = "A thread attempted to unlock an mutex that was locked by another thread.";
                 break;
             }
             default:
             {
-                message = "An unknown error has occurred.";
+                errorMessage = "An unknown error has occurred.";
             }
         }
     }
-    printf("code %d: %s\n", err, message);
+    sprintf(message, "%s code %d: %s\n", message, err, errorMessage);
+    printf("%s", message);
     exit(0);
 }
