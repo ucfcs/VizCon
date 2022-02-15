@@ -72,7 +72,6 @@ void vcThreadStart()
 
     while (vizconThreadList != NULL)
     {
-        printf("%d\n", (int) vizconThreadList->arg);
         startThread(vizconThreadList);
         vizconThreadList = vizconThreadList->next;
     }

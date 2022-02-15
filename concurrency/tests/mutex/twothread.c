@@ -27,10 +27,9 @@ int main(void)
     testMutex = vcMutexCreate("Test");
     
     // Create two threads with different parameters.
-    int nums[3] = {1, 2, 3};
-    vcThreadQueue(SimpleThread, (void *)nums[0]);
-    vcThreadQueue(SimpleThread, (void *)nums[1]);
-    vcThreadQueue(SimpleThread, (void *)nums[2]);
+    int nums[2] = {1, 2};
+    vcThreadQueue(SimpleThread, (THREAD_PARAM)nums[0]);
+    vcThreadQueue(SimpleThread, (THREAD_PARAM)nums[1]);
 
     // Start the threads.
     vcThreadStart();
