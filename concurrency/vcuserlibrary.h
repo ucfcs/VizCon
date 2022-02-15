@@ -8,6 +8,7 @@
 void vcThreadQueue(threadFunc func, void *arg);
 void vcThreadStart();
 THREAD_RET *vcThreadReturn();
+void freeUserThreads();
 
 // Alternate function names.
 #define vcMutex VCMutex

@@ -18,7 +18,7 @@ CSThread* createThread(threadFunc func, void *arg)
         thread->thread = CreateThread(NULL, 0, func, arg, CREATE_SUSPENDED, 0);
 
     // Create thread function for POSIX
-    #elif defined(_APPLE_) || defined(_linux_)
+    #elif defined(__APPLE__) || defined(__linux__)
 		// Passes in the parameters as arguments for future creation
 		thread->func = func;
 		thread->arg = arg;
