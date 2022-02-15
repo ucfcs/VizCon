@@ -119,13 +119,17 @@ void mutexLock(CSMutex* mutex)
 
     // pthread_mutex_lock returns 0 on success.
     // With success, mark lock as unavailable.
-    if(!pthread_mutex_lock(mutex->mutex))
+    int ret = pthread_mutex_lock(mutex->mutex);
+    if(!ret)
     {
         mutex->available = 0;
         mutex->holderID = pthread_self();
     }
     else
-        vizconError("vcMutexLock", errno);
+    {
+        vizconError("vcThreadStart/vcThreadReturn", ret);
+        return;
+    }
     
     #endif
 }
@@ -195,7 +199,7 @@ int mutexTryLock(CSMutex* mutex)
         // Default - OS-level error. Just pass it on.
         default:
         {
-            vizconError("vcMutexTrylock", errno);
+            vizconError("vcMutexTrylock", ret);
             return 0;
         }
     }
@@ -246,8 +250,12 @@ void mutexUnlock(CSMutex* mutex)
         return;
     }
 
-    if(pthread_mutex_unlock(mutex->mutex))
-        vizconError("vcMutexUnlock", errno);
+    int ret = pthread_mutex_unlock(mutex->mutex);
+    if(ret)
+    {
+        vizconError("vcMutexUnlock", ret);
+        return;
+    }
 
     mutex->available = 1;
     mutex->holderID = (THREAD_ID_TYPE) 0;
@@ -267,14 +275,31 @@ void mutexClose(CSMutex* mutex)
     free(mutex);
 
     #elif __linux__ || __APPLE__ // POSIX version
-    // Forcibly unlock to ensure the destruction works.
+    // Forcibly trylock and unlock to ensure the lock is free for destruction.
     // This won't cause an error since the underlying mutex is unsecured.
     // This is not needed in Windows, which tracks abandonment by threads.
-    if(pthread_mutex_unlock(mutex->mutex))
-        vizconError("vcThreadStart/vcThreadReturn", errno);
+    int ret = pthread_mutex_trylock(mutex->mutex);
+    if(ret != 0 && ret != EBUSY)
+    {
+        vizconError("vcThreadStart/vcThreadReturn", ret);
+        return;
+    }
 
-    if(pthread_mutex_destroy(mutex->mutex))
-        vizconError("vcThreadStart/vcThreadReturn", errno);
+    ret = pthread_mutex_unlock(mutex->mutex);
+    if(ret)
+    {
+        vizconError("vcThreadStart/vcThreadReturn", ret);
+        return;
+    }
+
+    ret = pthread_mutex_destroy(mutex->mutex);
+    if(ret)
+    {
+        vizconError("vcThreadStart/vcThreadReturn", ret);
+        return;
+    }
+    
+    // Free both the mutex and wrapper.
     free(mutex->mutex);
     free(mutex);
 
