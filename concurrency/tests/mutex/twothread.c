@@ -11,11 +11,11 @@ vcMutex *testMutex;
 THREAD_RET SimpleThread(THREAD_PARAM param)
 {
     // Get the input value.
-    //int val = param;
+    int val = param;
 
     vcMutexLock(testMutex);
 
-    printf("I'm a thread! My value is %d\n", param);
+    printf("I'm a thread! My value is %d\n", val);
     
     vcMutexUnlock(testMutex);
     return 0;
