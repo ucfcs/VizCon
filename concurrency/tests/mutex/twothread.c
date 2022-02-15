@@ -11,11 +11,11 @@ vcMutex *testMutex;
 THREAD_RET SimpleThread(THREAD_PARAM param)
 {
     // Get the input value.
-    int* val = param;
+    int val = param;
 
     vcMutexLock(testMutex);
 
-    printf("I'm a thread! My value is %d\n", *val);
+    printf("I'm a thread! My value is %d\n", val);
     
     vcMutexUnlock(testMutex);
     return 0;
@@ -28,8 +28,8 @@ int main(void)
     
     // Create two threads with different parameters.
     int nums[2] = {1, 2};
-    vcThreadQueue(SimpleThread, &nums[0]);
-    vcThreadQueue(SimpleThread, &nums[1]);
+    vcThreadQueue(SimpleThread, (THREAD_PARAM)nums[0]);
+    vcThreadQueue(SimpleThread, (THREAD_PARAM)nums[1]);
 
     // Start the threads.
     vcThreadStart();

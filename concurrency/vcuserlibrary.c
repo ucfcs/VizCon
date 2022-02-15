@@ -2,8 +2,7 @@
 
 
 // Lists used to track all threads and semaphores
-CSThread* vizconThreadList;
-CSThread* vizconThreadListInitial;
+CSThread *vizconThreadList, *vizconThreadListHead;
 
 // Create a thread instance with arguments
 void vcThreadQueue(threadFunc func, void *arg)
@@ -12,12 +11,12 @@ void vcThreadQueue(threadFunc func, void *arg)
     CSThread *thread = createThread(func, arg);
 
     // If there are no threads in the list, make the current thread the initial one
-    if (vizconThreadListInitial == NULL)
+    if (vizconThreadList == NULL)
     {
         thread->name = vizconCreateName(0, 0);
         thread->num = 0;
+        vizconThreadListHead = thread;
         vizconThreadList = thread;
-        vizconThreadListInitial = thread;
     }
     else
     {
@@ -36,7 +35,7 @@ void vcThreadQueueNamed(threadFunc func, void *arg, char *name)
 
     // Attempts to allocate space for the thread name
     char *mallocName = (char*)malloc(sizeof(char) * (vizconStringLength(name) + 1));
-    if (mallocName = NULL)
+    if (mallocName == NULL)
     {
         vizconError("vcThreadQueueNamed", 502);
     }
@@ -44,11 +43,11 @@ void vcThreadQueueNamed(threadFunc func, void *arg, char *name)
     thread->name = mallocName;
 
         // If there are no threads in the list, make the current thread the initial one
-    if (vizconThreadListInitial == NULL)
+    if (vizconThreadListHead == NULL)
     {
         thread->num = 0;
         vizconThreadList = thread;
-        vizconThreadListInitial = thread;
+        vizconThreadListHead = thread;
     }
     else
     {
@@ -58,18 +57,18 @@ void vcThreadQueueNamed(threadFunc func, void *arg, char *name)
     }
 }
 
-void freeUserThreads();
 // Start all threads created by vcThreadQueue
 void vcThreadStart()
 {
     // If there are no threads in the list, return immediately
-    if (vizconThreadListInitial = NULL)
+    if (vizconThreadListHead == NULL)
     {
         return;
     }
 
     // Begin all threads
-    vizconThreadList = vizconThreadListInitial;
+    vizconThreadList = vizconThreadListHead;
+    
 
     while (vizconThreadList != NULL)
     {
@@ -78,13 +77,14 @@ void vcThreadStart()
     }
 
     // Waits for all threads to complete
-    vizconThreadList = vizconThreadListInitial;
+    vizconThreadList = vizconThreadListHead;
     
     while (vizconThreadList != NULL)
     {
         joinThread(vizconThreadList);
         vizconThreadList = vizconThreadList->next;
     }
+    
 
     freeUserThreads();
 }
@@ -94,11 +94,11 @@ THREAD_RET *vcThreadReturn()
 {
     int i = 0;
 
-    if (vizconThreadListInitial == NULL)
+    if (vizconThreadListHead == NULL)
         return NULL;
 
     // Begin all threads and get the number of threads
-    vizconThreadList = vizconThreadListInitial;
+    vizconThreadList = vizconThreadListHead;
     
     while (vizconThreadList != NULL)
     {
@@ -110,7 +110,7 @@ THREAD_RET *vcThreadReturn()
     THREAD_RET *arr = (THREAD_RET*)malloc(sizeof(THREAD_RET) * i);
 
     // Wait for all threads to complete and get return values
-    vizconThreadList = vizconThreadListInitial;
+    vizconThreadList = vizconThreadListHead;
 
     i = 0;
     while (vizconThreadList != NULL)
@@ -128,12 +128,12 @@ THREAD_RET *vcThreadReturn()
 // Frees all user threads
 void freeUserThreads()
 {
-    while(vizconThreadListInitial != NULL)
+    while(vizconThreadListHead != NULL)
     {
-        vizconThreadList = vizconThreadListInitial->next;
-        free(vizconThreadListInitial->name);
-        freeThread(vizconThreadListInitial);
-        vizconThreadListInitial = vizconThreadList;
+        vizconThreadList = vizconThreadListHead->next;
+        free(vizconThreadListHead->name);
+        freeThread(vizconThreadListHead);
+        vizconThreadListHead = vizconThreadList;
     }
 }
 
