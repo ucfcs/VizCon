@@ -19,3 +19,5 @@
 extern void closeAllMutexes();
 extern VCMutex* vizconMutexListHead;
 extern VCMutex* vizconMutexListTail;
+extern CSThread* vizconThreadList;
+extern CSThread* vizconThreadListHead;

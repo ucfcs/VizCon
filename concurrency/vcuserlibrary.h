@@ -11,6 +11,9 @@ THREAD_RET *vcThreadReturn();
 void freeUserThreads();
 
 // Alternate function names.
+#define vcSemaphore CSSem
+#define vcSemCreate semCreate
+
 #define vcMutex VCMutex
 #define vcMutexLockCreate vcMutexCreate
 #define vcLock vcMutexLock
