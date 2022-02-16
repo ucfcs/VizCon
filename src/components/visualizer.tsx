@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/visualizer.scss';
 import Controls from './visualizer/controls';
+import ConsoleOutput from './visualizer/output';
+import Threads from './visualizer/threads';
+import Variables from './visualizer/variables';
 
 interface VisualizerProps {
   inVisualizer: boolean;
@@ -10,6 +13,7 @@ interface VisualizerProps {
 
 export default function Visualizer({ inVisualizer, current, goBack }: VisualizerProps): React.ReactElement {
   const [className, setClassName] = useState('');
+  const [consoleOutput, setConsoleOutput] = useState('');
 
   useEffect(() => {
     console.log('some event happened on the visualizer', inVisualizer, current);
@@ -33,7 +37,11 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   return (
     <div id="visualizer" className={className}>
       <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack}/>
-      <div>Temporary visualizer content</div>
+      <div className='visualizer-main'>
+        <Threads data={[]}/>
+        <ConsoleOutput current={current} text={consoleOutput} />
+        <Variables data={[]}/>
+      </div>
     </div>
   );
 }

@@ -109,4 +109,104 @@
       }
     }
   }
+
+  .visualizer-main {
+    height: calc(100% - 35px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+
+    .threads-container {
+      width: 20%;
+      height: 100%;
+      background-color: rgb(37, 37, 38);
+
+      .title-container {
+        display: flex;
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 0px 8px;
+        height: 35px;
+        color: rgb(231, 231, 231);
+  
+        .title {
+          user-select: none;
+          font-size: 11px;
+          line-height: 27px;
+          height: 35px;
+          padding: 2px 10px;
+  
+          .title-border {
+            white-space: nowrap;
+            text-transform: uppercase;
+            border-bottom-color: rgb(231, 231, 231);
+            border-bottom: 1px solid;
+          }
+        }
+      }
+    }
+
+    .visualizer-console {
+      height: 100%;
+      width: 60%;
+  
+      .title-container {
+        display: flex;
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 0px 8px;
+        height: 35px;
+        color: rgb(231, 231, 231);
+  
+        .title {
+          user-select: none;
+          font-size: 11px;
+          line-height: 27px;
+          height: 35px;
+          padding: 2px 10px;
+  
+          .title-border {
+            white-space: nowrap;
+            text-transform: uppercase;
+            border-bottom-color: rgb(231, 231, 231);
+            border-bottom: 1px solid;
+          }
+        }
+      }
+  
+      .output-container {
+        height: calc(100% - 35px);
+      }
+    }
+
+    .variables-container {
+      width: 20%;
+      height: 100%;
+      background-color: rgb(37, 37, 38);
+
+      .title-container {
+        display: flex;
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 0px 8px;
+        height: 35px;
+        color: rgb(231, 231, 231);
+  
+        .title {
+          user-select: none;
+          font-size: 11px;
+          line-height: 27px;
+          height: 35px;
+          padding: 2px 10px;
+  
+          .title-border {
+            white-space: nowrap;
+            text-transform: uppercase;
+            border-bottom-color: rgb(231, 231, 231);
+            border-bottom: 1px solid;
+          }
+        }
+      }
+    }
+  }
 }
