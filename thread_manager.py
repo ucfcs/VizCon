@@ -16,7 +16,7 @@ class ThreadManager:
     semaphoreMap = {}
     semWaitLists = {}
     def __init__(self, main_lldb_thread):
-        main_thread = {'thread': main_lldb_thread, 'pthread_id': '#main_thread'}
+        main_thread = {'thread': main_lldb_thread, 'pthread_id': '#main_thread', 'state': 'ready'}
         self.ready_list2 = [main_thread]
         self.managed_threads.append(main_thread)
 
@@ -34,6 +34,7 @@ class ThreadManager:
                 self.waiting_dict2[joined_on] = []
             self.waiting_dict2[joined_on].append(c_thread)
             self.ready_list2.remove(c_thread)
+            c_thread['state'] = 'waiting (vcJoin)'
     def onWaitSem(self, lldb_thread, sem):
         c_thread = self.__lookupFromLLDB(lldb_thread)
         #already_exited = joined_on in self.exited_threads
@@ -48,6 +49,7 @@ class ThreadManager:
             self.semWaitLists[sem] = []
         self.semWaitLists[sem].append(c_thread)
         self.ready_list2.remove(c_thread)
+        c_thread['state'] = 'waiting (sempahore)'
     def onSignalSem(self, lldb_thread, sem):
         c_thread = self.__lookupFromLLDB(lldb_thread)
         old_val = self.semaphoreMap[sem]
@@ -64,9 +66,10 @@ class ThreadManager:
             self.semWaitLists[sem].remove(woken_thread)
             print("\tAdding back", woken_thread['pthread_id'], "to the ready list")
             self.ready_list2.append(woken_thread)
-
+            woken_thread['state'] = 'ready'
 
     def onCreateThread(self, thread):
+        thread['state'] = 'ready'
         self.managed_threads.append(thread)
         self.ready_list2.append(thread)
         print("Created thread:", thread['pthread_id'])

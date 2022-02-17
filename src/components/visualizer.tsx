@@ -9,7 +9,7 @@ interface VisualizerProps {
 }
 interface ThreadInfo {
   name: string;
-  active: boolean;
+  state: string;
 }
 interface VariableInfo {
   name: string;
@@ -90,25 +90,33 @@ function Displays({visualizerState} : {visualizerState: VisualizerState} ) {
     return (<span>Loading...</span>);
   return (
     <div>
-      Threads:
-      <ul>
-        {visualizerState.threads.map((thread: any) => {
-            return <li key={thread.name}>{thread.active ? "*"+thread.name : thread.name}</li>
-        })}
-      </ul>
-      <table className="globals">
-        <caption>Globals</caption>
+      <table className="threads">
+        <caption>Threads:</caption>
         <thead>
-            <tr>
-                <th>Type</th>
-                <th>Name</th>
-                <th>Value</th>
-            </tr>
+          <tr>
+            <th>Thread ID</th>
+            <th>State</th>
+          </tr>
         </thead>
         <tbody>
-        {visualizerState.globals.map((global) => {
-            return <tr key={global.name}><td>{global.type}</td><td>{global.name}</td><td>{global.value}</td></tr>
-        })}
+          {visualizerState.threads.map((thread) => {
+              return <tr key={thread.name}><td>{thread.name}</td><td>{thread.state}</td></tr>
+          })}
+        </tbody>
+      </table>
+      <table className="globals">
+        <caption>Globals:</caption>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visualizerState.globals.map((global) => {
+              return <tr key={global.name}><td>{global.type}</td><td>{global.name}</td><td>{global.value}</td></tr>
+          })}
         </tbody>
       </table>
     </div>

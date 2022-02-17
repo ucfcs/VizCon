@@ -149,7 +149,10 @@ if target:
             #    print("\t(Local)",frame_var)
             thread_list = []
             for thread in thread_man.getManagedThreads():
-                thread_list.append({'name': thread['pthread_id'], 'active': thread == chosen_cthread})
+                thread_state = thread['state']
+                if thread == chosen_cthread:
+                    thread_state = 'running'
+                thread_list.append({'name': thread['pthread_id'], 'active': thread == chosen_cthread, 'state': thread_state})
             globals = frame.get_statics()
             globals_list = []
             for frame_var in globals:
