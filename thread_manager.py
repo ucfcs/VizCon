@@ -7,7 +7,7 @@ def print(*args, **kwargs):
 
 seed = randint(0, 10000)
 print("Using RNG seed", seed)
-thread_scheduler_rng = Random(5145)
+thread_scheduler_rng = Random(seed)
 
 class ThreadManager:
     waiting_dict2 = {}
