@@ -24,6 +24,7 @@ interface VisualizerState {
 export default function Visualizer({ inVisualizer, current, goBack }: VisualizerProps): React.ReactElement {
   const [className, setClassName] = useState('');
   const [visualizerState, setVisualizerState] = useState<VisualizerState | null>(null);
+  const [runState, setRunState] = useState('not started');
   const visualizerController = useRef(null)
   useEffect(() => {
     console.log('some event happened on the visualizer', inVisualizer, current);
@@ -39,13 +40,19 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     
     let running = true;
     let delayMilliseconds = 100;
+    setRunState("starting...");
     const task = async function() {
         await window.platform._temp_launchProgram("path");
+        setRunState("started");
         // TODO: improve cancellation
         // possibly refactor this into some sort of controller class
         while (running) {
             const msg = await window.platform._temp_doStep();
             console.log("received visualizer state", msg);
+            if (msg.type === 'process_end') {
+              setRunState("finished");
+              return;
+            }
             setVisualizerState(msg);
             await delay(delayMilliseconds);
         }
@@ -66,6 +73,7 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   return (
     <div id="visualizer" className={className}>
       <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack}/>
+      Status: {runState}
       {/*This input is for testing only and should probably be removed*/}
       <input type="range" min="0" max="1000" defaultValue="100" step="20"
         onChange={ (e) => {

@@ -88,6 +88,7 @@ if target:
                 new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
                 # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
                 thread_man.onWaitSem(t, str(new_sem))
+                # TODO: Add a better resume to replace this
                 process.Continue()
                 continue
             if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcSignal_bp.GetID():
@@ -127,7 +128,7 @@ if target:
                     for t2 in getThreads():
                         t2.Suspend()
                     running_thread.Resume()
-                    #process.Continue()
+                    process.Continue()
                     ignore_set.add(t.GetThreadID())
                 else:
                     print("Unknown stop while trying to hit user thread function!")
@@ -136,16 +137,16 @@ if target:
             break
         if chosen_cthread is not None:
             frame = running_thread.GetFrameAtIndex(0)
-            globals = frame.get_statics()
-            arguments = frame.get_arguments()
-            locals = frame.get_locals()
-            print("Variables:")
-            for frame_var in globals:
-                print("\t(Global)",frame_var)
-            for frame_var in arguments:
-                print("\t(Argument)",frame_var)
-            for frame_var in locals:
-                print("\t(Local)",frame_var)
+            #globals = frame.get_statics()
+            #arguments = frame.get_arguments()
+            #locals = frame.get_locals()
+            #print("Variables:")
+            #for frame_var in globals:
+            #    print("\t(Global)",frame_var)
+            #for frame_var in arguments:
+            #    print("\t(Argument)",frame_var)
+            #for frame_var in locals:
+            #    print("\t(Local)",frame_var)
             thread_list = []
             for thread in thread_man.getManagedThreads():
                 thread_list.append({'name': thread['pthread_id'], 'active': thread == chosen_cthread})
@@ -177,7 +178,7 @@ if target:
             print("Stepping instruction", line, current_function)
         running_thread.StepInstruction(False)
         current_function = running_thread.GetFrameAtIndex(0).GetFunction().GetDisplayName()
-        if current_function == 'vcJoin' or current_function == 'vcWait' or current_function == 'vcSignal' or current_function == 'vcCreateSemaphore' or current_function == 'vc_internal_init':
+        if current_function == 'vcJoin' or current_function == 'vcWait' or current_function == 'vcSignal' or current_function == 'vcCreateSemaphore' or current_function == 'vc_internal_init' or current_function == 'doCreateThread':
             if verbose:
                 print("Stepping out of vcJoin")
             running_thread.StepOut()
@@ -207,6 +208,7 @@ if target:
             print(running_thread.GetFrameAtIndex(0).EvaluateExpression("counter"))
             interleave_log.write("End.\n")
             interleave_log.close()
+            respondToVisualizer({'type': 'process_end'})
             sys.exit(0)
         else:
             line = running_thread.GetFrameAtIndex(0).GetLineEntry()
