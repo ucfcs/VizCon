@@ -18,6 +18,7 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   const [runState, setRunState] = useState('not started');
   const visualizerController = useRef(null)
   const [consoleOutput, setConsoleOutput] = useState('');
+  const [simulationSpeed, setSimulationSpeed] = useState(100);
 
   useEffect(() => {
     console.log('some event happened on the visualizer', inVisualizer, current);
@@ -32,7 +33,7 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     console.log('test start');
     
     let running = true;
-    let delayMilliseconds = 100;
+    let delayMilliseconds = simulationSpeed;
     setRunState("Starting...");
     const task = async function() {
         await window.platform._temp_launchProgram("path");
@@ -74,17 +75,17 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
 
   return (
     <div id="visualizer" className={className}>
-      <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack}/>
+      <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack}
+        status={runState}
+        setSimulationSpeed={(simulationSpeed) => {
+          if (visualizerController.current !== null) {
+            visualizerController.current.setSpeed(simulationSpeed);
+          }
+          setSimulationSpeed(simulationSpeed);
+        }}
+        simulationSpeed={simulationSpeed}
+      />
       <div className='visualizer-main'>
-        <div>
-          Status: {runState}
-          {/*This input is for testing only and should probably be removed*/}
-          <input type="range" min="0" max="1000" defaultValue="100" step="20"
-            onChange={ (e) => {
-              visualizerController.current.setSpeed(e.target.value)
-            }}
-          />
-        </div>
         <Threads threads={visualizerState?.threads || []}/>
         <ConsoleOutput current={current} text={consoleOutput} />
         <Variables globals={visualizerState?.globals || []}/>

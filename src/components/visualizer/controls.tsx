@@ -8,6 +8,9 @@ interface ControlsProps {
   restart: () => void;
   stop: () => void;
   goBack: () => void;
+  status: string;
+  simulationSpeed: number;
+  setSimulationSpeed: (speed: number) => void;
 }
 
 interface ControlProps {
@@ -55,6 +58,9 @@ export default function Controls({
   restart,
   stop,
   goBack,
+  status,
+  setSimulationSpeed,
+  simulationSpeed,
 }: ControlsProps): React.ReactElement {
   return (
     <div className="controls">
@@ -75,11 +81,21 @@ export default function Controls({
         label="Stop Simulation"
         action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }}
       />
+      {/*Temporary style hack. The status is not a control and not a label.*/}
+      <div className="control">
+        <div className="padding-container label">Status: {status}</div>
+      </div>
+      {/*This input is for testing only and should probably be removed*/}
+      <input type="range" min="0" max="1000" value={simulationSpeed} step="20"
+            onChange={ (e) => {
+              setSimulationSpeed(e.target.valueAsNumber)
+            }}
+      />
       <Control
         label="Return to Editor"
         action={{ title: 'Return to Editor', codiconClass: 'codicon-discard', action: goBack }}
         className="f-end"
-      />
+      /> 
     </div>
   );
 }
