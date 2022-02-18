@@ -23,7 +23,7 @@ export default function Threads({ threads }: ThreadsProps): React.ReactElement {
         <tbody>
           {threads.map((thread) => {
             return (
-              <tr key={thread.name}>
+              <tr key={thread.name} className={thread.state === 'running' ? 'active-thread' : null}>
                 <td>{thread.name}</td>
                 <td>{thread.state}</td>
               </tr>

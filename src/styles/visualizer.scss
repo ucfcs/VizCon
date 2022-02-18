@@ -162,6 +162,9 @@
       .threads-table {
         @include basic-table;
       }
+      .active-thread {
+        background-color: darkblue;
+      }
     }
 
     .visualizer-console {
