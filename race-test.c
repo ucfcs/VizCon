@@ -23,7 +23,7 @@ void *function(void *parameter)
 
 int real_main(void)
 {
-	
+	printf("Hello world!\n");
 	counter_sem = vcCreateSemaphore();
 
 	pthread_t thread1;
@@ -44,6 +44,6 @@ int real_main(void)
 	vcJoin(thread1, &ret_from_thread1);
 	vcJoin(thread2, &ret_from_thread2);
 	printf("Done. Counter is %d\n", counter);
-	Sleep(5000);
+	//Sleep(5000);
 	return 0;
 }

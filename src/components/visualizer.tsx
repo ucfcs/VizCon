@@ -46,6 +46,15 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
               setRunState("Finished");
               return;
             }
+            setConsoleOutput((console_out) => {
+              let new_out = console_out;
+              // Not actually lines
+              for (const printed_line of msg.printed_lines) {
+                new_out += printed_line;
+              }
+              return new_out;
+            });
+            
             setVisualizerState(msg);
             await delay(delayMilliseconds);
         }

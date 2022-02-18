@@ -46,6 +46,8 @@ if target:
     thread_bp = target.BreakpointCreateByName ("do_post", target.GetExecutable().GetFilename())
     vcJoin_bp = target.BreakpointCreateByName ("vcJoin", target.GetExecutable().GetFilename())
     vc_internal_registerSem_bp = target.BreakpointCreateByName ("vc_internal_registerSem", target.GetExecutable().GetFilename())
+    printf_hook_bp = target.BreakpointCreateByName ("printf_hook", target.GetExecutable().GetFilename())
+
     vcWait_bp = target.BreakpointCreateByName ("vcWait", target.GetExecutable().GetFilename())
     vcSignal_bp = target.BreakpointCreateByName ("vcSignal", target.GetExecutable().GetFilename())
 
@@ -143,7 +145,14 @@ if target:
                 #print("Stepi into line", line, running_thread.GetFrameAtIndex(0))
                 #print("Stepping out of it")
                 running_thread.StepOut()
+        printed_lines = []
         for t in process:
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == printf_hook_bp.GetID(): 
+                the_str = t.GetFrameAtIndex(0).FindVariable("str")
+                captured_str = process.ReadCStringFromMemory(the_str.GetValueAsUnsigned(), 1024, lldb.SBError())
+                printed_lines.append(captured_str)
+                process.Continue()
+                continue
             if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vc_internal_registerSem_bp.GetID():
                 new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
                 # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
@@ -223,4 +232,4 @@ if target:
                 if frame_var.GetTypeName() == 'vcSem *':
                     global_value = thread_man.getSemaphoreValue(str(global_value))    
                 globals_list.append({'name': frame_var.GetName(), 'type': frame_var.GetTypeName(), 'value': global_value})
-            respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list})
+            respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list, 'printed_lines': printed_lines})

@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <semaphore.h>
@@ -17,7 +18,7 @@ struct vc_internal_wrapped_thread {
 };
 void *vc_internal_thread_wrapper(void *parameter) {
 	struct vc_internal_wrapped_thread *threadinfo = parameter;
-	printf("Thread runs!\n");
+	//printf("Thread runs!\n");
 	do_post(pthread_self());
 	void *retval = threadinfo->thefunc(threadinfo->parameter);
 	free(threadinfo);
@@ -30,7 +31,7 @@ void doCreateThread(pthread_t *thethread, void *thefunc(void *), void *theparam)
 	threadinfo->thefunc = thefunc;
 	pthread_create(thethread, NULL, vc_internal_thread_wrapper, threadinfo);
 	sem_wait(&sem_wait_create_thread);
-	printf("doCreateThread is over\n");
+	//printf("doCreateThread is over\n");
 }
 void vcJoin(pthread_t thread, void *ret) {
 	// pthread_join(thread, &ret);
@@ -65,4 +66,19 @@ int main(void)
 {
 	vc_internal_init();
 	return real_main();
+}
+
+void printf_hook(const char* str) {
+}
+// From 
+
+int lldb_printf(const char *format_string, ...)
+{
+	va_list args;
+	va_start(args, format_string);
+	char buf[1024];
+	int ret = vsnprintf(buf, 1024, format_string, args);
+	printf_hook(buf);
+	va_end(args);
+	return ret;
 }
