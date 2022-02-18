@@ -15,8 +15,9 @@ class ThreadManager:
     exited_threads = set()
     semaphoreMap = {}
     semWaitLists = {}
+    nextThreadID = 2
     def __init__(self, main_lldb_thread):
-        main_thread = {'thread': main_lldb_thread, 'pthread_id': '#main_thread', 'state': 'ready'}
+        main_thread = {'thread': main_lldb_thread, 'pthread_id': '#main_thread', 'name': '#main_thread', 'state': 'ready'}
         self.ready_list2 = [main_thread]
         self.managed_threads.append(main_thread)
 
@@ -74,6 +75,8 @@ class ThreadManager:
 
     def onCreateThread(self, thread):
         thread['state'] = 'ready'
+        thread['name'] = str(self.nextThreadID)
+        self.nextThreadID += 1
         self.managed_threads.append(thread)
         self.ready_list2.append(thread)
         print("Created thread:", thread['pthread_id'])

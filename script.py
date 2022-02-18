@@ -224,7 +224,7 @@ if target:
                 thread_state = thread['state']
                 if thread == chosen_cthread:
                     thread_state = 'running'
-                thread_list.append({'name': thread['pthread_id'], 'state': thread_state})
+                thread_list.append({'name': thread['name'], 'state': thread_state})
             globals = frame.get_statics()
             globals_list = []
             for frame_var in globals:
