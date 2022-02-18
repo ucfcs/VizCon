@@ -22,7 +22,7 @@ export default function ConsoleOutput({ text, current }: ConsoleOutputProps): Re
     <div className="visualizer-console">
       <div className="title-container">
         <div className="title">
-          <div className="title-border">Compilation Output</div>
+          <div className="title-border">Console Output</div>
         </div>
       </div>
       <div className="output-container">
@@ -40,8 +40,6 @@ export default function ConsoleOutput({ text, current }: ConsoleOutputProps): Re
             lineNumbers: 'off',
             renderLineHighlight: 'none',
             scrollBeyondLastLine: false,
-            detectIndentation: false,
-            tabSize: 100000,
             folding: false,
             guides: {
               indentation: false,
