@@ -1,3 +1,10 @@
+@mixin basic-table {
+  td, th {
+    border: 1px solid white;
+  }
+  border-collapse: collapse;
+}
+
 #visualizer {
   box-sizing: border-box;
   font-size: 13px;
@@ -13,13 +20,6 @@
   .linux &,
   .darwin #vizcon.normal & {
     height: calc(100vh - 30px);
-  }
-
-  .globals, .threads {
-    td, th {
-      border: 1px solid white;
-    }
-    border-collapse: collapse;
   }
 
   .controls {
@@ -42,7 +42,6 @@
       // cursor: pointer;
       height: 35px;
       box-sizing: border-box;
-      padding-left: 10px;
 
       &.f-end {
         left: unset;
@@ -52,6 +51,16 @@
 
       &.pad-r {
         padding-right: 10px;
+      }
+
+      &.has-action .padding-container:hover {
+        border-radius: 5px;
+        background-color: rgba(90, 93, 94, 0.31);
+      }
+
+      .padding-container {
+        padding-left: 10px;
+        display: flex;
       }
 
       .label {
@@ -64,55 +73,161 @@
         line-height: 35px;
       }
 
-      .actions {
-        margin-top: auto;
-        margin-bottom: auto;
-        width: 28px;
-        white-space: nowrap;
+      .action-button {
+        display: flex;
+        cursor: pointer;
 
-        .actions-container {
-          display: flex;
-          justify-content: center;
-          margin: 0 auto;
-          padding: 0;
-          height: 100%;
-          width: 100%;
-          align-items: center;
+        .actions {
+          margin-top: auto;
+          margin-bottom: auto;
+          width: 28px;
+          white-space: nowrap;
 
-          .action-item {
-            display: block;
-            align-items: center;
+          .actions-container {
+            display: flex;
             justify-content: center;
-            cursor: pointer;
-            position: relative;
+            margin: 0 auto;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            align-items: center;
 
-            .action-label {
-              color: inherit;
-              font-size: 16px;
-              padding: 2px;
-              width: 16px;
-              height: 16px;
-              border-radius: 5px;
-              display: flex;
+            .action-item {
+              display: block;
               align-items: center;
+              justify-content: center;
+              position: relative;
 
-              &:hover {
-                background-color: rgba(90, 93, 94, 0.31);
-              }
+              .action-label {
+                color: inherit;
+                font-size: 16px;
+                padding: 2px;
+                width: 16px;
+                height: 16px;
+                display: flex;
+                align-items: center;
 
-              &.codicon {
-                // TODO: fix colors
-                &.codicon-play {
-                  color: #000;
-                }
+                &.codicon {
+                  // TODO: fix colors
+                  &.codicon-play {
+                    color: #89d185;
+                  }
 
-                &.codicon-debug-stop {
-                  color: #000;
+                  &.codicon-debug-stop {
+                    color: #f48771;
+                  }
                 }
               }
             }
           }
         }
+      }
+    }
+  }
+
+  .visualizer-main {
+    height: calc(100% - 35px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+
+    .threads-container {
+      width: 20%;
+      height: 100%;
+      background-color: rgb(37, 37, 38);
+
+      .title-container {
+        display: flex;
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 0px 8px;
+        height: 35px;
+        color: rgb(231, 231, 231);
+
+        .title {
+          user-select: none;
+          font-size: 11px;
+          line-height: 27px;
+          height: 35px;
+          padding: 2px 10px;
+
+          .title-border {
+            white-space: nowrap;
+            text-transform: uppercase;
+            border-bottom-color: rgb(231, 231, 231);
+            border-bottom: 1px solid;
+          }
+        }
+      }
+      .threads-table {
+        @include basic-table;
+      }
+    }
+
+    .visualizer-console {
+      height: 100%;
+      width: 60%;
+
+      .title-container {
+        display: flex;
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 0px 8px;
+        height: 35px;
+        color: rgb(231, 231, 231);
+
+        .title {
+          user-select: none;
+          font-size: 11px;
+          line-height: 27px;
+          height: 35px;
+          padding: 2px 10px;
+
+          .title-border {
+            white-space: nowrap;
+            text-transform: uppercase;
+            border-bottom-color: rgb(231, 231, 231);
+            border-bottom: 1px solid;
+          }
+        }
+      }
+
+      .output-container {
+        height: calc(100% - 35px);
+      }
+    }
+
+    .variables-container {
+      width: 20%;
+      height: 100%;
+      background-color: rgb(37, 37, 38);
+
+      .title-container {
+        display: flex;
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 0px 8px;
+        height: 35px;
+        color: rgb(231, 231, 231);
+
+        .title {
+          user-select: none;
+          font-size: 11px;
+          line-height: 27px;
+          height: 35px;
+          padding: 2px 10px;
+
+          .title-border {
+            white-space: nowrap;
+            text-transform: uppercase;
+            border-bottom-color: rgb(231, 231, 231);
+            border-bottom: 1px solid;
+          }
+        }
+      }
+
+      table.variables-globals {
+        @include basic-table;
       }
     }
   }

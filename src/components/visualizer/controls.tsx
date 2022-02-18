@@ -12,38 +12,38 @@ interface ControlsProps {
 
 interface ControlProps {
   label: string;
-  actions?: {
+  action?: {
     title: string;
     codiconClass: string;
     action: () => void;
-  }[];
+  };
   className?: string;
 }
 
 // TODO: restructure so entire element is clickable
-function Control({ label, actions = [], className = '' }: ControlProps): React.ReactElement {
-  const actionLIs = actions.map(action => {
-    return (
-      <li className="action-item" key={`Control: ${label} ${action.title}`}>
-        {/* TODO: tab index tracking */}
-        <a
-          className={`action-label codicon ${action.codiconClass}`}
-          role="button"
-          title={action.title}
-          onClick={action.action}
-        />
-      </li>
-    );
-  });
+function Control({ label, action, className = '' }: ControlProps): React.ReactElement {
+  const labelElem = <div className="label">{label}</div>;
+
+  if (action) {
+    className = (className + ' has-action').trim();
+  }
 
   return (
-    <div className={`control ${className}`}>
-      <div className="label">{label}</div>
-      {actions.length > 0 && (
-        <div className="actions">
-          <ul className="actions-container">{actionLIs}</ul>
-        </div>
+    <div className={`control ${className}`.trim()}>
+      {action && (
+        <a className="action-button padding-container" role="button" title={action.title} onClick={action.action}>
+          {/* TODO: tab index tracking */}
+          {labelElem}
+          <div className="actions">
+            <ul className="actions-container">
+              <li className="action-item" key={`Control: ${label} ${action.title}`}>
+                <span className={`action-label codicon ${action.codiconClass}`} />
+              </li>
+            </ul>
+          </div>
+        </a>
       )}
+      {!action && <div className="padding-container">{labelElem}</div>}
     </div>
   );
 }
@@ -58,26 +58,26 @@ export default function Controls({
 }: ControlsProps): React.ReactElement {
   return (
     <div className="controls">
-      <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r"/>
+      <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r" />
       {simulationActive && (
         <Control
           label="Restart Simulation"
-          actions={[{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }]}
+          action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }}
         />
       )}
       {!simulationActive && (
         <Control
           label="Start Simulation"
-          actions={[{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }]}
+          action={{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }}
         />
       )}
       <Control
         label="Stop Simulation"
-        actions={[{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }]}
+        action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }}
       />
       <Control
         label="Return to Editor"
-        actions={[{ title: 'Return to Editor', codiconClass: 'codicon-discard', action: goBack }]}
+        action={{ title: 'Return to Editor', codiconClass: 'codicon-discard', action: goBack }}
         className="f-end"
       />
     </div>
