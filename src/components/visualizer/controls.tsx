@@ -48,33 +48,17 @@ function Control({ label, action, className = '' }: ControlProps): React.ReactEl
   );
 }
 
-export default function Controls({
-  fileName,
-  simulationActive,
-  start,
-  restart,
-  stop,
-  goBack,
-}: ControlsProps): React.ReactElement {
+export default function Controls({ fileName, simulationActive, start, restart, stop, goBack }: ControlsProps): React.ReactElement {
   return (
     <div className="controls">
       <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r" />
       {simulationActive && (
-        <Control
-          label="Restart Simulation"
-          action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }}
-        />
+        <Control label="Restart Simulation" action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }} />
       )}
       {!simulationActive && (
-        <Control
-          label="Start Simulation"
-          action={{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }}
-        />
+        <Control label="Start Simulation" action={{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }} />
       )}
-      <Control
-        label="Stop Simulation"
-        action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }}
-      />
+      <Control label="Stop Simulation" action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }} />
       <Control
         label="Return to Editor"
         action={{ title: 'Return to Editor', codiconClass: 'codicon-discard', action: goBack }}

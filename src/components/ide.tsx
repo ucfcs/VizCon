@@ -16,7 +16,16 @@ interface IDEProps {
   inVisualizer: boolean;
 }
 
-export default function IDE({ files, current, setCurrent, closeFile, compileResults, showOutput, closeOutput, inVisualizer }: IDEProps): React.ReactElement {
+export default function IDE({
+  files,
+  current,
+  setCurrent,
+  closeFile,
+  compileResults,
+  showOutput,
+  closeOutput,
+  inVisualizer,
+}: IDEProps): React.ReactElement {
   const [tabination, setTabination] = useState(<div className="tabination"></div>);
   const [className, setClassName] = useState('');
 
@@ -32,16 +41,7 @@ export default function IDE({ files, current, setCurrent, closeFile, compileResu
           const close = () => {
             closeFile(file);
           };
-          return (
-            <Tab
-              setActive={setActive}
-              close={close}
-              name={file.path}
-              dirty={file.dirty}
-              current={current}
-              key={'tab' + file.path}
-            />
-          );
+          return <Tab setActive={setActive} close={close} name={file.path} dirty={file.dirty} current={current} key={'tab' + file.path} />;
         })}
       </div>
     );

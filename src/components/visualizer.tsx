@@ -36,11 +36,11 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
 
   return (
     <div id="visualizer" className={className}>
-      <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack}/>
-      <div className='visualizer-main'>
-        <Threads data={[]}/>
+      <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack} />
+      <div className="visualizer-main">
+        <Threads data={[]} />
         <ConsoleOutput current={current} text={consoleOutput} />
-        <Variables data={[]}/>
+        <Variables data={[]} />
       </div>
     </div>
   );
