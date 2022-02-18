@@ -77,90 +77,10 @@ if target:
     print("-----------------------------------")
     respondToVisualizer({'type': 'hello'})
     while True:
-        for t in process:
-            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vc_internal_registerSem_bp.GetID():
-                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
-                thread_man.registerSem(str(new_sem))
-                process.Continue()
-                continue
-            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcWait_bp.GetID():
-                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
-                thread_man.onWaitSem(t, str(new_sem))
-                # TODO: Add a better resume to replace this
-                process.Continue()
-                continue
-            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcSignal_bp.GetID():
-                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
-                thread_man.onSignalSem(t, str(new_sem))
-                process.Continue()
-                continue
-            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcJoin_bp.GetID():
-                if t.GetThreadID() in ignore_set:
-                    if verbose:
-                        print("Ignoring a thread")
-                    continue
-                thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
-                #verbose: print("You joined on", thread_val)
-                
-                ignore_set.add(t.GetThreadID())
-                thread_man.onJoin(t, thread_val)
-            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == thread_bp.GetID():
-                if t.GetThreadID() in ignore_set:
-                    if verbose:
-                        print("Ignoring a thread that already hit thread_bp")
-                    continue
-                #verbose: print(t, "is stopped because of the thread breakpoint")
-                pthread_id = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
-                for other_thread in getThreads():
-                    if other_thread != t:
-                        if verbose:
-                            print("Temporarily suspending other thread", other_thread)
-                        other_thread.Suspend()
-                thread_man.onCreateThread({'thread': t, 'pthread_id': pthread_id})
-                process.Continue()
-                if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == user_thread_bp.GetID():
-                    if verbose:
-                        print("User thread function hit successfully")
-                        print(running_thread.stop_reason == lldb.eStopReasonNone, running_thread)
-                    for t2 in getThreads():
-                        t2.Suspend()
-                    running_thread.Resume()
-                    process.Continue()
-                    ignore_set.add(t.GetThreadID())
-                else:
-                    print("Unknown stop while trying to hit user thread function!")
         if process.state == lldb.eStateExited:
             print("Process state is", process)
             break
-        if chosen_cthread is not None:
-            frame = running_thread.GetFrameAtIndex(0)
-            #globals = frame.get_statics()
-            #arguments = frame.get_arguments()
-            #locals = frame.get_locals()
-            #print("Variables:")
-            #for frame_var in globals:
-            #    print("\t(Global)",frame_var)
-            #for frame_var in arguments:
-            #    print("\t(Argument)",frame_var)
-            #for frame_var in locals:
-            #    print("\t(Local)",frame_var)
-            thread_list = []
-            for thread in thread_man.getManagedThreads():
-                thread_state = thread['state']
-                if thread == chosen_cthread:
-                    thread_state = 'running'
-                thread_list.append({'name': thread['pthread_id'], 'active': thread == chosen_cthread, 'state': thread_state})
-            globals = frame.get_statics()
-            globals_list = []
-            for frame_var in globals:
-                global_value = frame_var.GetValue()
-                if frame_var.GetTypeName() == 'vcSem *':
-                    global_value = thread_man.getSemaphoreValue(str(global_value))    
-                globals_list.append({'name': frame_var.GetName(), 'type': frame_var.GetTypeName(), 'value': global_value})
-            respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list})
+
         waitForVisualizer()
         chosen_cthread = thread_man.chooseThread()
         
@@ -223,3 +143,84 @@ if target:
                 #print("Stepi into line", line, running_thread.GetFrameAtIndex(0))
                 #print("Stepping out of it")
                 running_thread.StepOut()
+        for t in process:
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vc_internal_registerSem_bp.GetID():
+                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
+                thread_man.registerSem(str(new_sem))
+                process.Continue()
+                continue
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcWait_bp.GetID():
+                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
+                thread_man.onWaitSem(t, str(new_sem))
+                # TODO: Add a better resume to replace this
+                process.Continue()
+                continue
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcSignal_bp.GetID():
+                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
+                thread_man.onSignalSem(t, str(new_sem))
+                process.Continue()
+                continue
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcJoin_bp.GetID():
+                if t.GetThreadID() in ignore_set:
+                    if verbose:
+                        print("Ignoring a thread")
+                    continue
+                thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                #verbose: print("You joined on", thread_val)
+                
+                ignore_set.add(t.GetThreadID())
+                thread_man.onJoin(t, thread_val)
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == thread_bp.GetID():
+                if t.GetThreadID() in ignore_set:
+                    if verbose:
+                        print("Ignoring a thread that already hit thread_bp")
+                    continue
+                #verbose: print(t, "is stopped because of the thread breakpoint")
+                pthread_id = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                for other_thread in getThreads():
+                    if other_thread != t:
+                        if verbose:
+                            print("Temporarily suspending other thread", other_thread)
+                        other_thread.Suspend()
+                thread_man.onCreateThread({'thread': t, 'pthread_id': pthread_id})
+                process.Continue()
+                if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == user_thread_bp.GetID():
+                    if verbose:
+                        print("User thread function hit successfully")
+                        print(running_thread.stop_reason == lldb.eStopReasonNone, running_thread)
+                    for t2 in getThreads():
+                        t2.Suspend()
+                    running_thread.Resume()
+                    process.Continue()
+                    ignore_set.add(t.GetThreadID())
+                else:
+                    print("Unknown stop while trying to hit user thread function!")
+        if chosen_cthread is not None:
+            frame = running_thread.GetFrameAtIndex(0)
+            #globals = frame.get_statics()
+            #arguments = frame.get_arguments()
+            #locals = frame.get_locals()
+            #print("Variables:")
+            #for frame_var in globals:
+            #    print("\t(Global)",frame_var)
+            #for frame_var in arguments:
+            #    print("\t(Argument)",frame_var)
+            #for frame_var in locals:
+            #    print("\t(Local)",frame_var)
+            thread_list = []
+            for thread in thread_man.getManagedThreads():
+                thread_state = thread['state']
+                if thread == chosen_cthread:
+                    thread_state = 'running'
+                thread_list.append({'name': thread['pthread_id'], 'active': thread == chosen_cthread, 'state': thread_state})
+            globals = frame.get_statics()
+            globals_list = []
+            for frame_var in globals:
+                global_value = frame_var.GetValue()
+                if frame_var.GetTypeName() == 'vcSem *':
+                    global_value = thread_man.getSemaphoreValue(str(global_value))    
+                globals_list.append({'name': frame_var.GetName(), 'type': frame_var.GetTypeName(), 'value': global_value})
+            respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list})
