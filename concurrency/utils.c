@@ -48,8 +48,9 @@ int vizconStringLength(char* name)
 //Handles error from concurrencylib and vcuserlibrary
 void vizconError(char* func, int err)
 {
-    char message[200];
-    sprintf(message, "\nError from %s.\n", func);
+    int maxLen = 200;
+    char message[maxLen];
+    sprintf(message, "\nError from %s\n", func);
     #if defined(_WIN32) // windows
     LPSTR errorMessage;
     if(err < 500)
@@ -61,13 +62,14 @@ void vizconError(char* func, int err)
     char* errorMessage;
     if(err < 500)
     {
-        errorMessage = strerror(err);
-        sprintf(message, "%serrno", message);
+        sprintf(message, "%serrno code %d", message, err);
+        perror(message);
+        exit(0);
     }
     #endif
     if(err >= 500)
     {
-        printf("vizcon error ");
+        sprintf(message, "%svizcon error", message);
         switch(err)
         {
             case 500:
@@ -87,17 +89,17 @@ void vizconError(char* func, int err)
             }
             case 510:
             {
-                message = "A thread attempted to unlock an already-unlocked mutex.";
+                errorMessage = "A thread attempted to unlock an already-unlocked mutex.";
                 break;
             }
             case 511:
             {
-                message = "A thread attempted to lock a mutex that it already locked.";
+                errorMessage = "A thread attempted to lock a mutex that it already locked.";
                 break;
             }
             case 512:
             {
-                message = "A thread attempted to unlock an mutex that was locked by another thread.";
+                errorMessage = "A thread attempted to unlock an mutex that was locked by another thread.";
                 break;
             }
             default:
