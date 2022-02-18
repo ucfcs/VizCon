@@ -35,6 +35,10 @@ class ThreadManager:
             self.waiting_dict2[joined_on].append(c_thread)
             self.ready_list2.remove(c_thread)
             c_thread['state'] = 'waiting (vcJoin)'
+    def getSemaphoreValue(self, sem):
+        if sem not in self.semaphoreMap:
+            return None
+        return self.semaphoreMap[sem]
     def onWaitSem(self, lldb_thread, sem):
         c_thread = self.__lookupFromLLDB(lldb_thread)
         #already_exited = joined_on in self.exited_threads

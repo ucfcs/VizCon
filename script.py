@@ -156,7 +156,10 @@ if target:
             globals = frame.get_statics()
             globals_list = []
             for frame_var in globals:
-                globals_list.append({'name': frame_var.GetName(), 'type': frame_var.GetTypeName(), 'value': frame_var.GetValue()})
+                global_value = frame_var.GetValue()
+                if frame_var.GetTypeName() == 'vcSem *':
+                    global_value = thread_man.getSemaphoreValue(str(global_value))    
+                globals_list.append({'name': frame_var.GetName(), 'type': frame_var.GetTypeName(), 'value': global_value})
             respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list})
         waitForVisualizer()
         chosen_cthread = thread_man.chooseThread()
