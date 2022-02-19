@@ -5,6 +5,7 @@
 #include "unit_test.h"
 
 #define ISOLATION_TEST_SIZE 5
+#define MASS_CLOSURE_TEST_SIZE 5
 
 vcMutex *testMutex;
 
