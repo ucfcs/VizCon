@@ -3,10 +3,13 @@
 #include "mutexes.h"
 
 #define main userMain
+#define vcSem CSSem
 
 // Lists used to track all threads and semaphores
 CSThread* vizconThreadList;
 CSThread* vizconThreadListInitial;
+CSSem* vizconSemList;
+CSSem* vizconSemListInitial;
 
 // Thread functions
 void vcThreadQueue(threadFunc func, void *arg);
@@ -25,6 +28,17 @@ typedef struct VCMutex
     CSMutex* mutex;       // The corresponding mutex.
     struct VCMutex* next; // The next mutex in the list.
 } VCMutex;
+
+//Semaphore functions
+vcSem* vcSemCreate(int count);
+vcSem* vcSemCreateNamed(int count, char* name);
+void vcSemWait(vcSem* sem);
+void vcSemWaitMult(vcSem* sem, int num);
+int vcSemTryWait(vcSem* sem);
+int vcSemTryWaitMult(vcSem* sem, int num);
+void vcSemSignal(vcSem* sem);
+void vcSemSignalMult(vcSem* sem, int num);
+int vcSemValue(vcSem* sem);
 
 // Mutex functions
 VCMutex* vcMutexCreate(char* name); // Creates a VCMutex with the given name.
