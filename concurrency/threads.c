@@ -1,37 +1,43 @@
 #include "threads.h"
 
-// Create a thread, passing in a function
+// createThread - Create a thread, passing in a function
+//                Returns: a pointer to the thread struct.
 CSThread* createThread(threadFunc func, void *arg)
 {
-	// Attempts to create the Thread data type. If it fails, print an error
+    // Allocate the thread struct. Error out if needed.
     CSThread *thread = (CSThread*) malloc(sizeof(CSThread));
     if (thread == NULL)
         vizconError("vcThreadQueue/vcThreadQueueNamed", VC_ERROR_MEMORY);
 
-    // Sets the next value in the linked list to NULL
+    // Set the non-platform-dependent properties of the struct.
     thread->next = NULL;
     thread->name = NULL;
     thread->num = -1;
+    thread->returnVal = NULL;
 
-    // Create thread function for Windows
-    #if defined(_WIN32) 
+    // Platform-dependent thread definition.
+    #if defined(_WIN32) // Windows version
+        // Create the thread in a suspended state.
+        // It will be woken up by a vcThreadStart or vcThreadReturn.
         thread->thread = CreateThread(NULL, 0, func, arg, CREATE_SUSPENDED, 0);
 
-    // Create thread function for POSIX
-    #elif defined(__APPLE__) || defined(__linux__)
-		// Passes in the parameters as arguments for future creation
-		thread->func = func;
-		thread->arg = arg;
+    #elif defined(__APPLE__) || defined(__linux__) // POSIX version
+        // POSIX cannot create suspended threads, so save everything for later.
+        // The thread will be created by a vcThreadStart or vcThreadReturn.
+        thread->func = func;
+        thread->arg = arg;
+
     #endif
-	
-	return thread;
+    
+    return thread;
 }
 
+// joinThread - Wait for the thread to finish, then join it.
 void joinThread(CSThread *thread)
 {
-    // Windows join thread function
-    #if defined(_WIN32)
-		// Attempt to wait for the object, rpnting the appropriate error if it fails
+    // Platform-dependent thread joining.
+    // Attempt to wait for the object.
+    #ifdef _WIN32 // Windows version
         DWORD ret = WaitForSingleObject(thread->thread, INFINITE);
         switch(ret)
         {          
@@ -52,45 +58,48 @@ void joinThread(CSThread *thread)
             }
         }
 
-    // POSIX join thread function
-    #elif defined(__APPLE__) || defined(__linux__)
-    // Attempts to join the thread. If it fails, print an error
+    #elif __APPLE__ || __linux__ // POSIX version
     int err = pthread_join(thread->thread, &thread->returnVal);
     if (err)
     {
         free(thread);
         vizconError("vcThreadStart/vcThreadReturn", err);
     }
+
     #endif
 }
 
+// freeThread - Close the thread (if needed) and free the struct.
 void freeThread(CSThread *thread)
 {
-    // Windows free thread function
-    #if defined(_WIN32) 
-		// Attempts to close the thread. If it fails, print an error
+    // On Windows only, attempt to close the thread.
+    // (On POSIX, the thread is closed during the join.)
+    #ifdef _WIN32
         if (!CloseHandle(thread->thread))
             vizconError("vcThreadStart/vcThreadReturn", GetLastError());
     #endif
 
-    // Frees the struct
+    // Free the struct.
     free(thread);
 }
 
-//Start a given thread that was in a suspended state
+// startThread - Start the thread mapped to the struct.
 void startThread(CSThread* thread)
 {
-    #if defined(_WIN32) // windows
-	// Attempts to resume a thread. If it fails, print an error
+    // Platform-dependent thread start.
+    #ifdef _WIN32 // Windows version
+    // Attempt to resume the thread. If it fails, print an error.
     if (ResumeThread(thread->thread) == -1)
         vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-    #elif defined(__APPLE__) || defined(__linux__)
-	// Attempts to create a pthread using the previously passed in parameters. If it fails, print an error
+    
+    #elif __APPLE__ || __linux__
+    // Create the thread based on the saved function and argument.
     int err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
     if (err)
     {
         free(thread);
         vizconError("vcThreadStart/vcThreadReturn", err);
     }
+    
     #endif
 }

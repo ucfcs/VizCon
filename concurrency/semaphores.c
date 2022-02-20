@@ -1,29 +1,39 @@
 #include "semaphores.h"
 
-//Create a CSSem
+// semCreate - Create a semaphore with the given name and max value.
+//             Returns: a pointer to the semaphore struct.
 CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
 {
     if(name == NULL)
     {
         return NULL;
     }
-    CSSem* sem = (CSSem*)malloc(sizeof(CSSem));
+
+    // Attempt to allocate the struct. Error out on failure.
+    CSSem* sem = (CSSem*) malloc(sizeof(CSSem));
     if (sem == NULL) 
         vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_MEMORY);
     
+    // Set non-semaphore properties.
     sem->next = NULL;
-    sem->name = (char*)name;
+    sem->name = (char*) name;
     sem->num = -1;
-    #if defined(_WIN32) // windows
+    
+    // Platform-dependent semaphore creation.
+    // Create a mutex with default settings. Error out where needed.
+    #ifdef _WIN32 // Windows version
     sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, name);
     if(sem->sem == NULL)
     {
-        int err = (int)GetLastError();
+        int err = (int) GetLastError();
         free(sem);
         vizconError("vcSemCreate/vcSemCreateNamed", err);
+        return NULL;
     }
     sem->count = maxValue;
-    #elif defined(__linux__) || defined(__APPLE__)
+
+    #elif __linux__ || __APPLE__ // POSIX version
+    // Use sem_open to create a named semaphore, which macOS requires.
     sem->sem = sem_open(name, O_CREAT | O_EXCL, 0644, maxValue);
     if(sem->sem == SEM_FAILED)
     {
@@ -36,28 +46,35 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
         vizconError("vcSemCreate/vcSemCreateNamed", errno);
     }
     sem->count = maxValue;
+
     #endif
+    
     return sem;
 }
 
-//Releases 1 permit from semaphore and increment its count
+// semSignal - Release 1 permit from sem and increment its count.
 void semSignal(CSSem* sem)
 {
-    #if defined(_WIN32) // windows
+    // Platform-dependent senaphore release.
+    #ifdef _WIN32 // Windows version
     if(!ReleaseSemaphore(sem->sem, 1, NULL))
         vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
     sem->count = sem->count + 1;
-    #elif defined(__linux__) || defined(__APPLE__)
+
+    #elif __linux__ || __APPLE__ // POSIX version
     if(sem_post(sem->sem))
         vizconError("vcSemSignal/vcSemSignalMult", errno);
     sem->count = sem->count + 1;
+
     #endif
 }
 
-//Waits for semaphore to become available, attaining 1 permit from semaphore and decrementing its count
+// semWait - Wait for sem to become available.
+//           When it is, attain 1 permit and decrement its count
 void semWait(CSSem* sem)
 {
-    #if defined(_WIN32) // windows
+    // Platform-dependent waiting.
+    #ifdef _WIN32 // Windows version
     DWORD ret = WaitForSingleObject(sem->sem, INFINITE);
     switch(ret)
     {
@@ -80,19 +97,21 @@ void semWait(CSSem* sem)
         case WAIT_TIMEOUT:
             vizconError("vcSemWait/vcSemWaitMult", VC_ERROR_TIMEOUT);
     }
-    #elif defined(__linux__) || defined(__APPLE__)
+
+    #elif __linux__ || __APPLE__ // POSIX version
     if(sem_wait(sem->sem))
         vizconError("vcSemWait/vcSemWaitMult", errno);
     
     #endif
 }
 
-//Try to attain 1 permit from semaphore and decrement its count
-//Returns immediately if semaphore has no remaining permits at time of call
-//returns 1 if available, else 0
+// semTryWait - Try to obtain the semaphore.
+//              If it's unavailable, return without waiting.
+//              Returns: 1 if permit was available, 0 otherwise.
 int semTryWait(CSSem* sem)
 {
-    #if defined(_WIN32) // windows
+    // Platform-dependent trywaiting.
+    #if defined(_WIN32) // Windows version
     DWORD ret = WaitForSingleObject(sem->sem, 0);
     switch(ret)
     {
@@ -147,32 +166,38 @@ int semTryWait(CSSem* sem)
             return 0;
         }
     }
+
     #endif
+    
     return 0;
 }
 
-//Returns semaphore's current value
+// semValue - Get the number of available permits.
+//            Returns: an integer representing the above.
 int semValue(CSSem* sem)
 {
     return sem->count;
 }
 
-//Frees all data associated with a CSSem type, including itself
+// semClose - Close the semaphore and free the associated struct.
 void semClose(CSSem* sem)
 {
-    #if defined(_WIN32) // windows
+    // Platform-dependent closure and memory management.
+    #ifdef _WIN32 // Windows version.
     if(!CloseHandle(sem->sem))
     {
         // FIXME: Change referenced function.
         vizconError("vcSemClose", GetLastError());
     }
     free(sem);
-    #elif defined(__linux__) || defined(__APPLE__)
+
+    #elif __linux__ || __APPLE__ // POSIX version.
     if(sem_close(sem->sem))
     {
         // FIXME: Change referenced function.
         vizconError("vcSemClose", errno);
     }
     free(sem);
+
     #endif
 }

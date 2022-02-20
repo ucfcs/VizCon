@@ -1,18 +1,23 @@
 #include "utils.h"
 
-//Creates a name for a concurrency structure
+// vizconCreateName - Creates a string that can be used to name a struct.
+//                    Returns: a pointer to the created string.
 char* vizconCreateName(int type, int value)
 {
-    int i = 1, temp = value/10;
+    // Determine the number of characters in value.
+    int i = 1, temp = value / 10;
     while(temp != 0)
     {
         i++;
         temp = temp / 10;
     }
-    char* ret = (char*)malloc(sizeof(char) * (11+i));
+
+    // Allocate the string. Error out if necessary.
+    char* ret = (char*) malloc(sizeof(char) * (11 + i));
     if(ret == NULL)
         vizconError("create function", VC_ERROR_MEMORY);
     
+    // Add the value to a string based on the type and return.
     switch(type)
     {
         // VC_TYPE_THREAD - Thread.
@@ -42,27 +47,35 @@ char* vizconCreateName(int type, int value)
     }
 }
 
+// vizconStringLength - Calculate the length of the name string.
+//                      Returns: the length.
 int vizconStringLength(char* name)
 {
     int i;
-    for(i=0; name[i] != '\0'; i++);
+    for(i = 0; name[i] != '\0'; i++);
     return i;
 }
 
-//Handles error from concurrencylib and vcuserlibrary
+// vizconError - Prints errors encountered by the user library.
+//               The program closes after this method finishes.
 void vizconError(char* func, int err)
 {
-    int maxLen = 200;
-    char message[maxLen];
-    sprintf(message, "\nError from %s\n", func);
-    #if defined(_WIN32) // windows
+    // Start building the message string.
+    char message[200];
+    sprintf(message, "\nError from %s.\n", func);
+
+    // Platform-dependent error decoding.
+    // If the error is less than 500, it's not from our library.
+    // Get the corresponding string from the system's error descriptions.
+    #if defined(_WIN32) // Windows version
     LPSTR errorMessage;
     if(err < 500)
     {
         FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&errorMessage, 0, NULL);
         sprintf(message, "%ssystem error", errorMessage);
     }
-    #elif defined(__linux__) || defined(__APPLE__)
+
+    #elif defined(__linux__) || defined(__APPLE__) // POSIX version
     char* errorMessage;
     if(err < 500)
     {
@@ -73,6 +86,9 @@ void vizconError(char* func, int err)
         exit(0);
     }
     #endif
+
+    // If the error is 500 or greater, it's a VizCon-specific error.
+    // Select the string related to the error.
     if(err >= 500)
     {
         switch(err)
@@ -92,6 +108,8 @@ void vizconError(char* func, int err)
                 errorMessage = "Not enough memory resources are available to process this command.";
                 break;
             }
+            case VC_ERROR_BADCOUNT:
+            {
             case VC_ERROR_DOUBLEUNLOCK:
             {
                 errorMessage = "A thread attempted to unlock an already-unlocked mutex.";

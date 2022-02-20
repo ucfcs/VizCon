@@ -1,7 +1,7 @@
-// Utils library
+// Utilities library
 #include "utils.h"
 
-// Platform-dependent libraries
+// Platform-dependent libraries.
 #ifdef _WIN32 // Windows version
 #define MUTEX_TYPE HANDLE
 #define THREAD_ID_TYPE DWORD
@@ -10,7 +10,7 @@
 #define THREAD_ID_TYPE pthread_t
 #endif
 
-// CSMutex - Wrapper for the system's mutex type.
+// CSMutex - A wrapper for the system's mutex type.
 typedef struct CSMutex
 {
     MUTEX_TYPE mutex;        // Mutex object
@@ -18,8 +18,7 @@ typedef struct CSMutex
     THREAD_ID_TYPE holderID; // If locked, ID of thread that placed the lock.
 } CSMutex;
 
-// Mutex function prototypes.
-// Function contents can be found in mutexes.c.
+// Function prototypes.
 CSMutex* mutexCreate(char* name); // Creates a mutex with the given name.
 void mutexLock(CSMutex* mutex);   // Waits for mutex availability, then locks.
 int mutexTryLock(CSMutex* mutex); // Attempts to lock without waiting.

@@ -136,7 +136,7 @@ void mutexLock(CSMutex* mutex)
 
 // mutexTryLock - Try to obtain the mutex.
 //                If it's unavailable, return without waiting.
-//                Returns: 1 if lock is available, 0 otherwise.
+//                Returns: 1 if lock was available, 0 otherwise.
 int mutexTryLock(CSMutex* mutex)
 {
     // Platform-dependent mutex lock trying.
