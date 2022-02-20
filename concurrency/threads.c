@@ -33,25 +33,24 @@ void joinThread(CSThread *thread)
     #if defined(_WIN32)
 		// Attempt to wait for the object, rpnting the appropriate error if it fails
         DWORD ret = WaitForSingleObject(thread->thread, INFINITE);
-		if (ret == WAIT_FAILED)
-		{
-			vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-		}
-		else if (ret == WAIT_OBJECT_0)
-		{
-			if (!GetExitCodeThread(thread->thread, &thread->returnVal))
-			{
-				vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-			}
-		}
-		else if(ret == WAIT_ABANDONED)
-		{
-			vizconError("vcThreadStart/vcThreadReturn", 500);
-		}
-		else if (ret == WAIT_TIMEOUT)
-		{
-			vizconError("vcThreadStart/vcThreadReturn", 501);
-		}
+        switch(ret)
+        {          
+            // WAIT_OBJECT_0 - The thread ended successfully.
+            //                 Save the return value.
+            case WAIT_OBJECT_0:
+            {
+                if (!GetExitCodeThread(thread->thread, &thread->returnVal))
+                    vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+                return;
+            }
+
+            // Default - OS-level error.
+            default:
+            {
+                vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+                return;
+            }
+        }
 
     // POSIX join thread function
     #elif defined(__APPLE__) || defined(__linux__)

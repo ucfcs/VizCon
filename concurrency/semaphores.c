@@ -64,21 +64,26 @@ void semWait(CSSem* sem)
 {
     #if defined(_WIN32) // windows
     DWORD ret = WaitForSingleObject(sem->sem, INFINITE);
-    if(ret == WAIT_FAILED)
+    switch(ret)
     {
-        vizconError("vcSemWait", GetLastError());
-    }
-    else if(ret == WAIT_OBJECT_0)
-    {
-        sem->count = sem->count - 1;
-    }
-    else if(ret == WAIT_ABANDONED)
-    {
-        vizconError("vcSemWait", 500);
-    }
-    else if (ret == WAIT_TIMEOUT)
-    {
-        vizconError("vcSemWait", 501);
+        // WAIT_FAILED: OS-level error.
+        case WAIT_FAILED:
+            vizconError("vcSemWait", GetLastError());
+        
+        // WAIT_OBJECT_0: Success. Decrement the count.
+        case WAIT_OBJECT_0:
+            sem->count = sem->count - 1;
+
+        // WAIT_ABANDONED: A thread with a permit closed before returning it.
+        //                 This is only supposed to happen to mutexes,
+        //                 but it's here for safety.
+        case WAIT_ABANDONED:
+            vizconError("vcSemWait", 500);
+        
+        // WAIT_TIMEOUT - Thread was not available before timeout.
+        //                This shouldn't happen, but it's here for safety.
+        case WAIT_TIMEOUT:
+            vizconError("vcSemWait", 501);
     }
     #elif defined(__linux__) || defined(__APPLE__)
     if(sem_wait(sem->sem))
@@ -95,28 +100,58 @@ int semTryWait(CSSem* sem)
 {
     #if defined(_WIN32) // windows
     DWORD ret = WaitForSingleObject(sem->sem, 0);
-    if(ret == WAIT_FAILED)
+    switch(ret)
     {
-        vizconError("vcSemTryWait", GetLastError());
+        // WAIT_OBJECT_0 - No error. Decrement the counter.
+        case WAIT_OBJECT_0:
+        {
+            sem->count = sem->count - 1;
+            return 1;
+        }
+
+        // WAIT_TIMEOUT - Semaphore was not available before timeout.
+        //                Since timeout is 0, this means it has no permits.
+        case WAIT_TIMEOUT:
+            return 0;
+        
+        // WAIT_ABANDONED: A thread with a permit closed before returning it.
+        //                 This is only supposed to happen to mutexes,
+        //                 but it's here for safety.
+        case WAIT_ABANDONED:
+        {
+            vizconError("vcSemTrylock", 500);
+            return 0;
+        }
+        
+        // WAIT_FAILED - OS-level error.
+        case WAIT_FAILED:
+        {
+            vizconError("vcSemTrylock", GetLastError());
+            return 0;
+        }
     }
-    else if(ret == WAIT_OBJECT_0)
+    
+    #elif __linux__ || __APPLE__ // POSIX version
+    int ret = sem_trywait(sem->sem);
+    switch(ret)
     {
-        sem->count = sem->count - 1;
-        return 1;
-    }
-    else if(ret == WAIT_ABANDONED)
-    {
-        vizconError("vcSemTryWait", 500);
-    }
-    #elif defined(__linux__) || defined(__APPLE__)
-    if(!sem_trywait(sem->sem))
-    {
-        sem->count = sem->count - 1;
-        return 1;
-    }
-    else if(errno != EAGAIN)
-    {
-        vizconError("vcSemTryWait", errno);
+        // 0 - Success. Decrement the semaphore count.
+        case 0:
+        {
+            sem->count = sem->count - 1;
+            return 1;
+        }
+
+        // EBUSY - Semaphore currently has no permits. Just leave.
+        case EBUSY:
+            return 0;
+
+        // Default - OS-level error. Just pass it on.
+        default:
+        {
+            vizconError("vcSemTrylock", ret);
+            return 0;
+        }
     }
     #endif
     return 0;
