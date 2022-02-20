@@ -17,16 +17,6 @@
 #define THREAD_ID_TYPE pthread_t
 #endif
 
-// Constant used for default name generation.
-#define NAME_ID_MUTEX 2
-
-// Constants used for VizCon error codes.
-#define ERROR_MUTEX_ABANDONED 500
-#define ERROR_MUTEX_TIMEOUT 501
-#define ERROR_MUTEX_DOUBLE_UNLOCK 510
-#define ERROR_MUTEX_DOUBLE_LOCK 511
-#define ERROR_MUTEX_CROSS_THREAD_UNLOCK 512
-
 // CSMutex - Wrapper for the system's mutex type.
 typedef struct CSMutex
 {

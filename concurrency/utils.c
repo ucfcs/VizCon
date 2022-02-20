@@ -11,30 +11,34 @@ char* vizconCreateName(int type, int value)
     }
     char* ret = (char*)malloc(sizeof(char) * (11+i));
     if(ret == NULL)
-    {
-        vizconError("create function", 502);
-    }
+        vizconError("create function", VC_ERROR_MEMORY);
+    
     switch(type)
     {
-        case 0:
+        // VC_TYPE_THREAD - Thread.
+        case VC_TYPE_THREAD:
         {
             sprintf(ret, "Thread %d", value);
             return ret;
         }
-        case 1:
+
+        // VC_TYPE_SEM - Semaphore.
+        case VC_TYPE_SEM:
         {
             sprintf(ret, "Semaphore %d", value);
             return ret;
         }
-        case 2:
+
+        // VC_TYPE_MUTEX - Mutex lock.
+        case VC_TYPE_MUTEX:
         {
             sprintf(ret, "Mutex %d", value);
             return ret;
         }
+
+        // Default - If anything else, return nothing.
         default:
-        {
             return NULL;
-        }
     }
 }
 
@@ -73,40 +77,38 @@ void vizconError(char* func, int err)
     {
         switch(err)
         {
-            case 500:
+            case VC_ERROR_ABANDONED:
             {
-                errorMessage = "A thread terminated without releasing its mutex lock.";
+                errorMessage = "A thread terminated without releasing a mutex lock it acquired.";
                 break;
             }
-            case 501:
+            case VC_ERROR_TIMEOUT:
             {
                 errorMessage = "An unexpected wait timeout occurred.";
                 break;
             }
-            case 502:
+            case VC_ERROR_MEMORY:
             {
                 errorMessage = "Not enough memory resources are available to process this command.";
                 break;
             }
-            case 510:
+            case VC_ERROR_DOUBLEUNLOCK:
             {
                 errorMessage = "A thread attempted to unlock an already-unlocked mutex.";
                 break;
             }
-            case 511:
+            case VC_ERROR_DOUBLELOCK:
             {
                 errorMessage = "A thread attempted to lock a mutex that it already locked.";
                 break;
             }
-            case 512:
+            case VC_ERROR_CROSSTHREADUNLOCK:
             {
                 errorMessage = "A thread attempted to unlock an mutex that was locked by another thread.";
                 break;
             }
             default:
-            {
                 errorMessage = "An unknown error has occurred.";
-            }
         }
         sprintf(message, "vizcon error code %d: %s\n", err, errorMessage);
     }

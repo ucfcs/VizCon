@@ -9,9 +9,8 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     }
     CSSem* sem = (CSSem*)malloc(sizeof(CSSem));
     if (sem == NULL) 
-    {
-        vizconError("vcSemCreate", 502);
-    }
+        vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_MEMORY);
+    
     sem->next = NULL;
     sem->name = (char*)name;
     sem->num = -1;
@@ -21,7 +20,7 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     {
         int err = (int)GetLastError();
         free(sem);
-        vizconError("vcSemCreate", err);
+        vizconError("vcSemCreate/vcSemCreateNamed", err);
     }
     sem->count = maxValue;
     #elif defined(__linux__) || defined(__APPLE__)
@@ -29,12 +28,12 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     if(sem->sem == SEM_FAILED)
     {
         free(sem);
-        vizconError("vcSemCreate", errno);
+        vizconError("vcSemCreate/vcSemCreateNamed", errno);
     }
     if(sem_unlink(name))
     {
         free(sem);
-        vizconError("vcSemCreate", errno);
+        vizconError("vcSemCreate/vcSemCreateNamed", errno);
     }
     sem->count = maxValue;
     #endif
@@ -46,15 +45,11 @@ void semSignal(CSSem* sem)
 {
     #if defined(_WIN32) // windows
     if(!ReleaseSemaphore(sem->sem, 1, NULL))
-    {
-        vizconError("vcSemSignal", GetLastError());
-    }
+        vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
     sem->count = sem->count + 1;
     #elif defined(__linux__) || defined(__APPLE__)
     if(sem_post(sem->sem))
-    {
-        vizconError("vcSemSignal", errno);
-    }
+        vizconError("vcSemSignal/vcSemSignalMult", errno);
     sem->count = sem->count + 1;
     #endif
 }
@@ -68,7 +63,7 @@ void semWait(CSSem* sem)
     {
         // WAIT_FAILED: OS-level error.
         case WAIT_FAILED:
-            vizconError("vcSemWait", GetLastError());
+            vizconError("vcSemWait/vcSemWaitMult", GetLastError());
         
         // WAIT_OBJECT_0: Success. Decrement the count.
         case WAIT_OBJECT_0:
@@ -78,18 +73,17 @@ void semWait(CSSem* sem)
         //                 This is only supposed to happen to mutexes,
         //                 but it's here for safety.
         case WAIT_ABANDONED:
-            vizconError("vcSemWait", 500);
+            vizconError("vcSemWait/vcSemWaitMult", VC_ERROR_ABANDONED);
         
         // WAIT_TIMEOUT - Thread was not available before timeout.
         //                This shouldn't happen, but it's here for safety.
         case WAIT_TIMEOUT:
-            vizconError("vcSemWait", 501);
+            vizconError("vcSemWait/vcSemWaitMult", VC_ERROR_TIMEOUT);
     }
     #elif defined(__linux__) || defined(__APPLE__)
     if(sem_wait(sem->sem))
-    {
-        vizconError("vcSemWait", errno);
-    }
+        vizconError("vcSemWait/vcSemWaitMult", errno);
+    
     #endif
 }
 
@@ -119,14 +113,14 @@ int semTryWait(CSSem* sem)
         //                 but it's here for safety.
         case WAIT_ABANDONED:
         {
-            vizconError("vcSemTrylock", 500);
+            vizconError("vcSemTrylock/vcSemTrylockMult", VC_ERROR_ABANDONED);
             return 0;
         }
         
         // WAIT_FAILED - OS-level error.
         case WAIT_FAILED:
         {
-            vizconError("vcSemTrylock", GetLastError());
+            vizconError("vcSemTrylock/vcSemTrylockMult", GetLastError());
             return 0;
         }
     }
@@ -149,7 +143,7 @@ int semTryWait(CSSem* sem)
         // Default - OS-level error. Just pass it on.
         default:
         {
-            vizconError("vcSemTrylock", ret);
+            vizconError("vcSemTrylock/vcSemTrylockMult", ret);
             return 0;
         }
     }
@@ -169,12 +163,14 @@ void semClose(CSSem* sem)
     #if defined(_WIN32) // windows
     if(!CloseHandle(sem->sem))
     {
+        // FIXME: Change referenced function.
         vizconError("vcSemClose", GetLastError());
     }
     free(sem);
     #elif defined(__linux__) || defined(__APPLE__)
     if(sem_close(sem->sem))
     {
+        // FIXME: Change referenced function.
         vizconError("vcSemClose", errno);
     }
     free(sem);

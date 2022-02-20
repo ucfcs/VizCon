@@ -4,9 +4,9 @@
 CSThread* createThread(threadFunc func, void *arg)
 {
 	// Attempts to create the Thread data type. If it fails, print an error
-    CSThread *thread = (CSThread*)malloc(sizeof(CSThread));
-	if (thread == NULL)
-		vizconError("vcThreadQueue", 8);
+    CSThread *thread = (CSThread*) malloc(sizeof(CSThread));
+    if (thread == NULL)
+        vizconError("vcThreadQueue/vcThreadQueueNamed", VC_ERROR_MEMORY);
 
     // Sets the next value in the linked list to NULL
     thread->next = NULL;
@@ -59,7 +59,7 @@ void joinThread(CSThread *thread)
     if (err)
     {
         free(thread);
-		vizconError("vcThreadStart/vcThreadReturn", err);
+        vizconError("vcThreadStart/vcThreadReturn", err);
     }
     #endif
 }
@@ -70,9 +70,7 @@ void freeThread(CSThread *thread)
     #if defined(_WIN32) 
 		// Attempts to close the thread. If it fails, print an error
         if (!CloseHandle(thread->thread))
-		{
-			vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-		}
+            vizconError("vcThreadStart/vcThreadReturn", GetLastError());
     #endif
 
     // Frees the struct
@@ -85,16 +83,14 @@ void startThread(CSThread* thread)
     #if defined(_WIN32) // windows
 	// Attempts to resume a thread. If it fails, print an error
     if (ResumeThread(thread->thread) == -1)
-    {
         vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-    }
     #elif defined(__APPLE__) || defined(__linux__)
 	// Attempts to create a pthread using the previously passed in parameters. If it fails, print an error
     int err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
     if (err)
     {
         free(thread);
-        vizconError("vcThreadQueue", err);
+        vizconError("vcThreadStart/vcThreadReturn", err);
     }
     #endif
 }

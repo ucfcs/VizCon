@@ -16,7 +16,20 @@
     #include <errno.h>
 #endif
 
-//Other functions
+// VizCon type codes used by vizconCreateName
+#define VC_TYPE_THREAD 0
+#define VC_TYPE_SEM 1
+#define VC_TYPE_MUTEX 2
+
+// VizCon error codes
+#define VC_ERROR_ABANDONED 500
+#define VC_ERROR_TIMEOUT 501
+#define VC_ERROR_MEMORY 502
+#define VC_ERROR_DOUBLEUNLOCK 510
+#define VC_ERROR_DOUBLELOCK 511
+#define VC_ERROR_CROSSTHREADUNLOCK 512
+
+// Function prototypes
 char* vizconCreateName(int type, int value);
 int vizconStringLength(char* name);
 void vizconError(char* func, int err);

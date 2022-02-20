@@ -14,14 +14,14 @@ void vcThreadQueue(threadFunc func, void *arg)
     // If there are no threads in the list, make the current thread the initial one
     if (vizconThreadList == NULL)
     {
-        thread->name = vizconCreateName(0, 0);
+        thread->name = vizconCreateName(VC_TYPE_THREAD, 0);
         thread->num = 0;
         vizconThreadListHead = thread;
         vizconThreadList = thread;
     }
     else
     {
-        thread->name = vizconCreateName(0, vizconThreadList->num + 1);
+        thread->name = vizconCreateName(VC_TYPE_THREAD, vizconThreadList->num + 1);
         thread->num = vizconThreadList->num + 1;
         vizconThreadList->next = thread;
         vizconThreadList = thread;
@@ -37,9 +37,8 @@ void vcThreadQueueNamed(threadFunc func, void *arg, char *name)
     // Attempts to allocate space for the thread name
     char *mallocName = (char*)malloc(sizeof(char) * (vizconStringLength(name) + 1));
     if (mallocName == NULL)
-    {
-        vizconError("vcThreadQueueNamed", 502);
-    }
+        vizconError("vcThreadQueueNamed", VC_ERROR_MEMORY);
+    
     sprintf(mallocName, "%s", name);
     thread->name = mallocName;
 
@@ -63,14 +62,10 @@ void vcThreadStart()
 {
     // If there are no threads in the list, return immediately
     if (vizconThreadListHead == NULL)
-    {
         return;
-    }
 
     // Begin all threads
     vizconThreadList = vizconThreadListHead;
-    
-
     while (vizconThreadList != NULL)
     {
         startThread(vizconThreadList);
@@ -79,7 +74,6 @@ void vcThreadStart()
 
     // Waits for all threads to complete
     vizconThreadList = vizconThreadListHead;
-    
     while (vizconThreadList != NULL)
     {
         joinThread(vizconThreadList);
@@ -100,7 +94,6 @@ THREAD_RET *vcThreadReturn()
 
     // Begin all threads and get the number of threads
     vizconThreadList = vizconThreadListHead;
-    
     while (vizconThreadList != NULL)
     {
         startThread(vizconThreadList);
@@ -112,7 +105,6 @@ THREAD_RET *vcThreadReturn()
 
     // Wait for all threads to complete and get return values
     vizconThreadList = vizconThreadListHead;
-
     i = 0;
     while (vizconThreadList != NULL)
     {
@@ -145,14 +137,14 @@ vcSem* vcSemCreate(int count)
     vcSem* sem;
     if(vizconSemList == NULL)
     {
-        sem = semCreate(vizconCreateName(1, 0), count);
+        sem = semCreate(vizconCreateName(VC_TYPE_SEM, 0), count);
         sem->num = 0;
         vizconSemListInitial = sem;
         vizconSemList = sem;
     }
     else
     {
-        sem = semCreate(vizconCreateName(1, vizconSemList->num + 1), count);
+        sem = semCreate(vizconCreateName(VC_TYPE_SEM, vizconSemList->num + 1), count);
         sem->num = vizconSemList->num + 1;
         vizconSemList->next = sem;
         vizconSemList = sem;
@@ -168,7 +160,7 @@ vcSem* vcSemCreateNamed(int count, char* name)
     char* mallocName = (char*)malloc(sizeof(char) * (vizconStringLength(name) + 1));
     if (mallocName == NULL) 
     {
-        vizconError("vcSemCreateNamed", 502);
+        vizconError("vcSemCreateNamed", VC_ERROR_MEMORY);
     }
     sprintf(mallocName, "%s", name);
     vcSem* sem = semCreate(mallocName, count);
