@@ -1,8 +1,9 @@
 #include "vcuserlibrary.h"
 
-
-// Lists used to track all threads and semaphores
+// Lists used to track all concurrency objects.
 CSThread *vizconThreadList, *vizconThreadListHead;
+CSSem *vizconSemList, *vizconSemListInitial;
+VCMutex *vizconMutexListHead, *vizconMutexListTail;
 
 // Create a thread instance with arguments
 void vcThreadQueue(threadFunc func, void *arg)

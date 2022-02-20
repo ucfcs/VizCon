@@ -4,8 +4,8 @@
 #endif
 
 // VizCon libraries.
-//#include "../useroverwrite.h"
-#include "../vcuserlibrary.h"
+//#include "../concurrency/useroverwrite.h"
+#include "../concurrency/vcuserlibrary.h"
 
 // Standard libraries.
 #include <stdio.h>

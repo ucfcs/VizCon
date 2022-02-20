@@ -12,7 +12,7 @@ Describe(Semaphores);
 // BeforeEach - Initialize objects used by multiple tests.
 BeforeEach(Semaphores)
 {
-    testSem = vcSemCreate("Test", 2);
+    testSem = vcSemCreate(2);
 }
 
 // create_first - 3 assertions.

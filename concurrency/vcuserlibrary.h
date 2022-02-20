@@ -2,14 +2,8 @@
 #include "semaphores.h"
 #include "mutexes.h"
 
-#define main userMain
+//#define main userMain
 #define vcSem CSSem
-
-// Lists used to track all threads and semaphores
-CSThread* vizconThreadList;
-CSThread* vizconThreadListInitial;
-CSSem* vizconSemList;
-CSSem* vizconSemListInitial;
 
 // Thread functions
 void vcThreadQueue(threadFunc func, void *arg);
@@ -19,8 +13,6 @@ void freeUserThreads();
 
 // Alternate function names.
 #define vcSemaphore CSSem
-#define vcSemCreate semCreate
-
 #define vcMutex VCMutex
 #define vcMutexLockCreate vcMutexCreate
 #define vcLock vcMutexLock
