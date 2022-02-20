@@ -113,6 +113,11 @@ void vizconError(char* func, int err)
                 errorMessage = "A semaphore was created with an invalid maximum permit value.";
                 break;
             }
+            case VC_ERROR_NAMEERROR:
+            {
+                errorMessage = "There was an error saving the internal mutex name.";
+                break;
+            }
             case VC_ERROR_DOUBLEUNLOCK:
             {
                 errorMessage = "A thread attempted to unlock an already-unlocked mutex.";

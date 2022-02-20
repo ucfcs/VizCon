@@ -1,18 +1,15 @@
 #include "mutexes.h"
 
-// Tracks the number of mutexes created without names.
-// This is used to generate internal names when needed.
-int genericNames = 0;
-
 // mutexCreate - Create a mutex struct with the given name.
 //               Returns: a pointer to the mutex struct.
 CSMutex* mutexCreate(char* name)
 {
-    // A name is required, so make one if the user doesn't provide it.
-    if(name == NULL)
+    // vcMutexCreate and vcMutexCreateNamed should ensure the mutex is named.
+    // If it somehow isn't, error out.
+    if (name == NULL)
     {
-        genericNames++;
-        name = vizconCreateName(VC_TYPE_MUTEX, genericMutexNames + 1);
+        vizconError("vcMutexCreate/vcMutexCreateNamed", VC_ERROR_NAMEERROR);
+        return NULL;
     }
 
     // Attempt to allocate the struct. Error out on failure.
@@ -29,7 +26,7 @@ CSMutex* mutexCreate(char* name)
         #endif
 
         free(mutex);
-        vizconError("vcMutexCreate", err);
+        vizconError("vcMutexCreate/vcMutexCreateNamed", err);
         return NULL;
     }
 
@@ -45,7 +42,7 @@ CSMutex* mutexCreate(char* name)
     {
         int err = (int) GetLastError();
         free(mutex);
-        vizconError("vcMutexCreate", err);
+        vizconError("vcMutexCreate/vcMutexCreateNamed", err);
         return NULL;
     }
 
@@ -55,7 +52,7 @@ CSMutex* mutexCreate(char* name)
     {
         int err = errno;
         free(mutex);
-        vizconError("vcMutexCreate", err);
+        vizconError("vcMutexCreate/vcMutexCreateNamed", err);
         return NULL;
     }
 
@@ -206,7 +203,7 @@ int mutexTryLock(CSMutex* mutex)
 
     #endif
 
-    return 0; // Supress "potential non-return" compiler warning.
+    return 0; // Suppress "potential non-return" compiler warning.
 }
 
 // mutexUnlock - Release a mutex lock.

@@ -274,24 +274,62 @@ int vcSemValue(vcSem* sem)
 
 // closeAllSemaphores()?
 
-// vcMutexCreate - Creates a mutex with the given name and adds it to the list.
+// vcMutexCreate - Create a mutex and add it to the list.
 //                 Returns: a pointer to the mutex list entry.
-VCMutex* vcMutexCreate(char* name)
+VCMutex* vcMutexCreate()
 {
     // Allocate the node and create the mutex.
     VCMutex* mutex = (VCMutex*) malloc(sizeof(VCMutex));
-    mutex->mutex = mutexCreate(name);
     mutex->next = NULL;
 
     // If the list is empty, set this as the head.
     if(vizconMutexListTail == NULL)
     {
+        mutex->num = 0;
+        mutex->name = vizconCreateName(VC_TYPE_MUTEX, 0);
+        mutex->mutex = mutexCreate(mutex->name);
         vizconMutexListHead = mutex;
         vizconMutexListTail = mutex;
     }
     // Otherwise, add it to the end of the list.
     else
     {
+        mutex->num = vizconMutexListTail->num + 1;
+        mutex->name = vizconCreateName(VC_TYPE_MUTEX, mutex->num);
+        mutex->mutex = mutexCreate(mutex->name);
+        vizconMutexListTail->next = mutex;
+        vizconMutexListTail = mutex;
+    }
+    return mutex;
+}
+
+// vcMutexCreateNamed - Create a mutex with the given name and add it to the list.
+//                      Returns: a pointer to the mutex list entry.
+VCMutex* vcMutexCreateNamed(char* name)
+{
+    // Attempt to allocate space for the mutex name.
+    char* mallocName = (char*) malloc(sizeof(char) * (vizconStringLength(name) + 1));
+    if (mallocName == NULL) 
+        vizconError("vcMutexCreateNamed", VC_ERROR_MEMORY);
+    sprintf(mallocName, "%s", name);
+
+    // Allocate the node and create the mutex.
+    VCMutex* mutex = (VCMutex*) malloc(sizeof(VCMutex));
+    mutex->name = mallocName;
+    mutex->mutex = mutexCreate(mallocName);
+    mutex->next = NULL;
+
+    // If the list is empty, set this as the head.
+    if(vizconMutexListTail == NULL)
+    {
+        mutex->num = 0;
+        vizconMutexListHead = mutex;
+        vizconMutexListTail = mutex;
+    }
+    // Otherwise, add it to the end of the list.
+    else
+    {
+        mutex->num = vizconMutexListTail->num + 1;
         vizconMutexListTail->next = mutex;
         vizconMutexListTail = mutex;
     }

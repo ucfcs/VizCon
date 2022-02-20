@@ -4,10 +4,11 @@
 
 #include "unit_test.h"
 
+#define CREATE_NAMED_TEST_SIZE 5
 #define ISOLATION_TEST_SIZE 5
 #define MASS_CLOSURE_TEST_SIZE 5
 
-vcMutex *testMutex;
+vcMutex *firstMutex;
 
 // Mutexes - The list of mutex tests begins below.
 Describe(Mutexes);
@@ -15,52 +16,82 @@ Describe(Mutexes);
 // BeforeEach - Initialize objects used by multiple tests.
 BeforeEach(Mutexes)
 {
-    testMutex = vcMutexCreate("Test");
+    firstMutex = vcMutexCreate();
     srand(time(NULL));
 }
 
-// create_first - 8 assertions.
+// create_first - 10 assertions.
 //                Ensure that the test mutex was properly made.
 Ensure(Mutexes, create_first)
 {
     // The mutex should not be null.
-    assert_that(testMutex, is_not_null);
+    assert_that(firstMutex, is_not_null);
 
     // The "next" property should be null since there are no others.
-    assert_that(testMutex->next, is_null);
+    assert_that(firstMutex->next, is_null);
+
+    // The ID should be 0, and the name should be "Mutex 0".
+    assert_that(firstMutex->num, is_equal_to(0));
+    assert_that(firstMutex->name, is_equal_to_string("Mutex 0"));
 
     // The contained "mutex" struct should not be null.
-    assert_that(testMutex->mutex, is_not_null);
+    assert_that(firstMutex->mutex, is_not_null);
 
     // The struct should have a mutex object, be available (true),
     // and have a holderID of 0.
-    assert_that(testMutex->mutex->mutex, is_not_null);
-    assert_that(testMutex->mutex->available, is_true);
-    assert_that(testMutex->mutex->holderID, is_equal_to(0));
+    assert_that(firstMutex->mutex->mutex, is_not_null);
+    assert_that(firstMutex->mutex->available, is_true);
+    assert_that(firstMutex->mutex->holderID, is_equal_to(0));
 
-    // The mutexListHead and mutexListTail values should both be testMutex.
-    assert_that(vizconMutexListHead, is_equal_to(testMutex));
-    assert_that(vizconMutexListTail, is_equal_to(testMutex));
+    // The mutexListHead and mutexListTail values should both be firstMutex.
+    assert_that(vizconMutexListHead, is_equal_to(firstMutex));
+    assert_that(vizconMutexListTail, is_equal_to(firstMutex));
 }
 
-// create_second - 6 assertions.
+// create_second - 7 assertions.
 //                 Create a second mutex and ensure it was properly made.
 Ensure(Mutexes, create_second)
 {
     // Create the mutex.
-    vcMutex* testMutex2 = vcMutexCreate("Test2");
+    vcMutex* secondMutex = vcMutexCreate();
 
     // The mutex should not be null.
-    assert_that(testMutex2, is_not_null);
+    assert_that(secondMutex, is_not_null);
 
-    // The "next" for testMutex should be testMutex2.
-    // The "next" for testMutex2 should be null since there are no others.
-    assert_that(testMutex->next, is_equal_to(testMutex2));
-    assert_that(testMutex2->next, is_null);
+    // The ID should be 1, and the name should be "Mutex 1".
+    assert_that(secondMutex->num, is_equal_to(1));
+    assert_that(secondMutex->name, is_equal_to_string("Mutex 1"));
+
+    // The "next" for firstMutex should be secondMutex.
+    // The "next" for secondMutex should be null since there are no others.
+    assert_that(firstMutex->next, is_equal_to(secondMutex));
+    assert_that(secondMutex->next, is_null);
 
     // Make sure the head and tail pointers point to the correct wrappers.
-    assert_that(vizconMutexListHead, is_equal_to(testMutex));
-    assert_that(vizconMutexListTail, is_equal_to(testMutex2));
+    assert_that(vizconMutexListHead, is_equal_to(firstMutex));
+    assert_that(vizconMutexListTail, is_equal_to(secondMutex));
+}
+
+// create_named - 3 assertions.
+//                Create a named mutex and ensure it was properly made.
+Ensure(Mutexes, create_named)
+{
+    // Create a random string of the specified length.
+    char str[CREATE_NAMED_TEST_SIZE + 1];
+    int i;
+    for(int i = 0; i < CREATE_NAMED_TEST_SIZE; i++)
+        str[i] = rand() % 26 + 'A';
+    str[CREATE_NAMED_TEST_SIZE] = '\0';
+
+    // Create the mutex.
+    vcMutex* secondMutex = vcMutexCreateNamed(str);
+
+    // The mutex should not be null.
+    assert_that(secondMutex, is_not_null);
+
+    // The ID should be 1, and the name should be "Mutex 1".
+    assert_that(secondMutex->num, is_equal_to(1));
+    assert_that(secondMutex->name, is_equal_to_string(str));
 }
 
 // status - 3 assertions.
@@ -68,15 +99,15 @@ Ensure(Mutexes, create_second)
 Ensure(Mutexes, status)
 {
     // Mutex starts unlocked. Status should be 1 (true).
-    assert_that(vcMutexStatus(testMutex), is_true);
+    assert_that(vcMutexStatus(firstMutex), is_true);
 
     // Lock the mutex. Status should now be 0 (false).
-    vcMutexLock(testMutex);
-    assert_that(vcMutexStatus(testMutex), is_false);
+    vcMutexLock(firstMutex);
+    assert_that(vcMutexStatus(firstMutex), is_false);
 
     // Unlock the mutex. Status should now be 1 (true).
-    vcMutexUnlock(testMutex);
-    assert_that(vcMutexStatus(testMutex), is_true);
+    vcMutexUnlock(firstMutex);
+    assert_that(vcMutexStatus(firstMutex), is_true);
 }
 
 // trylock_status - 6 assertions.
@@ -85,17 +116,17 @@ Ensure(Mutexes, trylock_status)
 {
     // Mutex starts unlocked.
     // vcMutexTrylock should lock and return 1. Then, mutex status should be 0.
-    assert_that(vcMutexTrylock(testMutex), is_true);
-    assert_that(vcMutexStatus(testMutex), is_false);
+    assert_that(vcMutexTrylock(firstMutex), is_true);
+    assert_that(vcMutexStatus(firstMutex), is_false);
 
     // vcMutexTrylock should now return 0. Mutex status should stay 0.
-    assert_that(vcMutexTrylock(testMutex), is_false);
-    assert_that(vcMutexStatus(testMutex), is_false);
+    assert_that(vcMutexTrylock(firstMutex), is_false);
+    assert_that(vcMutexStatus(firstMutex), is_false);
 
     // Unlock the mutex. vcMutexTrylock should now work again.
-    vcMutexUnlock(testMutex);
-    assert_that(vcMutexTrylock(testMutex), is_true);
-    assert_that(vcMutexStatus(testMutex), is_false);
+    vcMutexUnlock(firstMutex);
+    assert_that(vcMutexTrylock(firstMutex), is_true);
+    assert_that(vcMutexStatus(firstMutex), is_false);
 }
 
 // isolation - Variable number of assertions (ISOLATION_TEST_SIZE).
@@ -137,6 +168,7 @@ int main() {
     TestSuite *suite = create_test_suite();
     add_test_with_context(suite, Mutexes, create_first);
     add_test_with_context(suite, Mutexes, create_second);
+    add_test_with_context(suite, Mutexes, create_named);
     add_test_with_context(suite, Mutexes, status);
     add_test_with_context(suite, Mutexes, trylock_status);
     add_test_with_context(suite, Mutexes, isolation);
