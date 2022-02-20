@@ -1,6 +1,4 @@
 // Universal Libraries
-#include <stdio.h>
-#include <stdlib.h>
 #include "utils.h"
 
 // Platform dependent libraries
@@ -21,11 +19,6 @@ typedef struct CSThread
 } CSThread;
 
 #elif __linux__ || __APPLE__
-#include <pthread.h>
-#include <semaphore.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
 typedef void* (*threadFunc) (void* param);
 #define THREAD_FUNC_RET void*
 #define THREAD_RET void*

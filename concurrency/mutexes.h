@@ -1,18 +1,11 @@
-// Universal libraries
-#include <stdio.h>
-#include <stdlib.h>
-
 // Utils library
 #include "utils.h"
 
 // Platform-dependent libraries
 #ifdef _WIN32 // Windows version
-#include <windows.h>
 #define MUTEX_TYPE HANDLE
 #define THREAD_ID_TYPE DWORD
 #elif __linux__ || __APPLE__ // POSIX version
-#include <pthread.h>
-#include <errno.h>
 #define MUTEX_TYPE pthread_mutex_t*
 #define THREAD_ID_TYPE pthread_t
 #endif
