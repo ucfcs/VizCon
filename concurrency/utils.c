@@ -110,6 +110,9 @@ void vizconError(char* func, int err)
             }
             case VC_ERROR_BADCOUNT:
             {
+                errorMessage = "A semaphore was created with an invalid maximum permit value.";
+                break;
+            }
             case VC_ERROR_DOUBLEUNLOCK:
             {
                 errorMessage = "A thread attempted to unlock an already-unlocked mutex.";
@@ -130,6 +133,8 @@ void vizconError(char* func, int err)
         }
         sprintf(message, "vizcon error code %d: %s\n", err, errorMessage);
     }
+
+    // Print the message and leave.
     printf("%s", message);
     exit(0);
 }

@@ -144,6 +144,10 @@ void freeUserThreads()
 //               Returns: a pointer to the new semaphore.
 vcSem* vcSemCreate(int count)
 {
+    // Make sure the count is valid.
+    if (count <= 0)
+        vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
+
     // If there are no semaphores in the list, make the new semaphore the initial one.
     vcSem* sem;
     if(vizconSemList == NULL)
@@ -169,6 +173,10 @@ vcSem* vcSemCreate(int count)
 //                    Returns: a pointer to the new semaphore.
 vcSem* vcSemCreateNamed(int count, char* name)
 {
+    // Make sure the count is valid.
+    if (count <= 0)
+        vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
+
     // Attempt to allocate space for the semaphore name.
     char* mallocName = (char*) malloc(sizeof(char) * (vizconStringLength(name) + 1));
     if (mallocName == NULL) 
