@@ -48,8 +48,9 @@ int vizconStringLength(char* name)
 //Handles error from concurrencylib and vcuserlibrary
 void vizconError(char* func, int err)
 {
-    char message[200];
-    sprintf(message, "\nError from %s.\n", func);
+    int maxLen = 200;
+    char message[maxLen];
+    sprintf(message, "\nError from %s\n", func);
     #if defined(_WIN32) // windows
     LPSTR errorMessage;
     if(err < 500)
@@ -61,13 +62,15 @@ void vizconError(char* func, int err)
     char* errorMessage;
     if(err < 500)
     {
-        errorMessage = strerror(err);
-        sprintf(message, "%serrno", errorMessage);
+        sprintf(message, "%serrno code %d", message, err);
+        errno = err;
+        perror(message);
+        exit(0);
     }
     #endif
     if(err >= 500)
     {
-        printf("vizcon error ");
+        sprintf(message, "%svizcon error", message);
         switch(err)
         {
             case 500:

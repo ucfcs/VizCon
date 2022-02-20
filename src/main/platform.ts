@@ -89,7 +89,7 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
 ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [path, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
-  
+
   const commandString = `gcc -g ${files.join(' ')} -o ${outputFile}`;
   console.log(outputFile, commandString);
 
