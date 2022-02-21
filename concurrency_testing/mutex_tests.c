@@ -9,6 +9,8 @@
 #define MASS_CLOSURE_TEST_SIZE 5
 
 vcMutex *firstMutex;
+long long int lockTarget = 0;
+int lockFlag = 0;
 
 // Mutexes - The list of mutex tests begins below.
 Describe(Mutexes);
@@ -128,6 +130,69 @@ Ensure(Mutexes, create_named)
     assert_that(vizconMutexListTail, is_equal_to(secondMutex));
 }
 
+// lockThread - The thread used by the lock test.
+//              Parameter: int addend, int flagVal
+//              Adds the addend to the global lockTarget,
+//              but only if the global lockFlag is 0.
+//              Returns: an unused value.
+THREAD_RET lockThread(THREAD_PARAM param)
+{
+    // Recast the two parameters.
+    int* vals = param;
+    int addend = vals[0];
+    int flagVal = vals[1];
+
+    // Place the lock.
+    vcMutexLock(firstMutex);
+
+    // Check whether a flag is placed.
+    // If so, add the addend to lockTarget.
+    if(lockFlag == 0)
+    {
+        lockTarget += addend;
+        lockFlag = flagVal;
+    }
+
+    // System-dependent mutex unlock.
+    // Use the system unlock function instead of the VC version
+    // because the VC version hasn't been checked yet.
+    // Check the return value so we're informed if something went wrong.
+    #ifdef _WIN32 // Windows version
+        assert_that(ReleaseMutex(firstMutex->mutex->mutex), is_not_equal_to(0));
+    #elif __linux__ || __APPLE__ // POSIX version
+        assert_that(pthread_mutex_unlock(firstMutex->mutex->mutex), is_equal_to(0));
+    #endif
+
+    return 0;
+}
+
+// lock - 3 assertions (1 in each lockThread instance).
+//        Ensure that vcMutexLock works.
+Ensure(Mutexes, lock)
+{
+    // Create a 2-D array of argument pairs,
+    // then select a random one to go "first".
+    int args1[2] = {5, 1};
+    int args2[2] = {10, 2};
+    int* args[2] = {args1, args2};
+    int first = rand() % 2;
+
+    // Create two threads.
+    // Each will try to add a number (5 or 10) the lockTarget value.
+    // A lock will stop one, and when it is resumed,
+    // the continueThread flag will cause it to skip the addition.
+    // The randomized "first" index is used so the order is not guaranteed.
+    vcThreadQueue(lockThread, (THREAD_PARAM) args[first]);
+    vcThreadQueue(lockThread, (THREAD_PARAM) args[!first]);
+    vcThreadStart();
+
+    // When they finish, check that the one scheduled first got the lock.
+    if(lockFlag == 1)
+        assert_that(lockTarget, is_equal_to(5));
+    else if(lockFlag == 2)
+        assert_that(lockTarget, is_equal_to(10));
+}
+
 // status - 3 assertions.
 //          Ensure that vcMutexStatus works.
 Ensure(Mutexes, status)
@@ -197,7 +262,7 @@ AfterEach(Mutexes)
 }
 
 // End of the suite.
-// Total number of assertions: 39 + ISOLATION_TEST_SIZE
+// Total number of assertions: 42 + ISOLATION_TEST_SIZE
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
@@ -206,6 +271,7 @@ int main() {
     add_test_with_context(suite, Mutexes, create_first);
     add_test_with_context(suite, Mutexes, create_second);
     add_test_with_context(suite, Mutexes, create_named);
+    add_test_with_context(suite, Mutexes, lock);
     add_test_with_context(suite, Mutexes, status);
     add_test_with_context(suite, Mutexes, trylock_status);
     add_test_with_context(suite, Mutexes, isolation);
