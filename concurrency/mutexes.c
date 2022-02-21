@@ -16,18 +16,8 @@ CSMutex* mutexCreate(char* name)
     CSMutex* mutex = (CSMutex*) malloc(sizeof(CSMutex));
     if (mutex == NULL)
     {
-        // Platform-dependent error code retrieval.
-        #ifdef _WIN32 // Windows version
-        int err = GetLastError();
-
-        #elif __linux__ || __APPLE__ // POSIX version
-        int err = errno;
-        
-        #endif
-
-        free(mutex);
-        vizconError("vcMutexCreate/vcMutexCreateNamed", err);
-        return NULL;
+        vizconError("vcMutexCreate/vcMutexCreateNamed", VC_ERROR_MEMORY);
+        return 0;
     }
 
     // Set non-mutex properties.
