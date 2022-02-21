@@ -20,7 +20,7 @@ BeforeEach(Mutexes)
     srand(time(NULL));
 }
 
-// create_first - 10 assertions.
+// create_first - 11 assertions.
 //                Ensure that the test mutex was properly made.
 Ensure(Mutexes, create_first)
 {
@@ -43,13 +43,23 @@ Ensure(Mutexes, create_first)
     assert_that(firstMutex->mutex->available, is_true);
     assert_that(firstMutex->mutex->holderID, is_equal_to(0));
 
+    // Platform-dependent check that the internal mutex is available.
+    // Use the system trylock function instead of the VC version
+    // because the VC version hasn't been checked yet.
+    #ifdef _WIN32 // Windows version
+        assert_that(WaitForSingleObject(firstMutex->mutex->mutex, 0), is_equal_to(WAIT_OBJECT_0));
+    #elif __linux__ || __APPLE__ // POSIX version
+        assert_that(pthread_mutex_trylock(firstMutex->mutex->mutex), is_equal_to(0));
+    #endif
+
     // The mutexListHead and mutexListTail values should both be firstMutex.
     assert_that(vizconMutexListHead, is_equal_to(firstMutex));
     assert_that(vizconMutexListTail, is_equal_to(firstMutex));
 }
 
 // create_second - 7 assertions.
-//                 Create a second mutex and ensure it was properly made.
+//                 Create a second mutex. Ensure the name and ID are correct
+//                 and that the list variables are properly updated.
 Ensure(Mutexes, create_second)
 {
     // Create the mutex.
@@ -72,15 +82,18 @@ Ensure(Mutexes, create_second)
     assert_that(vizconMutexListTail, is_equal_to(secondMutex));
 }
 
-// create_named - 3 assertions.
-//                Create a named mutex and ensure it was properly made.
+// create_named - 12 assertions.
+//                Create a named mutex. Ensure that everything works
+//                like a normal vcMutexCreate and
+//                that the list variables are properly updated.
 Ensure(Mutexes, create_named)
 {
     // Create a random string of the specified length.
+    // The for loop can generate all ASCII characters except a null char.
     char str[CREATE_NAMED_TEST_SIZE + 1];
     int i;
     for(int i = 0; i < CREATE_NAMED_TEST_SIZE; i++)
-        str[i] = rand() % 26 + 'A';
+        str[i] = rand() % 126 + 1;
     str[CREATE_NAMED_TEST_SIZE] = '\0';
 
     // Create the mutex.
@@ -92,6 +105,27 @@ Ensure(Mutexes, create_named)
     // The ID should be 1, and the name should be "Mutex 1".
     assert_that(secondMutex->num, is_equal_to(1));
     assert_that(secondMutex->name, is_equal_to_string(str));
+
+    // The internal struct should be built in the same way as a vcMutexCreate.
+    assert_that(secondMutex->mutex, is_not_null);
+    assert_that(secondMutex->mutex->mutex, is_not_null);
+    assert_that(secondMutex->mutex->available, is_true);
+    assert_that(secondMutex->mutex->holderID, is_equal_to(0));
+
+    // Platform-dependent check that the internal mutex is available.
+    // Use the system trylock function instead of the VC version
+    // because the VC version hasn't been checked yet.
+    #ifdef _WIN32 // Windows version
+        assert_that(WaitForSingleObject(firstMutex->mutex->mutex, 0), is_equal_to(WAIT_OBJECT_0));
+    #elif __linux__ || __APPLE__ // POSIX version
+        assert_that(pthread_mutex_trylock(firstMutex->mutex->mutex), is_equal_to(0));
+    #endif
+
+    // The nexts and lists should be set in the same way as a vcMutexCreate.
+    assert_that(firstMutex->next, is_equal_to(secondMutex));
+    assert_that(secondMutex->next, is_null);
+    assert_that(vizconMutexListHead, is_equal_to(firstMutex));
+    assert_that(vizconMutexListTail, is_equal_to(secondMutex));
 }
 
 // status - 3 assertions.
@@ -161,6 +195,9 @@ AfterEach(Mutexes)
 {
     closeAllMutexes();
 }
+
+// End of the suite.
+// Total number of assertions: 39 + ISOLATION_TEST_SIZE
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
