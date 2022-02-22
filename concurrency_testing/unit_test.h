@@ -17,7 +17,7 @@
 
 // External functions and variables that users don't need but testers may find hepful.
 extern void closeAllMutexes();
-extern VCMutex* vizconMutexListHead;
-extern VCMutex* vizconMutexListTail;
+extern CSMutex* vizconMutexListHead;
+extern CSMutex* vizconMutexListTail;
 extern CSThread* vizconThreadList;
 extern CSThread* vizconThreadListHead;

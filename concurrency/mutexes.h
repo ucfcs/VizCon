@@ -14,8 +14,11 @@
 typedef struct CSMutex
 {
     MUTEX_TYPE mutex;        // Mutex object
+    char* name;              // Internal name.
+    int num;                 // Internal identifier.
     int available;           // Flags whether the mutex is currently available.
     THREAD_ID_TYPE holderID; // If locked, ID of thread that placed the lock.
+    struct CSMutex* next;    // The next mutex in the list.
 } CSMutex;
 
 // Function prototypes.

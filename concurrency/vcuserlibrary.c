@@ -3,7 +3,7 @@
 // Lists used to track all concurrency objects.
 CSThread *vizconThreadList, *vizconThreadListHead;
 CSSem *vizconSemList, *vizconSemListInitial;
-VCMutex *vizconMutexListHead, *vizconMutexListTail;
+CSMutex *vizconMutexListHead, *vizconMutexListTail;
 
 // vcThreadQueue - Prepare a thread instance with the function and arguments.
 //                 Automatically generate the thread name.
@@ -276,27 +276,27 @@ int vcSemValue(vcSem* sem)
 
 // vcMutexCreate - Create a mutex and add it to the list.
 //                 Returns: a pointer to the mutex list entry.
-VCMutex* vcMutexCreate()
+CSMutex* vcMutexCreate()
 {
-    // Allocate the node and create the mutex.
-    VCMutex* mutex = (VCMutex*) malloc(sizeof(VCMutex));
-    mutex->next = NULL;
+    // Define the mutex.
+    CSMutex* mutex;
 
-    // If the list is empty, set this as the head.
+    // The mutex name is dependent on whether the list is empty.
+    // Create the mutex once the appropriate name can be determined.
+    // Then, if the list is empty, set the new mutex as the head.
     if(vizconMutexListTail == NULL)
     {
+        mutex = mutexCreate(vizconCreateName(VC_TYPE_MUTEX, 0));
         mutex->num = 0;
-        mutex->name = vizconCreateName(VC_TYPE_MUTEX, 0);
-        mutex->mutex = mutexCreate(mutex->name);
         vizconMutexListHead = mutex;
         vizconMutexListTail = mutex;
     }
+
     // Otherwise, add it to the end of the list.
     else
     {
+        mutex = mutexCreate(vizconCreateName(VC_TYPE_MUTEX, vizconMutexListTail->num + 1));
         mutex->num = vizconMutexListTail->num + 1;
-        mutex->name = vizconCreateName(VC_TYPE_MUTEX, mutex->num);
-        mutex->mutex = mutexCreate(mutex->name);
         vizconMutexListTail->next = mutex;
         vizconMutexListTail = mutex;
     }
@@ -305,7 +305,7 @@ VCMutex* vcMutexCreate()
 
 // vcMutexCreateNamed - Create a mutex with the given name and add it to the list.
 //                      Returns: a pointer to the mutex list entry.
-VCMutex* vcMutexCreateNamed(char* name)
+CSMutex* vcMutexCreateNamed(char* name)
 {
     // Attempt to allocate space for the mutex name.
     char* mallocName = (char*) malloc(sizeof(char) * (vizconStringLength(name) + 1));
@@ -313,11 +313,8 @@ VCMutex* vcMutexCreateNamed(char* name)
         vizconError("vcMutexCreateNamed", VC_ERROR_MEMORY);
     sprintf(mallocName, "%s", name);
 
-    // Allocate the node and create the mutex.
-    VCMutex* mutex = (VCMutex*) malloc(sizeof(VCMutex));
-    mutex->name = mallocName;
-    mutex->mutex = mutexCreate(mallocName);
-    mutex->next = NULL;
+    // Create the mutex.
+    CSMutex* mutex = mutexCreate(mallocName);
 
     // If the list is empty, set this as the head.
     if(vizconMutexListTail == NULL)
@@ -326,6 +323,7 @@ VCMutex* vcMutexCreateNamed(char* name)
         vizconMutexListHead = mutex;
         vizconMutexListTail = mutex;
     }
+
     // Otherwise, add it to the end of the list.
     else
     {
@@ -338,30 +336,30 @@ VCMutex* vcMutexCreateNamed(char* name)
 
 // vcMutexLock - Obtain a lock on the mutex.
 //               If a lock is not available yet, wait until it is.
-void vcMutexLock(VCMutex* mutex)
+void vcMutexLock(CSMutex* mutex)
 {
-    mutexLock(mutex->mutex);
+    mutexLock(mutex);
 }
 
 // vcMutexTrylock - Try to obtain the mutex.
 //                  If it's unavailable, return without waiting.
 //                  Returns: 1 if the mutex was obtained, 0 otherwise.
-int vcMutexTrylock(VCMutex* mutex)
+int vcMutexTrylock(CSMutex* mutex)
 {
-    return mutexTryLock(mutex->mutex);
+    return mutexTryLock(mutex);
 }
 
 // vcMutexUnlock - Release a mutex lock.
-void vcMutexUnlock(VCMutex* mutex)
+void vcMutexUnlock(CSMutex* mutex)
 {
-    mutexUnlock(mutex->mutex);
+    mutexUnlock(mutex);
 }
 
 // vcMutexStatus - Check whether the mutex is available.
 //                 Returns: 1 if lock is available, 0 otherwise.
-int vcMutexStatus(VCMutex* mutex)
+int vcMutexStatus(CSMutex* mutex)
 {
-    return mutexStatus(mutex->mutex);
+    return mutexStatus(mutex);
 }
 
 // closeAllMutexes - Closes and destroys all mutex list entries.
@@ -373,8 +371,8 @@ void closeAllMutexes()
     while(vizconMutexListHead != NULL)
     {
         vizconMutexListTail = vizconMutexListHead->next;
-        mutexClose(vizconMutexListHead->mutex);
-        free(vizconMutexListHead);
+        free(vizconMutexListHead->name);
+        mutexClose(vizconMutexListHead);
         vizconMutexListHead = vizconMutexListTail;
     }    
 }

@@ -20,9 +20,14 @@ CSMutex* mutexCreate(char* name)
         return 0;
     }
 
-    // Set non-mutex properties.
+    // Set the mutex name.
+    mutex->name = (char*) name;
+
+    // Set other non-mutex properties to default values.
     mutex->available = 1;
     mutex->holderID = (THREAD_ID_TYPE) 0;
+    mutex->num = -1;
+    mutex->next = NULL;
 
     // Platform-dependent mutex creation.
     // Create a mutex with default settings. Error out where needed.

@@ -13,6 +13,7 @@ long long int lockTarget = 0;
 int lockFlag = 0;
 
 // Mutexes - The list of mutex tests begins below.
+//           Note that these tests assume that threading works correctly.
 Describe(Mutexes);
 
 // BeforeEach - Initialize objects used by multiple tests.
@@ -36,22 +37,17 @@ Ensure(Mutexes, create_first)
     assert_that(firstMutex->num, is_equal_to(0));
     assert_that(firstMutex->name, is_equal_to_string("Mutex 0"));
 
-    // The contained "mutex" struct should not be null.
-    assert_that(firstMutex->mutex, is_not_null);
-
-    // The struct should have a mutex object, be available (true),
-    // and have a holderID of 0.
-    assert_that(firstMutex->mutex->mutex, is_not_null);
-    assert_that(firstMutex->mutex->available, is_true);
-    assert_that(firstMutex->mutex->holderID, is_equal_to(0));
+    // The mutex should be available (true) and have a holderID of 0.
+    assert_that(firstMutex->available, is_true);
+    assert_that(firstMutex->holderID, is_equal_to(0));
 
     // Platform-dependent check that the internal mutex is available.
     // Use the system trylock function instead of the VC version
     // because the VC version hasn't been checked yet.
     #ifdef _WIN32 // Windows version
-        assert_that(WaitForSingleObject(firstMutex->mutex->mutex, 0), is_equal_to(WAIT_OBJECT_0));
+        assert_that(WaitForSingleObject(firstMutex->mutex, 0), is_equal_to(WAIT_OBJECT_0));
     #elif __linux__ || __APPLE__ // POSIX version
-        assert_that(pthread_mutex_trylock(firstMutex->mutex->mutex), is_equal_to(0));
+        assert_that(pthread_mutex_trylock(firstMutex->mutex), is_equal_to(0));
     #endif
 
     // The mutexListHead and mutexListTail values should both be firstMutex.
@@ -110,17 +106,17 @@ Ensure(Mutexes, create_named)
 
     // The internal struct should be built in the same way as a vcMutexCreate.
     assert_that(secondMutex->mutex, is_not_null);
-    assert_that(secondMutex->mutex->mutex, is_not_null);
-    assert_that(secondMutex->mutex->available, is_true);
-    assert_that(secondMutex->mutex->holderID, is_equal_to(0));
+    assert_that(secondMutex->mutex, is_not_null);
+    assert_that(secondMutex->available, is_true);
+    assert_that(secondMutex->holderID, is_equal_to(0));
 
     // Platform-dependent check that the internal mutex is available.
     // Use the system trylock function instead of the VC version
     // because the VC version hasn't been checked yet.
     #ifdef _WIN32 // Windows version
-        assert_that(WaitForSingleObject(firstMutex->mutex->mutex, 0), is_equal_to(WAIT_OBJECT_0));
+        assert_that(WaitForSingleObject(firstMutex->mutex, 0), is_equal_to(WAIT_OBJECT_0));
     #elif __linux__ || __APPLE__ // POSIX version
-        assert_that(pthread_mutex_trylock(firstMutex->mutex->mutex), is_equal_to(0));
+        assert_that(pthread_mutex_trylock(firstMutex->mutex), is_equal_to(0));
     #endif
 
     // The nexts and lists should be set in the same way as a vcMutexCreate.
@@ -158,9 +154,9 @@ THREAD_RET lockThread(THREAD_PARAM param)
     // because the VC version hasn't been checked yet.
     // Check the return value so we're informed if something went wrong.
     #ifdef _WIN32 // Windows version
-        assert_that(ReleaseMutex(firstMutex->mutex->mutex), is_not_equal_to(0));
+        assert_that(ReleaseMutex(firstMutex->mutex), is_not_equal_to(0));
     #elif __linux__ || __APPLE__ // POSIX version
-        assert_that(pthread_mutex_unlock(firstMutex->mutex->mutex), is_equal_to(0));
+        assert_that(pthread_mutex_unlock(firstMutex->mutex), is_equal_to(0));
     #endif
 
     return 0;
