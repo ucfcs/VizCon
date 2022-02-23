@@ -23,7 +23,7 @@ BeforeEach(Mutexes)
     srand(time(NULL));
 }
 
-// create_first - 11 assertions.
+// create_first - 9 assertions.
 //                Ensure that the test mutex was properly made.
 Ensure(Mutexes, create_first)
 {
@@ -162,7 +162,7 @@ THREAD_RET lockThread(THREAD_PARAM param)
     return 0;
 }
 
-// lock - 3 assertions (1 in each lockThread instance).
+// lock - 3 assertions (1 in test body, 1 in each lockThread instance).
 //        Ensure that vcMutexLock works.
 Ensure(Mutexes, lock)
 {
@@ -187,6 +187,22 @@ Ensure(Mutexes, lock)
         assert_that(lockTarget, is_equal_to(5));
     else if(lockFlag == 2)
         assert_that(lockTarget, is_equal_to(10));
+}
+
+// double_lock - 1 exception, 1 dummy assertion.
+//               Attempt to lock a locked mutex.
+//               This will result in an a vizcon error, code 511.
+Ensure(Mutexes, double_lock)
+{
+    // Lock the mutex. This should work fine.
+    vcMutexLock(firstMutex);
+
+    // Lock the mutex again. This should throw an error 511.
+    vcMutexLock(firstMutex);
+
+    // This is tautologically false.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
 }
 
 // status - 3 assertions.
@@ -258,7 +274,8 @@ AfterEach(Mutexes)
 }
 
 // End of the suite.
-// Total number of assertions: 42 + ISOLATION_TEST_SIZE
+// Total number of assertions: 40 + ISOLATION_TEST_SIZE
+// Total number of exceptions: 1
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
@@ -268,6 +285,7 @@ int main() {
     add_test_with_context(suite, Mutexes, create_second);
     add_test_with_context(suite, Mutexes, create_named);
     add_test_with_context(suite, Mutexes, lock);
+    add_test_with_context(suite, Mutexes, double_lock);
     add_test_with_context(suite, Mutexes, status);
     add_test_with_context(suite, Mutexes, trylock_status);
     add_test_with_context(suite, Mutexes, isolation);
