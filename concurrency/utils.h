@@ -1,5 +1,7 @@
-#ifndef UTILS_H
-#define UTILS_H
+// If using MSYS to test on Windows, make sure the Windows branches are taken.
+#ifdef __MSYS__
+#define _WIN32
+#endif
 
 // Universal libraries
 #include <stdio.h>
@@ -31,9 +33,10 @@
 #define VC_ERROR_DOUBLELOCK 511
 #define VC_ERROR_CROSSTHREADUNLOCK 512
 
+// Other constants
+#define MAX_ERROR_MESSAGE_LENGTH 200
+
 // Function prototypes
 char* vizconCreateName(int type, int value);
 int vizconStringLength(char* name);
 void vizconError(char* func, int err);
-
-#endif

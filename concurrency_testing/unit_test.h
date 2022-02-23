@@ -1,8 +1,3 @@
-// If using MSYS to test on Windows, make sure the Windows branches are taken.
-#ifdef __MSYS__
-#define _WIN32
-#endif
-
 // VizCon libraries.
 //#include "../concurrency/useroverwrite.h"
 #include "../concurrency/vcuserlibrary.h"
