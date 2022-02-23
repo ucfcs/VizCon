@@ -217,7 +217,7 @@ THREAD_RET unlockThread(THREAD_PARAM param)
     {
         if(lockFlag == 1)
             assert_that(lockTarget, is_equal_to(5));
-        else if(lockFlag == 2)
+        else
             assert_that(lockTarget, is_equal_to(10));
     }
 
@@ -254,22 +254,6 @@ Ensure(Mutexes, unlock)
     assert_that(lockTarget, is_equal_to(15));
 }
 
-// double_lock - 1 exception, 1 dummy assertion.
-//               Attempt to lock a locked mutex.
-//               This will result in an a vizcon error, code 511.
-Ensure(Mutexes, double_lock)
-{
-    // Lock the mutex. This should work fine.
-    vcMutexLock(firstMutex);
-
-    // Lock the mutex again. This should throw an error 511.
-    vcMutexLock(firstMutex);
-
-    // This is tautologically false.
-    // If it's reported, then the program didn't close correctly.
-    assert_that(0, is_true);
-}
-
 // status - 3 assertions.
 //          Ensure that vcMutexStatus works.
 Ensure(Mutexes, status)
@@ -286,9 +270,9 @@ Ensure(Mutexes, status)
     assert_that(vcMutexStatus(firstMutex), is_true);
 }
 
-// trylock_status - 6 assertions.
-//                  Ensure that vcMutexTrylock works.
-Ensure(Mutexes, trylock_status)
+// trylock - 6 assertions.
+//           Ensure that vcMutexTrylock works.
+Ensure(Mutexes, trylock)
 {
     // Mutex starts unlocked.
     // vcMutexTrylock should lock and return 1. Then, mutex status should be 0.
@@ -303,6 +287,49 @@ Ensure(Mutexes, trylock_status)
     vcMutexUnlock(firstMutex);
     assert_that(vcMutexTrylock(firstMutex), is_true);
     assert_that(vcMutexStatus(firstMutex), is_false);
+}
+
+// double_lock - 1 assertion, 1 skipped assertion, 1 exception.
+//               Attempt to lock a locked mutex in the same thread.
+//               This will result in an a vizcon error, code 511.
+Ensure(Mutexes, double_lock)
+{
+    // Lock the mutex. This should work fine.
+    vcMutexLock(firstMutex);
+
+    // Tautological truth.
+    // This is to make sure the first unlock worked.
+    assert_that(1, is_true);
+
+    // Lock the mutex again. This should throw an error 511.
+    vcMutexLock(firstMutex);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
+// double_unlock - 1 assertion, 1 skipped assertion, 1 exception.
+//                 Attempt to unlock an unlocked mutex.
+//                 This will result in an a vizcon error, code 510.
+Ensure(Mutexes, double_unlock)
+{
+    // Lock the mutex.
+    vcMutexLock(firstMutex);
+
+    // Lock the mutex. This should work fine.
+    vcMutexUnlock(firstMutex);
+
+    // Tautological truth.
+    // This is to make sure the first unlock worked.
+    assert_that(1, is_true);
+
+    // Lock the mutex again. This should throw an error 510.
+    vcMutexUnlock(firstMutex);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
 }
 
 // isolation - Variable number of assertions (ISOLATION_TEST_SIZE).
@@ -339,7 +366,7 @@ AfterEach(Mutexes)
 }
 
 // End of the suite.
-// Total number of assertions: 43 + ISOLATION_TEST_SIZE
+// Total number of assertions: 45 + ISOLATION_TEST_SIZE
 // Total number of exceptions: 1
 
 // main - Initialize and run the suite.
@@ -351,9 +378,10 @@ int main() {
     add_test_with_context(suite, Mutexes, create_named);
     add_test_with_context(suite, Mutexes, lock);
     add_test_with_context(suite, Mutexes, unlock);
-    add_test_with_context(suite, Mutexes, double_lock);
     add_test_with_context(suite, Mutexes, status);
-    add_test_with_context(suite, Mutexes, trylock_status);
+    add_test_with_context(suite, Mutexes, trylock);
+    add_test_with_context(suite, Mutexes, double_lock);
+    add_test_with_context(suite, Mutexes, double_unlock);
     add_test_with_context(suite, Mutexes, isolation);
     return run_test_suite(suite, create_text_reporter());
 }
