@@ -61,29 +61,34 @@ int vizconStringLength(char* name)
 void vizconError(char* func, int err)
 {
     // Start building the message string.
-    char message[200];
+    char message[MAX_ERROR_MESSAGE_LENGTH];
     sprintf(message, "\nError from %s.\n", func);
 
     // Platform-dependent error decoding.
     // If the error is less than 500, it's not from our library.
     // Get the corresponding string from the system's error descriptions.
-    #if defined(_WIN32) // Windows version
+    // Then, append it to the end of the message string and set a 
+    #ifdef _WIN32 // Windows version
     LPSTR errorMessage;
     if(err < 500)
     {
         FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&errorMessage, 0, NULL);
-        sprintf(message, "%ssystem error", errorMessage);
+        sprintf(message + strlen(message), "system error %d: %s", err, errorMessage);
+        message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
+        printf("%s", message);
+        exit(err);
     }
 
-    #elif defined(__linux__) || defined(__APPLE__) // POSIX version
+    #elif __linux__ || __APPLE__ // POSIX version
     char* errorMessage;
     if(err < 500)
     {
-        sprintf(errorMessage, "%serrno code %d", message, err);
-        printf("%s", errorMessage);
         errno = err;
-        perror(message);
-        exit(0);
+        errorMessage = strerror(err);
+        sprintf(message + strlen(message), "errno code %d: %s", err, errorMessage);
+        message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
+        printf("%s\n", message);
+        exit(err);
     }
     #endif
 
@@ -136,10 +141,11 @@ void vizconError(char* func, int err)
             default:
                 errorMessage = "An unknown error has occurred.";
         }
-        sprintf(message, "vizcon error code %d: %s\n", err, errorMessage);
     }
 
     // Print the message and leave.
-    printf("%s", message);
-    exit(0);
+    sprintf(message + strlen(message), "vizcon error code %d: %s\n", err, errorMessage);
+    message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
+    printf("%s\n", message);
+    exit(err);
 }
