@@ -13,19 +13,20 @@ CSThread* createThread(threadFunc func, void *arg)
     thread->next = NULL;
     thread->name = NULL;
     thread->num = -1;
-    thread->returnVal = NULL;
 
-    // Platform-dependent thread definition.
+    // Platform-dependent thread and return value definition.
     #if defined(_WIN32) // Windows version
         // Create the thread in a suspended state.
         // It will be woken up by a vcThreadStart or vcThreadReturn.
         thread->thread = CreateThread(NULL, 0, func, arg, CREATE_SUSPENDED, 0);
+        thread->returnVal = 0;
 
     #elif defined(__APPLE__) || defined(__linux__) // POSIX version
         // POSIX cannot create suspended threads, so save everything for later.
         // The thread will be created by a vcThreadStart or vcThreadReturn.
         thread->func = func;
         thread->arg = arg;
+        thread->returnVal = NULL;
 
     #endif
     
