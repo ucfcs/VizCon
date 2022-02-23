@@ -189,6 +189,71 @@ Ensure(Mutexes, lock)
         assert_that(lockTarget, is_equal_to(10));
 }
 
+// unlockThread - The thread used by the unlock test.
+//                Parameter: int addend, int flagVal
+//                Add the addend to the global lockTarget,
+//                but also make sure that the previous thread has finished.
+//                Returns: an unused value.
+THREAD_RET unlockThread(THREAD_PARAM param)
+{
+    // Recast the two parameters.
+    int* vals = param;
+    int addend = vals[0];
+    int flagVal = vals[1];
+
+    // Place the lock.
+    vcMutexLock(firstMutex);
+
+    // Check whether a flag is placed.
+    // If not, add the addend to lockTarget.
+    if(lockFlag == 0)
+    {
+        assert_that(lockTarget, is_equal_to(0));
+        lockFlag = flagVal;
+    }
+
+    // If so, check that the value is correct.
+    else
+    {
+        if(lockFlag == 1)
+            assert_that(lockTarget, is_equal_to(5));
+        else if(lockFlag == 2)
+            assert_that(lockTarget, is_equal_to(10));
+    }
+
+    // Add the addend to indicate it got this far.
+    lockTarget += addend;
+
+    // Remove the lock.
+    vcMutexUnlock(firstMutex);
+
+    return 0;
+}
+
+// unlock - 3 assertions (1 in test body, 1 in each lockThread instance).
+//          Ensure that vcMutexUnlock works.
+Ensure(Mutexes, unlock)
+{
+    // Create a 2-D array of argument pairs,
+    // then select a random one to go "first".
+    int args1[2] = {5, 1};
+    int args2[2] = {10, 2};
+    int* args[2] = {args1, args2};
+    int first = rand() % 2;
+
+    // Create two threads.
+    // Each will try to add a number (5 or 10) the lockTarget value.
+    // A lock will stop one, and when it is resumed,
+    // the continueThread flag will cause it to skip the addition.
+    // The randomized "first" index is used so the order is not guaranteed.
+    vcThreadQueue(unlockThread, (THREAD_PARAM) args[first]);
+    vcThreadQueue(unlockThread, (THREAD_PARAM) args[!first]);
+    vcThreadStart();
+
+    // When they finish, check that both got to make the edit.
+    assert_that(lockTarget, is_equal_to(15));
+}
+
 // double_lock - 1 exception, 1 dummy assertion.
 //               Attempt to lock a locked mutex.
 //               This will result in an a vizcon error, code 511.
@@ -274,7 +339,7 @@ AfterEach(Mutexes)
 }
 
 // End of the suite.
-// Total number of assertions: 40 + ISOLATION_TEST_SIZE
+// Total number of assertions: 43 + ISOLATION_TEST_SIZE
 // Total number of exceptions: 1
 
 // main - Initialize and run the suite.
@@ -285,6 +350,7 @@ int main() {
     add_test_with_context(suite, Mutexes, create_second);
     add_test_with_context(suite, Mutexes, create_named);
     add_test_with_context(suite, Mutexes, lock);
+    add_test_with_context(suite, Mutexes, unlock);
     add_test_with_context(suite, Mutexes, double_lock);
     add_test_with_context(suite, Mutexes, status);
     add_test_with_context(suite, Mutexes, trylock_status);
