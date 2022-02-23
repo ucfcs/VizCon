@@ -329,6 +329,43 @@ Ensure(Mutexes, double_unlock)
     assert_that(0, is_true);
 }
 
+// crossUnlockThread - The thread used by the cross_unlock test.
+//                     Parameter: an unused value.
+//                     Attempts to unlock the mutex locked by the spawner.
+//                     Returns: an unused value.
+THREAD_RET crossUnlockThread(THREAD_PARAM param)
+{
+    // Platform-dependent thread check.
+    // Verify that this thread didn't place the lock.
+    #ifdef _WIN32 // Windows version
+        assert_that(GetCurrentThreadId(), is_not_equal_to(firstMutex->holderID));
+    #elif __linux__ || __APPLE__ // POSIX version
+        assert_that(pthread_self(), is_not_equal_to(firstMutex->holderID));
+    #endif
+
+    // Unlock the mutex. This should throw an error 512.
+    vcMutexUnlock(firstMutex);
+    return 0;
+}
+
+// cross_unlock - 1 assertion, 1 skipped assertion, 1 exception.
+//                Attempt to unlock an mutex locked by another thread.
+//                This will result in an a vizcon error, code 512.
+Ensure(Mutexes, cross_unlock)
+{
+    // Lock the mutex.
+    vcMutexLock(firstMutex);
+
+    // Create a thread that will try to unlock the mutex.
+    // It should encounter an error.
+    vcThreadQueue(crossUnlockThread, NULL);
+    vcThreadStart();
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
 // isolation - Variable number of assertions (ISOLATION_TEST_SIZE).
 //             Ensure that changing one mutex doesn't change another.
 Ensure(Mutexes, isolation)
@@ -363,8 +400,8 @@ AfterEach(Mutexes)
 }
 
 // End of the suite.
-// Total number of assertions: 45 + ISOLATION_TEST_SIZE
-// Total number of exceptions: 1
+// Total number of assertions: 46 + ISOLATION_TEST_SIZE
+// Total number of exceptions: 3
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
@@ -379,6 +416,7 @@ int main() {
     add_test_with_context(suite, Mutexes, trylock);
     add_test_with_context(suite, Mutexes, double_lock);
     add_test_with_context(suite, Mutexes, double_unlock);
+    add_test_with_context(suite, Mutexes, cross_unlock);
     add_test_with_context(suite, Mutexes, isolation);
     return run_test_suite(suite, create_text_reporter());
 }
