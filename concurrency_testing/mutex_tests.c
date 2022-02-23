@@ -297,9 +297,13 @@ Ensure(Mutexes, double_lock)
     // Lock the mutex. This should work fine.
     vcMutexLock(firstMutex);
 
-    // Tautological truth.
-    // This is to make sure the first unlock worked.
-    assert_that(1, is_true);
+    // Platform-dependent thread check.
+    // Verify that this thread placed the lock.
+    #ifdef _WIN32 // Windows version
+        assert_that(GetCurrentThreadId(), is_equal_to(firstMutex->holderID));
+    #elif __linux__ || __APPLE__ // POSIX version
+        assert_that(pthread_self(), is_equal_to(firstMutex->holderID));
+    #endif
 
     // Lock the mutex again. This should throw an error 511.
     vcMutexLock(firstMutex);
@@ -314,17 +318,10 @@ Ensure(Mutexes, double_lock)
 //                 This will result in an a vizcon error, code 510.
 Ensure(Mutexes, double_unlock)
 {
-    // Lock the mutex.
-    vcMutexLock(firstMutex);
+    // Verify that the mutex is unlocked.
+    assert_that(vcMutexStatus(firstMutex), is_true);
 
-    // Lock the mutex. This should work fine.
-    vcMutexUnlock(firstMutex);
-
-    // Tautological truth.
-    // This is to make sure the first unlock worked.
-    assert_that(1, is_true);
-
-    // Lock the mutex again. This should throw an error 510.
+    // Unlock the mutex. This should throw an error 510.
     vcMutexUnlock(firstMutex);
 
     // Tautological falsehood.
