@@ -117,7 +117,7 @@ ipcMain.handle('_temp_launchProgram', (e, path: string) => {
   return new Promise((resolve, reject) => {
     // TODO: use executable path
     console.log(`Current directory: ${cwd()}`);
-    child = child_process.spawn('python', ['script.py'])
+    child = child_process.spawn('python', ['script.py', 'race-test.exe'])
     child.on('close', (code) => {
         console.log(`child process exited with code ${code}`);
     });

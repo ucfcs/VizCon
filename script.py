@@ -6,7 +6,13 @@ import os
 import sys
 
 # Set the path to the executable to debug
-exe = "race-test.exe"
+if len(sys.argv) < 2:
+    print("Invalid usage", file=sys.stderr)
+    sys.exit(1)
+exe = sys.argv[1]
+visualizerMode = True
+if (len(sys.argv) >= 3 and sys.argv[2] == 'no_visualizer'):
+    visualizerMode = False
 
 # TODO
 ogprint = print
@@ -14,6 +20,8 @@ def print(*args, **kwargs):
     ogprint(*args, file=sys.stderr, **kwargs)
 
 def waitForVisualizer():
+    if not visualizerMode:
+        return
     lineIn = sys.stdin.readline()
     objIn = json.loads(lineIn)
 def respondToVisualizer(msg):
@@ -21,8 +29,19 @@ def respondToVisualizer(msg):
     sys.stdout.write("\n")
     sys.stdout.flush()
 def isUserCode(thread):
-    line = thread.GetFrameAtIndex(0).GetLineEntry()
-    return line.IsValid() and "race-test.c" in line.GetFileSpec().GetFilename()
+    frame = thread.GetFrameAtIndex(0)
+    line = frame.GetLineEntry()
+    if not line.IsValid():
+        return False
+
+    if target.GetExecutable() != frame.GetModule().GetFileSpec():
+        return False
+    file = line.GetFileSpec().GetFilename()
+    # TODO: keep this updated
+    if "lldb_lib.c" in file:
+        return False
+    return True
+
 os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(True)
 # Create a new debugger instance
 debugger = lldb.SBDebugger.Create()
@@ -139,6 +158,7 @@ if target:
             sys.exit(0)
         else:
             if not isUserCode(running_thread):
+                print("Special stepout from", running_thread.GetFrameAtIndex(0))
                 running_thread.StepOut()
         printed_lines = []
         for t in process:

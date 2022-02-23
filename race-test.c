@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <windows.h>
 #include "lldb_lib.h"
 
 struct vcSem *counter_sem;
@@ -44,6 +43,5 @@ int real_main(void)
 	vcJoin(thread1, &ret_from_thread1);
 	vcJoin(thread2, &ret_from_thread2);
 	printf("Done. Counter is %d\n", counter);
-	//Sleep(5000);
 	return 0;
 }
