@@ -5,7 +5,6 @@ import json
 import os
 import sys
 
-# Set the path to the executable to debug
 if len(sys.argv) < 2:
     print("Invalid usage", file=sys.stderr)
     sys.exit(1)
@@ -15,9 +14,8 @@ if (len(sys.argv) >= 3 and sys.argv[2] == 'no_visualizer'):
     visualizerMode = False
 
 # TODO
-ogprint = print
-def print(*args, **kwargs):
-    ogprint(*args, file=sys.stderr, **kwargs)
+def debug_print(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 def waitForVisualizer():
     if not visualizerMode:
@@ -52,13 +50,12 @@ debugger = lldb.SBDebugger.Create()
 debugger.SetAsync(False)
 
 # Create a target from a file and arch
-print("Creating a target for " + exe)
+debug_print("Creating a target for " + exe)
 
 #target = debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
 target = debugger.CreateTarget(exe)
 interleave_log = open("interleave_log.txt", "w")
 
-# verbose: print("Target", target)
 verbose = False
 
 if target:
@@ -84,57 +81,38 @@ if target:
             main_thread = t
 
     thread_man = ThreadManager(main_thread)
-    main_vars = main_thread.GetFrameAtIndex(0).GetVariables(False, False, True, True)
-    print("Searched vars", main_thread.GetFrameAtIndex(0))
-    for var in main_vars:
-        print("Global", var)
+
     running_thread = main_thread
     chosen_cthread = None
     def getThreads():
         for thread in thread_man.getManagedThreads():
             yield thread['thread']
     ignore_set = set()
-    print("-----------------------------------")
     respondToVisualizer({'type': 'hello'})
     while True:
         if process.state == lldb.eStateExited:
-            print("Process state is", process)
+            debug_print("Process state is", process)
             break
 
         waitForVisualizer()
         chosen_cthread = thread_man.chooseThread()
         
         if chosen_cthread is None:
-            print("Ready list is empty! No more runnable threads! Deadlock?")
-            print(running_thread.GetFrameAtIndex(0).EvaluateExpression("counter"))
+            debug_print("Ready list is empty! No more runnable threads! Deadlock?")
+            respondToVisualizer({'type': 'error', 'error': 'ready list is empty'})
             sys.exit(1)
         running_thread = chosen_cthread['thread']
         interleave_log.write(chosen_cthread['pthread_id']+"\n")
         for t in getThreads():
             t.Suspend()
-        #for t in process:
-        #    print("Thread in process", t.is_suspended, t)
+
         running_thread.Resume()
         if running_thread.GetThreadID() in ignore_set:
             ignore_set.remove(running_thread.GetThreadID())
 
-        line = running_thread.GetFrameAtIndex(0).GetLineEntry()
-        current_function = running_thread.GetFrameAtIndex(0).GetFunction().GetDisplayName()
-        if verbose:
-            print("Stepping instruction", line, current_function)
         running_thread.StepInstruction(False)
         current_function = running_thread.GetFrameAtIndex(0).GetFunction().GetDisplayName()
-        if current_function == 'vcJoin' or current_function == 'vcWait' or current_function == 'vcSignal' or current_function == 'vcCreateSemaphore' or current_function == 'vc_internal_init' or current_function == 'doCreateThread':
-            if verbose:
-                print("Stepping out of vcJoin")
-            running_thread.StepOut()
-            if verbose:
-                print("Done stepping out. maybe.", running_thread.GetFrameAtIndex(0).GetFunction().GetDisplayName())
-                print(running_thread.stop_reason, running_thread.stop_reason ==  lldb.eStopReasonBreakpoint)
-        #     print("You are in vcJoin!")
-        #     thread_val = running_thread.GetFrameAtIndex(0).FindVariable("thread")
-        #     print(thread_val, thread_val.GetValueAsUnsigned())
-        elif current_function == 'vc_internal_thread_wrapper':
+        if current_function == 'vc_internal_thread_wrapper':
             # TODO: much more cleanup is needed!
             # for example, remove it from managed threads
             # it probably can't be in ignore set but remove it from that anyway
@@ -150,15 +128,14 @@ if target:
             # but it probably doesn't matter
         elif current_function == 'main':
             # TODO: what if other threads are still running?
-            print("Main function exited.")
-            print(running_thread.GetFrameAtIndex(0).EvaluateExpression("counter"))
+            debug_print("Main function exited.")
             interleave_log.write("End.\n")
             interleave_log.close()
             respondToVisualizer({'type': 'process_end'})
             sys.exit(0)
         else:
             if not isUserCode(running_thread):
-                print("Special stepout from", running_thread.GetFrameAtIndex(0))
+                debug_print("Special stepout from", running_thread.GetFrameAtIndex(0))
                 running_thread.StepOut()
         printed_lines = []
         for t in process:
@@ -190,24 +167,21 @@ if target:
             if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcJoin_bp.GetID():
                 if t.GetThreadID() in ignore_set:
                     if verbose:
-                        print("Ignoring a thread")
+                        debug_print("Ignoring a thread")
                     continue
                 thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
-                #verbose: print("You joined on", thread_val)
-                
                 ignore_set.add(t.GetThreadID())
                 thread_man.onJoin(t, thread_val)
             if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == thread_bp.GetID():
                 if t.GetThreadID() in ignore_set:
                     if verbose:
-                        print("Ignoring a thread that already hit thread_bp")
+                        debug_print("Ignoring a thread that already hit thread_bp")
                     continue
-                #verbose: print(t, "is stopped because of the thread breakpoint")
                 pthread_id = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
                 for other_thread in getThreads():
                     if other_thread != t:
                         if verbose:
-                            print("Temporarily suspending other thread", other_thread)
+                            debug_print("Temporarily suspending other thread", other_thread)
                         other_thread.Suspend()
                 thread_man.onCreateThread({'thread': t, 'pthread_id': pthread_id})
                 t.StepOut()
@@ -222,16 +196,6 @@ if target:
                 ignore_set.add(t.GetThreadID())
         if chosen_cthread is not None:
             frame = running_thread.GetFrameAtIndex(0)
-            #globals = frame.get_statics()
-            #arguments = frame.get_arguments()
-            #locals = frame.get_locals()
-            #print("Variables:")
-            #for frame_var in globals:
-            #    print("\t(Global)",frame_var)
-            #for frame_var in arguments:
-            #    print("\t(Argument)",frame_var)
-            #for frame_var in locals:
-            #    print("\t(Local)",frame_var)
             thread_list = []
             for thread in thread_man.getManagedThreads():
                 thread_state = thread['state']
