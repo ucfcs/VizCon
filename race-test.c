@@ -8,15 +8,15 @@
 struct vcSem *counter_sem;
 int counter;
 
-void *function(void *parameter)
+void *thread_function(void *parameter)
 {
 	int *threadid = parameter;
 	for (int i = 0; i < 10; i++) {
-		vcWait(counter_sem);
+		//vcWait(counter_sem);
 		//counter++;
 		int local = counter;
 		counter = local + 1;
-		vcSignal(counter_sem);
+		//vcSignal(counter_sem);
 	}
 	return NULL;
 }
@@ -36,9 +36,9 @@ int real_main(void)
 	int thread2id = 2;
 
 	printf("Before create\n");
-	doCreateThread(&thread1, function, &thread1id);
+	doCreateThread(&thread1, thread_function, &thread1id);
 	printf("After create #1\n");
-	doCreateThread(&thread2, function, &thread2id);
+	doCreateThread(&thread2, thread_function, &thread2id);
 	printf("After create #2\n");
 
 	vcJoin(thread1, &ret_from_thread1);

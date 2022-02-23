@@ -20,7 +20,9 @@ def respondToVisualizer(msg):
     sys.stdout.write(json.dumps(msg))
     sys.stdout.write("\n")
     sys.stdout.flush()
-
+def isUserCode(thread):
+    line = thread.GetFrameAtIndex(0).GetLineEntry()
+    return line.IsValid() and "race-test.c" in line.GetFileSpec().GetFilename()
 os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(True)
 # Create a new debugger instance
 debugger = lldb.SBDebugger.Create()
@@ -50,9 +52,6 @@ if target:
 
     vcWait_bp = target.BreakpointCreateByName ("vcWait", target.GetExecutable().GetFilename())
     vcSignal_bp = target.BreakpointCreateByName ("vcSignal", target.GetExecutable().GetFilename())
-
-    # TODO: This is kind of cheating. Fixme
-    user_thread_bp = target.BreakpointCreateByName ("function", target.GetExecutable().GetFilename())
 
     # Launch the process. Since we specified synchronous mode, we won't return
     # from this function until we hit the breakpoint at main
@@ -139,11 +138,7 @@ if target:
             respondToVisualizer({'type': 'process_end'})
             sys.exit(0)
         else:
-            line = running_thread.GetFrameAtIndex(0).GetLineEntry()
-            isOurs = line.IsValid() and "race-test.c" in line.GetFileSpec().GetFilename()
-            if not isOurs:
-                #print("Stepi into line", line, running_thread.GetFrameAtIndex(0))
-                #print("Stepping out of it")
+            if not isUserCode(running_thread):
                 running_thread.StepOut()
         printed_lines = []
         for t in process:
@@ -195,18 +190,16 @@ if target:
                             print("Temporarily suspending other thread", other_thread)
                         other_thread.Suspend()
                 thread_man.onCreateThread({'thread': t, 'pthread_id': pthread_id})
+                t.StepOut()
+                while True:
+                    if isUserCode(t):
+                        break
+                    t.StepInstruction(False)
+                for t2 in getThreads():
+                    t2.Suspend()
+                running_thread.Resume()
                 process.Continue()
-                if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == user_thread_bp.GetID():
-                    if verbose:
-                        print("User thread function hit successfully")
-                        print(running_thread.stop_reason == lldb.eStopReasonNone, running_thread)
-                    for t2 in getThreads():
-                        t2.Suspend()
-                    running_thread.Resume()
-                    process.Continue()
-                    ignore_set.add(t.GetThreadID())
-                else:
-                    print("Unknown stop while trying to hit user thread function!")
+                ignore_set.add(t.GetThreadID())
         if chosen_cthread is not None:
             frame = running_thread.GetFrameAtIndex(0)
             #globals = frame.get_statics()
