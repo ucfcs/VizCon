@@ -272,7 +272,19 @@ int vcSemValue(vcSem* sem)
     return semValue(sem);
 }
 
-// closeAllSemaphores()?
+// closeAllSemaphores - Close and destroy all semaphores.
+//                      For use in vcThreadStart and vcThreadReturn.
+void closeAllSemaphores()
+{
+    // Keep removing the list head until the whole list is empty.
+    while(vizconSemListHead != NULL)
+    {
+        vizconSemList = vizconSemListHead->next;
+        free(vizconSemListHead->name);
+        semClose(vizconSemListHead);
+        vizconSemListHead = vizconSemList;
+    }
+}
 
 // vcMutexCreate - Create a mutex and add it to the list.
 //                 Returns: a pointer to the mutex list entry.
