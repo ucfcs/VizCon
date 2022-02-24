@@ -6,7 +6,6 @@
 
 #define CREATE_NAMED_TEST_SIZE 5
 #define ISOLATION_TEST_SIZE 5
-#define MASS_CLOSURE_TEST_SIZE 5
 
 vcMutex *firstMutex;
 long long int lockTarget = 0;
@@ -52,7 +51,7 @@ Ensure(Mutexes, create_first)
 
     // The mutexListHead and mutexListTail values should both be firstMutex.
     assert_that(vizconMutexListHead, is_equal_to(firstMutex));
-    assert_that(vizconMutexListTail, is_equal_to(firstMutex));
+    assert_that(vizconMutexList, is_equal_to(firstMutex));
 }
 
 // create_second - 7 assertions.
@@ -77,10 +76,10 @@ Ensure(Mutexes, create_second)
 
     // Make sure the head and tail pointers point to the correct wrappers.
     assert_that(vizconMutexListHead, is_equal_to(firstMutex));
-    assert_that(vizconMutexListTail, is_equal_to(secondMutex));
+    assert_that(vizconMutexList, is_equal_to(secondMutex));
 }
 
-// create_named - 12 assertions.
+// create_named - 11 assertions.
 //                Create a named mutex. Ensure that everything works
 //                like a normal vcMutexCreate and
 //                that the list variables are properly updated.
@@ -106,7 +105,6 @@ Ensure(Mutexes, create_named)
 
     // The internal struct should be built in the same way as a vcMutexCreate.
     assert_that(secondMutex->mutex, is_not_null);
-    assert_that(secondMutex->mutex, is_not_null);
     assert_that(secondMutex->available, is_true);
     assert_that(secondMutex->holderID, is_equal_to(0));
 
@@ -123,7 +121,7 @@ Ensure(Mutexes, create_named)
     assert_that(firstMutex->next, is_equal_to(secondMutex));
     assert_that(secondMutex->next, is_null);
     assert_that(vizconMutexListHead, is_equal_to(firstMutex));
-    assert_that(vizconMutexListTail, is_equal_to(secondMutex));
+    assert_that(vizconMutexList, is_equal_to(secondMutex));
 }
 
 // lockThread - The thread used by the lock test.
@@ -149,7 +147,7 @@ THREAD_RET lockThread(THREAD_PARAM param)
         lockFlag = flagVal;
     }
 
-    // System-dependent mutex unlock.
+    // Platform-dependent mutex unlock.
     // Use the system unlock function instead of the VC version
     // because the VC version hasn't been checked yet.
     // Check the return value so we're informed if something went wrong.
@@ -400,7 +398,7 @@ AfterEach(Mutexes)
 }
 
 // End of the suite.
-// Total number of assertions: 46 + ISOLATION_TEST_SIZE
+// Total number of assertions: 45 + ISOLATION_TEST_SIZE
 // Total number of exceptions: 3
 
 // main - Initialize and run the suite.

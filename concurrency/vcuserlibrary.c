@@ -1,9 +1,9 @@
 #include "vcuserlibrary.h"
 
-// Lists used to track all concurrency objects.
-CSThread *vizconThreadList, *vizconThreadListHead;
-CSSem *vizconSemList, *vizconSemListInitial;
-CSMutex *vizconMutexListHead, *vizconMutexListTail;
+// Pointers used to track all concurrency objects.
+CSThread *vizconThreadListHead, *vizconThreadList;
+CSSem    *vizconSemListHead,    *vizconSemList;
+CSMutex  *vizconMutexListHead,  *vizconMutexList;
 
 // vcThreadQueue - Prepare a thread instance with the function and arguments.
 //                 Automatically generate the thread name.
@@ -108,7 +108,7 @@ THREAD_RET *vcThreadReturn()
     }
 
     // Allocate the array of return values.
-    THREAD_RET *arr = (THREAD_RET*) malloc(sizeof(THREAD_RET) * i);
+    THREAD_RET* arr = (THREAD_RET*) malloc(sizeof(THREAD_RET) * i);
 
     // Wait for all threads to complete and save the return values.
     vizconThreadList = vizconThreadListHead;
@@ -154,7 +154,7 @@ vcSem* vcSemCreate(int count)
     {
         sem = semCreate(vizconCreateName(VC_TYPE_SEM, 0), count);
         sem->num = 0;
-        vizconSemListInitial = sem;
+        vizconSemListHead = sem;
         vizconSemList = sem;
     }
 
@@ -189,7 +189,7 @@ vcSem* vcSemCreateNamed(int count, char* name)
     if(vizconSemList == NULL)
     {
         sem->num = 0;
-        vizconSemListInitial = sem;
+        vizconSemListHead = sem;
         vizconSemList = sem;
     }
 
@@ -284,21 +284,21 @@ CSMutex* vcMutexCreate()
     // The mutex name is dependent on whether the list is empty.
     // Create the mutex once the appropriate name can be determined.
     // Then, if the list is empty, set the new mutex as the head.
-    if(vizconMutexListTail == NULL)
+    if(vizconMutexList == NULL)
     {
         mutex = mutexCreate(vizconCreateName(VC_TYPE_MUTEX, 0));
         mutex->num = 0;
         vizconMutexListHead = mutex;
-        vizconMutexListTail = mutex;
+        vizconMutexList = mutex;
     }
 
     // Otherwise, add it to the end of the list.
     else
     {
-        mutex = mutexCreate(vizconCreateName(VC_TYPE_MUTEX, vizconMutexListTail->num + 1));
-        mutex->num = vizconMutexListTail->num + 1;
-        vizconMutexListTail->next = mutex;
-        vizconMutexListTail = mutex;
+        mutex = mutexCreate(vizconCreateName(VC_TYPE_MUTEX, vizconMutexList->num + 1));
+        mutex->num = vizconMutexList->num + 1;
+        vizconMutexList->next = mutex;
+        vizconMutexList = mutex;
     }
     return mutex;
 }
@@ -317,19 +317,19 @@ CSMutex* vcMutexCreateNamed(char* name)
     CSMutex* mutex = mutexCreate(mallocName);
 
     // If the list is empty, set this as the head.
-    if(vizconMutexListTail == NULL)
+    if(vizconMutexList == NULL)
     {
         mutex->num = 0;
         vizconMutexListHead = mutex;
-        vizconMutexListTail = mutex;
+        vizconMutexList = mutex;
     }
 
     // Otherwise, add it to the end of the list.
     else
     {
-        mutex->num = vizconMutexListTail->num + 1;
-        vizconMutexListTail->next = mutex;
-        vizconMutexListTail = mutex;
+        mutex->num = vizconMutexList->num + 1;
+        vizconMutexList->next = mutex;
+        vizconMutexList = mutex;
     }
     return mutex;
 }
@@ -362,17 +362,16 @@ int vcMutexStatus(CSMutex* mutex)
     return mutexStatus(mutex);
 }
 
-// closeAllMutexes - Closes and destroys all mutex list entries.
-//                   For use in vcWaitForCompletion and vcWaitForReturn.
-//                   FIXME: This probably belongs in a different file.
+// closeAllMutexes - Close and destroy all mutexes.
+//                   For use in vcThreadStart and vcThreadReturn.
 void closeAllMutexes()
 {
     // Keep removing the list head until the whole list is empty.
     while(vizconMutexListHead != NULL)
     {
-        vizconMutexListTail = vizconMutexListHead->next;
+        vizconMutexList = vizconMutexListHead->next;
         free(vizconMutexListHead->name);
         mutexClose(vizconMutexListHead);
-        vizconMutexListHead = vizconMutexListTail;
-    }    
+        vizconMutexListHead = vizconMutexList;
+    }
 }
