@@ -29,5 +29,4 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue); // Creates a semaphore.
 void semWait(CSSem* sem);                            // Waits for a permit.
 int semTryWait(CSSem* sem);                          // Tries to get a permit without waiting.
 void semSignal(CSSem* sem);                          // Signals the semaphore.
-int semValue(CSSem* sem);                            // Gets the current value.
 void semClose(CSSem* sem);                           // Closes the semaphore and frees memory.

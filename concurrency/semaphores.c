@@ -179,13 +179,6 @@ void semSignal(CSSem* sem)
     #endif
 }
 
-// semValue - Get the number of available permits.
-//            Returns: an integer representing the above.
-int semValue(CSSem* sem)
-{
-    return sem->count;
-}
-
 // semClose - Close the semaphore and free the associated struct.
 void semClose(CSSem* sem)
 {
