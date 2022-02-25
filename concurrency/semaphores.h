@@ -1,10 +1,12 @@
+// Utilities library
 #include "utils.h"
 
-#ifdef _WIN32 // window's libraries and definitions
+// Platform-dependent libraries and definitions.
+#ifdef _WIN32
     #define SEM_TYPE HANDLE
     #define SEM_NAME LPCSTR
     #define SEM_VALUE LONG
-#elif __linux__ || __APPLE__ //Linux and MacOS's libraries and definitions
+#elif __linux__ || __APPLE__
     #include <semaphore.h>
     #include <fcntl.h>
     #define SEM_TYPE sem_t*
@@ -12,19 +14,20 @@
     #define SEM_VALUE unsigned int
 #endif
 
-// concurrency simulator semaphore structure
-typedef struct CSSem {
-    SEM_TYPE sem;
-    char* name;
-    int num;
-    SEM_VALUE count;
-    struct CSSem* next;
+// CSSem - A wrapper for the system's semaphore type.
+typedef struct CSSem
+{
+    SEM_TYPE sem;       // Semaphore object.
+    char* name;         // Internal name.
+    int num;            // Internal identifier.
+    SEM_VALUE count;    // The semaphore's current value.
+    struct CSSem* next; // The next semaphore in the global list.
 } CSSem;
 
-//Semaphore functions
-CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue);
-void semSignal(CSSem* sem);
-void semWait(CSSem* sem);
-int semTryWait(CSSem* sem);
-int semValue(CSSem* sem);
-void semClose(CSSem* sem);
+// Function prototypes
+CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue); // Creates a semaphore.
+void semWait(CSSem* sem);                            // Waits for a permit.
+int semTryWait(CSSem* sem);                          // Tries to get a permit without waiting.
+void semSignal(CSSem* sem);                          // Signals the semaphore.
+int semValue(CSSem* sem);                            // Gets the current value.
+void semClose(CSSem* sem);                           // Closes the semaphore and frees memory.

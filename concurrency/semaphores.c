@@ -1,147 +1,208 @@
 #include "semaphores.h"
 
-//Create a CSSem
+// semCreate - Create a semaphore with the given name and max value.
+//             Returns: a pointer to the semaphore struct.
 CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
 {
-    if(name == NULL)
+    // vcSemCreate and vcSemCreateNamed should ensure the mutex is named.
+    // If it somehow isn't, error out.
+    if (name == NULL)
     {
+        vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_NAMEERROR);
         return NULL;
     }
-    CSSem* sem = (CSSem*)malloc(sizeof(CSSem));
+
+    // Attempt to allocate the struct. Error out on failure.
+    CSSem* sem = (CSSem*) malloc(sizeof(CSSem));
     if (sem == NULL) 
-    {
-        vizconError("vcSemCreate", 502);
-    }
+        vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_MEMORY);
+    
+    // Set non-semaphore properties.
     sem->next = NULL;
-    sem->name = (char*)name;
+    sem->name = (char*) name;
     sem->num = -1;
-    #if defined(_WIN32) // windows
-    sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, name);
-    if(sem->sem == NULL)
-    {
-        int err = (int)GetLastError();
-        free(sem);
-        vizconError("vcSemCreate", err);
-    }
-    sem->count = maxValue;
-    #elif defined(__linux__) || defined(__APPLE__)
-    sem->sem = sem_open(name, O_CREAT | O_EXCL, 0644, maxValue);
-    if(sem->sem == SEM_FAILED)
-    {
-        free(sem);
-        vizconError("vcSemCreate", errno);
-    }
-    if(sem_unlink(name))
-    {
-        free(sem);
-        vizconError("vcSemCreate", errno);
-    }
-    sem->count = maxValue;
+    
+    // Platform-dependent semaphore creation.
+    // Create a mutex with default settings. Error out where needed.
+    #ifdef _WIN32 // Windows version
+        sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, name);
+        if(sem->sem == NULL)
+        {
+            int err = (int) GetLastError();
+            free(sem);
+            vizconError("vcSemCreate/vcSemCreateNamed", err);
+            return NULL;
+        }
+        sem->count = maxValue;
+    #elif __linux__ || __APPLE__ // POSIX version
+        // Use sem_open to create a named semaphore, which macOS requires.
+        sem->sem = sem_open(name, O_CREAT | O_EXCL, 0644, maxValue);
+        if(sem->sem == SEM_FAILED)
+        {
+            free(sem);
+            vizconError("vcSemCreate/vcSemCreateNamed", errno);
+        }
+        if(sem_unlink(name))
+        {
+            free(sem);
+            vizconError("vcSemCreate/vcSemCreateNamed", errno);
+        }
+        sem->count = maxValue;
     #endif
+    
     return sem;
 }
 
-//Releases 1 permit from semaphore and increment its count
-void semSignal(CSSem* sem)
-{
-    #if defined(_WIN32) // windows
-    if(!ReleaseSemaphore(sem->sem, 1, NULL))
-    {
-        vizconError("vcSemSignal", GetLastError());
-    }
-    sem->count = sem->count + 1;
-    #elif defined(__linux__) || defined(__APPLE__)
-    if(sem_post(sem->sem))
-    {
-        vizconError("vcSemSignal", errno);
-    }
-    sem->count = sem->count + 1;
-    #endif
-}
-
-//Waits for semaphore to become available, attaining 1 permit from semaphore and decrementing its count
+// semWait - Wait for sem to become available.
+//           When it is, attain 1 permit and decrement its count
 void semWait(CSSem* sem)
 {
-    #if defined(_WIN32) // windows
-    DWORD ret = WaitForSingleObject(sem->sem, INFINITE);
-    if(ret == WAIT_FAILED)
-    {
-        vizconError("vcSemWait", GetLastError());
-    }
-    else if(ret == WAIT_OBJECT_0)
-    {
+    // Platform-dependent waiting.
+    #ifdef _WIN32 // Windows version
+        DWORD ret = WaitForSingleObject(sem->sem, INFINITE);
+        switch(ret)
+        {
+            // WAIT_FAILED: OS-level error.
+            case WAIT_FAILED:
+            {
+                vizconError("vcSemWait/vcSemWaitMult", GetLastError());
+                break;
+            }
+            
+            // WAIT_OBJECT_0: Success. Decrement the count.
+            case WAIT_OBJECT_0:
+            {
+                sem->count = sem->count - 1;
+                break;
+            }
+
+            // WAIT_ABANDONED: A thread with a permit closed before returning it.
+            //                 This is only supposed to happen to mutexes,
+            //                 but it's here for safety.
+            case WAIT_ABANDONED:
+            {
+                vizconError("vcSemWait/vcSemWaitMult", VC_ERROR_ABANDONED);
+                break;
+            }
+            
+            // WAIT_TIMEOUT - Thread was not available before timeout.
+            //                This shouldn't happen, but it's here for safety.
+            case WAIT_TIMEOUT:
+            {
+                vizconError("vcSemWait/vcSemWaitMult", VC_ERROR_TIMEOUT);
+                break;
+            }
+        }
+    #elif __linux__ || __APPLE__ // POSIX version
+        if(sem_wait(sem->sem))
+            vizconError("vcSemWait/vcSemWaitMult", errno);
         sem->count = sem->count - 1;
-    }
-    else if(ret == WAIT_ABANDONED)
-    {
-        vizconError("vcSemWait", 500);
-    }
-    else if (ret == WAIT_TIMEOUT)
-    {
-        vizconError("vcSemWait", 501);
-    }
-    #elif defined(__linux__) || defined(__APPLE__)
-    if(sem_wait(sem->sem))
-    {
-        vizconError("vcSemWait", errno);
-    }
     #endif
 }
 
-//Try to attain 1 permit from semaphore and decrement its count
-//Returns immediately if semaphore has no remaining permits at time of call
-//returns 1 if available, else 0
+// semTryWait - Try to obtain the semaphore.
+//              If it's unavailable, return without waiting.
+//              Returns: 1 if permit was available, 0 otherwise.
 int semTryWait(CSSem* sem)
 {
-    #if defined(_WIN32) // windows
-    DWORD ret = WaitForSingleObject(sem->sem, 0);
-    if(ret == WAIT_FAILED)
-    {
-        vizconError("vcSemTryWait", GetLastError());
-    }
-    else if(ret == WAIT_OBJECT_0)
-    {
-        sem->count = sem->count - 1;
-        return 1;
-    }
-    else if(ret == WAIT_ABANDONED)
-    {
-        vizconError("vcSemTryWait", 500);
-    }
-    #elif defined(__linux__) || defined(__APPLE__)
-    if(!sem_trywait(sem->sem))
-    {
-        sem->count = sem->count - 1;
-        return 1;
-    }
-    else if(errno != EAGAIN)
-    {
-        vizconError("vcSemTryWait", errno);
-    }
+    // Platform-dependent trywaiting.
+    #if defined(_WIN32) // Windows version
+        DWORD ret = WaitForSingleObject(sem->sem, 0);
+        switch(ret)
+        {
+            // WAIT_OBJECT_0 - No error. Decrement the counter.
+            case WAIT_OBJECT_0:
+            {
+                sem->count = sem->count - 1;
+                return 1;
+            }
+
+            // WAIT_TIMEOUT - Semaphore was not available before timeout.
+            //                Since timeout is 0, this means it has no permits.
+            case WAIT_TIMEOUT:
+                return 0;
+            
+            // WAIT_ABANDONED: A thread with a permit closed before returning it.
+            //                 This is only supposed to happen to mutexes,
+            //                 but it's here for safety.
+            case WAIT_ABANDONED:
+            {
+                vizconError("vcSemTrylock/vcSemTrylockMult", VC_ERROR_ABANDONED);
+                return 0;
+            }
+            
+            // WAIT_FAILED - OS-level error.
+            case WAIT_FAILED:
+            {
+                vizconError("vcSemTrylock/vcSemTrylockMult", GetLastError());
+                return 0;
+            }
+        }
+    #elif __linux__ || __APPLE__ // POSIX version
+        int ret = sem_trywait(sem->sem);
+        // 0 - Success. Mark mutex as unavailable.
+        if(!ret)
+        {
+            sem->count = sem->count - 1;
+            return 1;
+        }
+        else switch(errno)
+        {
+            // EAGAIN - Semaphore currently has no permits. Just leave.
+            case EAGAIN:
+                return 0;
+
+            // Default - OS-level error. Just pass it on.
+            default:
+            {
+                vizconError("vcSemTrylock/vcSemTrylockMult", ret);
+                return 0;
+            }
+        }
     #endif
+    
     return 0;
 }
 
-//Returns semaphore's current value
+// semSignal - Release 1 permit from sem and increment its count.
+void semSignal(CSSem* sem)
+{
+    // Platform-dependent senaphore release.
+    #ifdef _WIN32 // Windows version
+        if(!ReleaseSemaphore(sem->sem, 1, NULL))
+            vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
+        sem->count = sem->count + 1;
+    #elif __linux__ || __APPLE__ // POSIX version
+        if(sem_post(sem->sem))
+            vizconError("vcSemSignal/vcSemSignalMult", errno);
+        sem->count = sem->count + 1;
+    #endif
+}
+
+// semValue - Get the number of available permits.
+//            Returns: an integer representing the above.
 int semValue(CSSem* sem)
 {
     return sem->count;
 }
 
-//Frees all data associated with a CSSem type, including itself
+// semClose - Close the semaphore and free the associated struct.
 void semClose(CSSem* sem)
 {
-    #if defined(_WIN32) // windows
-    if(!CloseHandle(sem->sem))
-    {
-        vizconError("vcSemClose", GetLastError());
-    }
-    free(sem);
-    #elif defined(__linux__) || defined(__APPLE__)
-    if(sem_close(sem->sem))
-    {
-        vizconError("vcSemClose", errno);
-    }
-    free(sem);
+    // Platform-dependent closure and memory management.
+    #ifdef _WIN32 // Windows version.
+        if(!CloseHandle(sem->sem))
+        {
+            // FIXME: Change referenced function.
+            vizconError("vcSemClose", GetLastError());
+        }
+        free(sem);
+    #elif __linux__ || __APPLE__ // POSIX version.
+        if(sem_close(sem->sem))
+        {
+            // FIXME: Change referenced function.
+            vizconError("vcSemClose", errno);
+        }
+        free(sem);
     #endif
 }

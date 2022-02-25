@@ -1,48 +1,56 @@
+// Concurrency libraries
 #include "threads.h"
 #include "semaphores.h"
 #include "mutexes.h"
 
-#define main userMain
-#define vcSem CSSem
+// Redefinition of the user's main function.
+// May be needed to start integration with LLDB.
+//#define main userMain
 
-// Lists used to track all threads and semaphores
-CSThread* vizconThreadList;
-CSThread* vizconThreadListInitial;
-CSSem* vizconSemList;
-CSSem* vizconSemListInitial;
+// User type definitions
+#define vcSem CSSem*
+#define vcSemaphore CSSem*
+#define vcMutex CSMutex*
 
-// Thread functions
-void vcThreadQueue(threadFunc func, void *arg);
-void vcThreadStart();
-THREAD_RET *vcThreadReturn();
-
-// Alternate function names.
+// Alternate function names
+#define vcAcquire vcSemWait
+#define vcAcquireMult vcSemWaitMult
+#define vcP vcSemWait
+#define vcPMult vcSemWaitMult
+#define vcRelease vcSemSignal
+#define vcReleaseMult vcSemSignalMult
+#define vcV vcSemSignal
+#define vcVMult vcSemSignalMult
 #define vcMutexLockCreate vcMutexCreate
+#define vcMutexLockCreateNamed vcMutexCreateNamed
 #define vcLock vcMutexLock
 #define vcUnlock vcMutexUnlock
 #define vcLockAvailable vcMutexStatus
 
-// VCMutex - A node for a mutex in the global mutex list.
-typedef struct VCMutex
-{
-    CSMutex* mutex;       // The corresponding mutex.
-    struct VCMutex* next; // The next mutex in the list.
-} VCMutex;
+// User thread functions
+void vcThreadQueue(threadFunc func, void *arg);                  // Queues a thread.
+void vcThreadQueueNamed(threadFunc func, void *arg, char *name); // Queues a thread with the name.
+void vcThreadStart();                                            // Starts all threads.
+void** vcThreadReturn();                                         // Starts all threads and returns their values.
 
-//Semaphore functions
-vcSem* vcSemCreate(int count);
-vcSem* vcSemCreateNamed(int count, char* name);
-void vcSemWait(vcSem* sem);
-void vcSemWaitMult(vcSem* sem, int num);
-int vcSemTryWait(vcSem* sem);
-int vcSemTryWaitMult(vcSem* sem, int num);
-void vcSemSignal(vcSem* sem);
-void vcSemSignalMult(vcSem* sem, int num);
-int vcSemValue(vcSem* sem);
+// User semaphore functions
+vcSem vcSemCreate(int count);                  // Creates a semaphore.
+vcSem vcSemCreateNamed(int count, char* name); // Creates a semaphore with the name.
+void vcSemWait(vcSem sem);                     // Waits for availability, then takes one permit.
+void vcSemWaitMult(vcSem sem, int num);        // Waits for availability, then takes multiple permits.
+int vcSemTryWait(vcSem sem);                   // Attempts to take one permit without waiting.
+int vcSemTryWaitMult(vcSem sem, int num);      // Attempts to take multiple permits without waiting.
+void vcSemSignal(vcSem sem);                   // Returns one permit.
+void vcSemSignalMult(vcSem sem, int num);      // Returns multiple permits.
+int vcSemValue(vcSem sem);                     // Returns the number of available permits.
 
-// Mutex functions
-VCMutex* vcMutexCreate(char* name); // Creates a VCMutex with the given name.
-void vcMutexLock(VCMutex* mutex);   // Waits for availability, then locks.
-int vcMutexTrylock(VCMutex* mutex); // Attempts to lock without waiting.
-void vcMutexUnlock(VCMutex* mutex); // Unlocks mutex.
-int vcMutexStatus(VCMutex* mutex);  // Returns whether the mutex is available.
+// User mutex functions
+vcMutex vcMutexCreate();                // Creates a mutex.
+vcMutex vcMutexCreateNamed(char* name); // Creates a mutex with the name.
+void vcMutexLock(vcMutex mutex);        // Waits for availability, then locks.
+int vcMutexTrylock(vcMutex mutex);      // Attempts to lock without waiting.
+void vcMutexUnlock(vcMutex mutex);      // Unlocks the mutex.
+int vcMutexStatus(vcMutex mutex);       // Returns whether mutex is available.
+
+// Other user functions
+void vcHalt(int exitCode); // Immediately frees all concurrency objects and exits.
