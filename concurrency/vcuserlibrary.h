@@ -31,7 +31,9 @@ typedef struct VCMutex
 
 //Semaphore functions
 vcSem* vcSemCreate(int count);
+vcSem* vcSemCreateInitial(int initialCount, int maxCount);
 vcSem* vcSemCreateNamed(int count, char* name);
+vcSem* vcSemCreateInitialNamed(int initialCount, int maxCount, char* name);
 void vcSemWait(vcSem* sem);
 void vcSemWaitMult(vcSem* sem, int num);
 int vcSemTryWait(vcSem* sem);

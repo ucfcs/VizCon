@@ -26,5 +26,4 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue);
 void semSignal(CSSem* sem);
 void semWait(CSSem* sem);
 int semTryWait(CSSem* sem);
-int semValue(CSSem* sem);
 void semClose(CSSem* sem);
