@@ -2,8 +2,8 @@
 
 // Pointers used to track all concurrency objects.
 CSThread *vizconThreadListHead, *vizconThreadList;
-CSSem    *vizconSemListHead,    *vizconSemList;
-CSMutex  *vizconMutexListHead,  *vizconMutexList;
+CSSem *vizconSemListHead, *vizconSemList;
+CSMutex *vizconMutexListHead, *vizconMutexList;
 
 // Definitions for methods that close objects.
 // They are defined here because a user doesn't need to access them directly.
@@ -133,15 +133,6 @@ void** vcThreadReturn()
     closeAllSemaphores();
     closeAllMutexes();
     return arr;
-}
-
-// vcHalt - Close all resources and immediately exit.
-void vcHalt(int exitCode)
-{
-    closeAllThreads();
-    closeAllSemaphores();
-    closeAllMutexes();
-    exit(exitCode);
 }
 
 // closeAllThreads - Free every thread in the thread list.
@@ -402,4 +393,13 @@ void closeAllMutexes()
         mutexClose(vizconMutexListHead);
         vizconMutexListHead = vizconMutexList;
     }
+}
+
+// vcHalt - Close all resources and immediately exit.
+void vcHalt(int exitCode)
+{
+    closeAllThreads();
+    closeAllSemaphores();
+    closeAllMutexes();
+    exit(exitCode);
 }

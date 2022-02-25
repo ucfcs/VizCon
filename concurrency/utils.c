@@ -70,7 +70,7 @@ void vizconError(char* func, int err)
     // Platform-dependent error decoding.
     // If the error is less than 500, it's not from our library.
     // Get the corresponding string from the system's error descriptions.
-    // Then, append it to the end of the message string and set a 
+    // Then print, close everything, and leave.
     #ifdef _WIN32 // Windows version
         LPSTR errorMessage;
         if(err < 500)

@@ -24,7 +24,7 @@ typedef struct CSThread
 } CSThread;
 
 // Function prototypes
-CSThread* createThread(threadFunc func, void *arg);
-void joinThread(CSThread *thread);
-void freeThread(CSThread *thread);
-void startThread(CSThread* thread);
+CSThread* createThread(threadFunc func, void *arg); // Creates a thread.
+void startThread(CSThread* thread);                 // Starts the thread.
+void joinThread(CSThread *thread);                  // Waits for a finish, then saves the return value.
+void freeThread(CSThread *thread);                  // Closes the thread and frees memory.
