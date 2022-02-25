@@ -216,8 +216,9 @@ void* startParamThread(void* param)
 }
 
 // start_param - Variable number of assertions (START_TEST_SIZE).
-//               Create several threads with specific random inputs.
-//               Start the threads and check that each got the input.
+//               Create several threads with specific inputs.
+//               Start the threads and check that each got the input
+//               by having them modify a shared array.
 Ensure(Threads, start_param)
 {
     // Queue a thread for each member of testVals.
@@ -237,16 +238,37 @@ Ensure(Threads, start_param)
         assert_that(testVals[i], is_equal_to(1));
 }
 
-// ReturnThread - A simple thread method with a return value.
+// returnThread - A simple thread method with a return value.
 //                Parameter: int val
 //                Add one to the parameter and return.
 //                Returns: A pointer to the parameter plus one.
-void* ReturnThread(void* param)
+void* returnThread(void* param)
 {
-    // Recast the parameter, increment, and return.
-    int* val = param;
-    *val += 1;
+    // Allocate a variable, set it to param + 1, and return.
+    int* val = (int*) calloc(1, sizeof(int));
+    *val = *((int*) param) + 1;
     return (void*) val;
+}
+
+// start_return - Variable number of assertions (START_TEST_SIZE).
+//                Create several threads with specific random inputs.
+//                Start the threads and check that each got the input.
+Ensure(Threads, start_return)
+{
+    // Queue a thread for each member of testVals.
+    int i;
+    for(i = 0; i < START_TEST_SIZE; i++)
+    {
+        testVals[i] = rand() % 25;
+        vcThreadQueue(returnThread, &testVals[i]);
+    }
+
+    // Run the threads asnd get the return values.
+    void** returnVals = vcThreadReturn();
+
+    // Ensure that every returnVals member is the testVals member plus 1.
+    for(i = 0; i < START_TEST_SIZE; i++)
+        assert_that(*((int*) returnVals[i]), is_equal_to(testVals[i] + 1));
 }
 
 // AfterEach - Close any threads still open.
@@ -258,7 +280,7 @@ AfterEach(Threads)
 }
 
 // End of the suite.
-// Total number of assertions: 26 + 3 * START_TEST_SIZE
+// Total number of assertions: 26 + 4 * START_TEST_SIZE
 // Total number of exceptions: 0
 
 // main - Initialize and run the suite.
@@ -270,5 +292,6 @@ int main() {
     add_test_with_context(suite, Threads, queue_named);
     add_test_with_context(suite, Threads, start);
     add_test_with_context(suite, Threads, start_param);
+    add_test_with_context(suite, Threads, start_return);
     return run_test_suite(suite, create_text_reporter());
 }
