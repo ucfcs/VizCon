@@ -323,6 +323,147 @@ Ensure(Semaphores, wait_two)
     vcThreadStart();
 }
 
+// signalThread - The thread used by the signal test.
+//                Parameter: int addend, int flagVal
+//                Add the addend to the global permitTarget,
+//                but also make sure that the previous thread has finished.
+//                Returns: an unused value.
+THREAD_RET signalThread(THREAD_PARAM param)
+{
+    // Recast the two parameters.
+    int* vals = param;
+    int addend = vals[0];
+    int flagVal = vals[1];
+
+    // Take the permit.
+    vcSemWait(firstSem);
+
+    // Check whether a flag is placed.
+    // If not, set the flag value.
+    if(permitFlag == 0)
+    {
+        assert_that(permitTarget, is_equal_to(0));
+        permitFlag = flagVal;
+    }
+
+    // If so, check that the value is correct.
+    // If there's an issue, the tautological falsehood will inform us.
+    else
+    {
+        if(permitFlag == 1)
+            assert_that(permitTarget, is_equal_to(5));
+        else if(permitFlag == 2)
+            assert_that(permitTarget, is_equal_to(10));
+        else
+            assert_that(0, is_equal_to(1));
+    }
+
+    // Add the addend to indicate it got this far.
+    permitTarget += addend;
+
+    // Remove the lock.
+    vcSemSignal(firstSem);
+
+    return 0;
+}
+
+// signal - 4 assertions (2 in test body, 1 in each signalThread instance).
+//          Ensure that vcSemSignal works.
+Ensure(Semaphores, signal)
+{
+    // Take one permit, since it isn't needed.
+    // Verify it was taken.
+    vcSemWait(firstSem);
+    assert_that(firstSem->count, is_equal_to(1));
+
+    // Create a 2-D array of argument pairs,
+    // then select a random one to go "first".
+    int args1[2] = {5, 1};
+    int args2[2] = {10, 2};
+    int* args[2] = {args1, args2};
+    int first = rand() % 2;
+
+    // Create two threads.
+    // Each will try to add a number (5 or 10) the lockTarget value.
+    // A lock will stop one, and when it is resumed,
+    // the continueThread flag will cause it to skip the addition.
+    // The randomized "first" index is used so the order is not guaranteed.
+    vcThreadQueue(signalThread, (THREAD_PARAM) args[first]);
+    vcThreadQueue(signalThread, (THREAD_PARAM) args[!first]);
+    vcThreadStart();
+
+    // When they finish, check that both got to make the edit.
+    assert_that(permitTarget, is_equal_to(15));
+}
+
+// signalMultThread - The thread used by the signal_mult test.
+//                Parameter: int addend, int flagVal
+//                Add the addend to the global permitTarget,
+//                but also make sure that the previous thread has finished.
+//                Returns: an unused value.
+THREAD_RET signalMultThread(THREAD_PARAM param)
+{
+    // Recast the two parameters.
+    int* vals = param;
+    int addend = vals[0];
+    int flagVal = vals[1];
+
+    // Take the permit.
+    vcSemWaitMult(firstSem, 2);
+
+    // Check whether a flag is placed.
+    // If not, set the flag value.
+    if(permitFlag == 0)
+    {
+        assert_that(permitTarget, is_equal_to(0));
+        permitFlag = flagVal;
+    }
+
+    // If so, check that the value is correct.
+    // If there's an issue, the tautological falsehood will inform us.
+    else
+    {
+        if(permitFlag == 1)
+            assert_that(permitTarget, is_equal_to(5));
+        else if(permitFlag == 2)
+            assert_that(permitTarget, is_equal_to(10));
+        else
+            assert_that(0, is_equal_to(1));
+    }
+
+    // Add the addend to indicate it got this far.
+    permitTarget += addend;
+
+    // Remove the lock.
+    vcSemSignalMult(firstSem, 2);
+
+    return 0;
+}
+
+// signal_mult - 3 assertions (1 in test body, 1 in each signalThread instance).
+//               Ensure that vcSemSignal works.
+Ensure(Semaphores, signal_mult)
+{
+    // Create a 2-D array of argument pairs,
+    // then select a random one to go "first".
+    int args1[2] = {5, 1};
+    int args2[2] = {10, 2};
+    int* args[2] = {args1, args2};
+    int first = rand() % 2;
+
+    // Create two threads.
+    // Each will try to add a number (5 or 10) the lockTarget value.
+    // A lock will stop one, and when it is resumed,
+    // the continueThread flag will cause it to skip the addition.
+    // The randomized "first" index is used so the order is not guaranteed.
+    vcThreadQueue(signalMultThread, (THREAD_PARAM) args[first]);
+    vcThreadQueue(signalMultThread, (THREAD_PARAM) args[!first]);
+    vcThreadStart();
+
+    // When they finish, check that both got to make the edit.
+    assert_that(permitTarget, is_equal_to(15));
+}
+
 // value - 6 assertions.
 //         Ensure that vcSemValue works.
 Ensure(Semaphores, value)
@@ -388,8 +529,8 @@ AfterEach(Semaphores)
 }
 
 // End of the suite.
-// Total number of assertions: 56
 // Total number of exceptions: 0
+// Total number of assertions: 63
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
@@ -401,6 +542,8 @@ int main() {
     add_test_with_context(suite, Semaphores, wait);
     add_test_with_context(suite, Semaphores, wait_mult);
     add_test_with_context(suite, Semaphores, wait_two);
+    add_test_with_context(suite, Semaphores, signal);
+    add_test_with_context(suite, Semaphores, signal_mult);
     add_test_with_context(suite, Semaphores, value);
     add_test_with_context(suite, Semaphores, trywait);
     return run_test_suite(suite, create_text_reporter());
