@@ -143,7 +143,7 @@ THREAD_RET waitThread(THREAD_PARAM param)
     int addend = vals[0];
     int flagVal = vals[1];
 
-    // Place the lock.
+    // Take the one available permit.
     vcSemWait(firstSem);
 
     // Check whether a flag is placed.
@@ -171,8 +171,8 @@ THREAD_RET waitThread(THREAD_PARAM param)
 //        Ensure that vcSemWait works.
 Ensure(Semaphores, wait)
 {
-    // Take one permit since it isn't needed for this test.
-    // Verify that it worked.
+    // Take one permit, since it isn't needed.
+    // Verify it was taken.
     vcSemWait(firstSem);
     assert_that(firstSem->count, is_equal_to(1));
 
@@ -193,10 +193,81 @@ Ensure(Semaphores, wait)
     vcThreadStart();
 
     // When they finish, check that the one scheduled first got the lock.
+    // If there's an issue, the tautological falsehood will inform us.
     if(permitFlag == 1)
         assert_that(permitTarget, is_equal_to(5));
     else if(permitFlag == 2)
         assert_that(permitTarget, is_equal_to(10));
+    else
+        assert_that(0, is_equal_to(1));
+}
+
+// waitMultThread - The thread used by the wait_mult test.
+//                  Parameter: int addend, int flagVal
+//                  Adds the addend to the global permitTarget,
+//                  but only if the global permitFlag is 0.
+//                  Returns: an unused value.
+THREAD_RET waitMultThread(THREAD_PARAM param)
+{
+    // Recast the two parameters.
+    int* vals = param;
+    int addend = vals[0];
+    int flagVal = vals[1];
+
+    // Take both permits.
+    vcSemWaitMult(firstSem, 2);
+
+    // Check whether a flag is placed.
+    // If so, add the addend to permitTarget.
+    if(permitFlag == 0)
+    {
+        permitTarget += addend;
+        permitFlag = flagVal;
+    }
+
+    // Platform-dependent semaphore release.
+    // Use the system unlock function instead of the VC version
+    // because the VC version hasn't been checked yet.
+    // Check the return value so we're informed if something went wrong.
+    #ifdef _WIN32 // Windows version
+        assert_that(ReleaseSemaphore(firstSem->sem, 1, NULL), is_not_equal_to(0));
+        assert_that(ReleaseSemaphore(firstSem->sem, 1, NULL), is_not_equal_to(0));
+    #elif __linux__ || __APPLE__ // POSIX version
+        assert_that(sem_post(firstSem->sem), is_equal_to(0));
+        assert_that(sem_post(firstSem->sem), is_equal_to(0));
+    #endif
+
+    return 0;
+}
+
+// wait_mult - 5 assertions (1 in test body, 2 in each waitMultThread instance), 1 skipped assertion.
+//             Ensure that vcSemWaitMult works.
+Ensure(Semaphores, wait_mult)
+{
+    // Create a 2-D array of argument pairs,
+    // then select a random one to go "first".
+    int args1[2] = {5, 1};
+    int args2[2] = {10, 2};
+    int* args[2] = {args1, args2};
+    int first = rand() % 2;
+
+    // Create two threads.
+    // Each will try to add a number (5 or 10) the permitTarget value.
+    // A lock will stop one, and when it is resumed,
+    // the continueThread flag will cause it to skip the addition.
+    // The randomized "first" index is used so the order is not guaranteed.
+    vcThreadQueue(waitMultThread, (THREAD_PARAM) args[first]);
+    vcThreadQueue(waitMultThread, (THREAD_PARAM) args[!first]);
+    vcThreadStart();
+
+    // When they finish, check that the one scheduled first got the lock.
+    // If there's an issue, the tautological falsehood will inform us.
+    if(permitFlag == 1)
+        assert_that(permitTarget, is_equal_to(5));
+    else if(permitFlag == 2)
+        assert_that(permitTarget, is_equal_to(10));
+    else
+        assert_that(0, is_equal_to(1));
 }
 
 // waitThread - The thread used by the lock test.
@@ -317,7 +388,7 @@ AfterEach(Semaphores)
 }
 
 // End of the suite.
-// Total number of assertions: 51
+// Total number of assertions: 56
 // Total number of exceptions: 0
 
 // main - Initialize and run the suite.
@@ -328,6 +399,7 @@ int main() {
     add_test_with_context(suite, Semaphores, create_second);
     add_test_with_context(suite, Semaphores, create_named);
     add_test_with_context(suite, Semaphores, wait);
+    add_test_with_context(suite, Semaphores, wait_mult);
     add_test_with_context(suite, Semaphores, wait_two);
     add_test_with_context(suite, Semaphores, value);
     add_test_with_context(suite, Semaphores, trywait);
