@@ -9,7 +9,6 @@ void vcThreadQueue(threadFunc func, void *arg);
 void vcThreadQueueNamed(threadFunc func, void *arg, char *name);
 void vcThreadStart();
 void** vcThreadReturn();
-void freeUserThreads();
 
 // Alternate type names.
 #define vcSem CSSem*

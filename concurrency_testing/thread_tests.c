@@ -276,7 +276,7 @@ Ensure(Threads, start_return)
 //             in that case, nothing will happen.
 AfterEach(Threads)
 {
-    freeUserThreads();
+    closeAllThreads();
 }
 
 // End of the suite.

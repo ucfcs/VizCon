@@ -5,6 +5,12 @@ CSThread *vizconThreadListHead, *vizconThreadList;
 CSSem    *vizconSemListHead,    *vizconSemList;
 CSMutex  *vizconMutexListHead,  *vizconMutexList;
 
+// Definitions for methods that close objects.
+// They are defined here because a user doesn't need to access them directly.
+void closeAllThreads();
+void closeAllSemaphores();
+void closeAllMutexes();
+
 // vcThreadQueue - Prepare a thread instance with the function and arguments.
 //                 Automatically generate the thread name.
 void vcThreadQueue(threadFunc func, void *arg)
@@ -84,9 +90,10 @@ void vcThreadStart()
         vizconThreadList = vizconThreadList->next;
     }
     
-    // Free all the threads.
-    freeUserThreads();
-    // FIXME: Free threads and semaphores?
+    // Close all the resources.
+    closeAllThreads();
+    closeAllSemaphores();
+    closeAllMutexes();
 }
 
 // vcThreadReturn - Start all threads created by vcThreadQueue and vcThreadQueueNamed.
@@ -121,15 +128,15 @@ void** vcThreadReturn()
         i++;
     }
 
-    // Free all the threads.
-    freeUserThreads();
-    // FIXME: Free threads and semaphores?
-
+    // Free all the resources and return.
+    closeAllThreads();
+    closeAllSemaphores();
+    closeAllMutexes();
     return arr;
 }
 
-// freeUserThreads - Free every thread in the thread list.
-void freeUserThreads()
+// closeAllThreads - Free every thread in the thread list.
+void closeAllThreads()
 {
     while(vizconThreadListHead != NULL)
     {
