@@ -133,6 +133,128 @@ void freeUserThreads()
         vizconThreadListInitial = vizconThreadList;
     }
 }
+
+//Create a semaphore with a name and maximum permit count
+//All semaphores must have a name, and values must be an integer greater than zero
+vcSem* vcSemCreate(int count)
+{
+    vcSem* sem;
+    if(vizconSemList == NULL)
+    {
+        sem = semCreate(vizconCreateName(1, 0), count);
+        sem->num = 0;
+        vizconSemListInitial = sem;
+        vizconSemList = sem;
+    }
+    else
+    {
+        sem = semCreate(vizconCreateName(1, vizconSemList->num + 1), count);
+        sem->num = vizconSemList->num + 1;
+        vizconSemList->next = sem;
+        vizconSemList = sem;
+    }
+    return sem;
+}
+
+//Create a semaphore with a name and maximum permit count
+//All semaphores must have a name, and values must be an integer greater than zero
+//Takes additional second parameter for user to assign a name to this semaphore
+vcSem* vcSemCreateNamed(int count, char* name)
+{
+    char* mallocName = (char*)malloc(sizeof(char) * (vizconStringLength(name) + 1));
+    if (mallocName == NULL) 
+    {
+        vizconError("vcSemCreateNamed", 502);
+    }
+    sprintf(mallocName, "%s", name);
+    vcSem* sem = semCreate(mallocName, count);
+    if(vizconSemList == NULL)
+    {
+        sem->num = 0;
+        vizconSemListInitial = sem;
+        vizconSemList = sem;
+    }
+    else
+    {
+        sem->num = vizconSemList->num + 1;
+        vizconSemList->next = sem;
+        vizconSemList = sem;
+    }
+    return sem;
+}
+
+//Consume one permit from a semaphore, or wait until one is available.
+void vcSemWait(vcSem* sem)
+{
+    semWait(sem);
+}
+
+//Consume a number of permits from a semaphore equal to a user-specified number, or wait until they are all available.
+void vcSemWaitMult(vcSem* sem, int num)
+{
+    int i;
+    for(i=0; i<num; i++)
+    {
+        semWait(sem);
+    }
+}
+
+//Consume one permit from a sempahore, or return immediately if none are available
+//Returns 1 if successful, else 0
+int vcSemTryWait(vcSem* sem)
+{
+    if(semTryWait(sem))
+    {
+        return 1;
+    }
+    return 0;
+}
+
+//Consume a number of permits from a sempahore equal to a user-specified number, or return immediately if all are not available
+//Returns 1 if successful, else 0
+int vcSemTryWaitMult(vcSem* sem, int num)
+{
+    int i;
+    if(vcSemValue(sem) < num)
+    {
+        return 0;
+    }
+    for(i=0; i<num; i++)
+    {
+        if(!vcSemTryWait(sem))
+        {
+            for(i=i; i>0; i--)
+            {
+                vcSemSignal(sem);
+            }
+            return 0;
+        }
+    }
+    return 1;
+}
+
+//Release one permit from a semaphore
+void vcSemSignal(vcSem* sem)
+{
+    semSignal(sem);
+}
+
+//Release a number of permits from a sempahore equal to a user-specified number
+void vcSemSignalMult(vcSem* sem, int num)
+{
+    int i;
+    for(i=0; i<num; i++)
+    {
+        semSignal(sem);
+    }
+}
+
+//Return the current number of permits from semaphore
+int vcSemValue(vcSem* sem)
+{
+    return semValue(sem);
+}
+
 // Lists used to track threads and semaphores.
 VCMutex* vizconMutexListHead;
 VCMutex* vizconMutexListTail;

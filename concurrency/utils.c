@@ -63,6 +63,7 @@ void vizconError(char* func, int err)
     if(err < 500)
     {
         sprintf(message, "%serrno code %d", message, err);
+        errno = err;
         perror(message);
         exit(0);
     }
