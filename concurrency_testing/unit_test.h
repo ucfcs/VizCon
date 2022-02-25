@@ -5,6 +5,7 @@
 // Standard libraries.
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <time.h> 
 
 // Cgreen testing library.
