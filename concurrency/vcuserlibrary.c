@@ -134,14 +134,10 @@ void freeUserThreads()
     }
 }
 
-//Create a semaphore with a maximum count
-//All semaphores values must be a postive integer
+//Create a semaphore with a name and maximum permit count
+//All semaphores must have a name, and values must be an integer greater than zero
 vcSem* vcSemCreate(int count)
 {
-    if(count <= 0)
-    {
-        vizconError("vcSemCreate", 503);
-    }
     vcSem* sem;
     if(vizconSemList == NULL)
     {
@@ -160,49 +156,12 @@ vcSem* vcSemCreate(int count)
     return sem;
 }
 
-//Create a semaphore with an initial count and a max count
-//All semaphores must have a name, and values must be a positive integer, except initial count which may be 0
-vcSem* vcSemCreateInitial(int initialCount, int maxCount)
-{
-    if(initialCount < 0 || maxCount <= 0)
-    {
-        vizconError("vcSemCreateInitial", 503);
-    }
-    vcSem* sem;
-    if(vizconSemList == NULL)
-    {
-        sem = semCreate(vizconCreateName(1, 0), maxCount);
-        sem->num = 0;
-        vizconSemListInitial = sem;
-        vizconSemList = sem;
-    }
-    else
-    {
-        sem = semCreate(vizconCreateName(1, vizconSemList->num + 1), maxCount);
-        sem->num = vizconSemList->num + 1;
-        vizconSemList->next = sem;
-        vizconSemList = sem;
-    }
-    int i;
-    for(i=0; i<maxCount-initialCount; i++)
-    {
-        vcSemWait(sem);
-    }
-    return sem;
-}
-
-//Create a semaphore with a maximum count
-//All semaphores values must be a postive integer
+//Create a semaphore with a name and maximum permit count
+//All semaphores must have a name, and values must be an integer greater than zero
 //Takes additional second parameter for user to assign a name to this semaphore
 vcSem* vcSemCreateNamed(int count, char* name)
 {
-    if(count <= 0)
-    {
-        vizconError("vcSemCreateNamed", 503);
-    }
-    int i;
-    for(i=0; name[i] != '\0'; i++);
-    char* mallocName = (char*)malloc(sizeof(char) * (i + 1));
+    char* mallocName = (char*)malloc(sizeof(char) * (vizconStringLength(name) + 1));
     if (mallocName == NULL) 
     {
         vizconError("vcSemCreateNamed", 502);
@@ -224,73 +183,19 @@ vcSem* vcSemCreateNamed(int count, char* name)
     return sem;
 }
 
-//Create a semaphore with an initial count and a max count
-//All semaphores must have a name, and values must be a positive integer, except initial count which may be 0
-//Takes additional third parameter for user to assign a name to this semaphore
-vcSem* vcSemCreateInitialNamed(int initialCount, int maxCount, char* name)
-{
-    if(initialCount < 0 || maxCount <= 0)
-    {
-        vizconError("vcSemCreateInitialNamed", 503);
-    }
-    int i;
-    for(i=0; name[i] != '\0'; i++);
-    char* mallocName = (char*)malloc(sizeof(char) * (i + 1));
-    if (mallocName == NULL) 
-    {
-        vizconError("vcSemCreateInitialNamed", 502);
-    }
-    sprintf(mallocName, "%s", name);
-    vcSem* sem = semCreate(mallocName, maxCount);
-    if(vizconSemList == NULL)
-    {
-        sem->num = 0;
-        vizconSemListInitial = sem;
-        vizconSemList = sem;
-    }
-    else
-    {
-        sem->num = vizconSemList->num + 1;
-        vizconSemList->next = sem;
-        vizconSemList = sem;
-    }
-    for(i=0; i<maxCount-initialCount; i++)
-    {
-        vcSemWait(sem);
-    }
-    return sem;
-}
-
-//Consume one permit from a semaphore, or wait until one is available
+//Consume one permit from a semaphore, or wait until one is available.
 void vcSemWait(vcSem* sem)
 {
     semWait(sem);
 }
 
-//Consume a number of permits from a semaphore equal to a user-specified number
-//Will not consume any permits until all are simultaneously available
+//Consume a number of permits from a semaphore equal to a user-specified number, or wait until they are all available.
 void vcSemWaitMult(vcSem* sem, int num)
 {
     int i;
-    while(1)
+    for(i=0; i<num; i++)
     {
-        while(vcSemValue(sem) < num);
-        for(i=0; i<num; i++)
-        {
-            if(!vcSemTryWait(sem))
-            {
-                for(i=i; i>0; i--)
-                {
-                    vcSemSignal(sem);
-                }
-                i = -1;
-                break;
-            }
-        }
-        if(i != -1)
-        {
-            return;
-        }
+        semWait(sem);
     }
 }
 
@@ -347,7 +252,7 @@ void vcSemSignalMult(vcSem* sem, int num)
 //Return the current number of permits from semaphore
 int vcSemValue(vcSem* sem)
 {
-    return sem->count;
+    return semValue(sem);
 }
 
 // Lists used to track threads and semaphores.

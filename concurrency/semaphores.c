@@ -122,6 +122,12 @@ int semTryWait(CSSem* sem)
     return 0;
 }
 
+//Returns semaphore's current value
+int semValue(CSSem* sem)
+{
+    return sem->count;
+}
+
 //Frees all data associated with a CSSem type, including itself
 void semClose(CSSem* sem)
 {

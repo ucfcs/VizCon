@@ -88,16 +88,6 @@ void vizconError(char* func, int err)
                 errorMessage = "Not enough memory resources are available to process this command.";
                 break;
             }
-            case 503:
-            {
-                errorMessage = "A semaphore was created with a non-whole number value.";
-                break;
-            }
-            case 504:
-            {
-                errorMessage = "There was an error saving the internal mutex name.";
-                break;
-            }
             case 510:
             {
                 errorMessage = "A thread attempted to unlock an already-unlocked mutex.";
