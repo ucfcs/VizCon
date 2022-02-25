@@ -6,7 +6,7 @@
 //#include "../concurrency/useroverwrite.h"
 #include "../concurrency/vcuserlibrary.h"
 
-#define SPAWN_COUNT 2
+#define SPAWN_COUNT 100
 
 vcSem semaphores[SPAWN_COUNT];
 vcMutex mutexes[SPAWN_COUNT];
