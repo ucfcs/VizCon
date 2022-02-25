@@ -4,8 +4,11 @@
 //             Returns: a pointer to the semaphore struct.
 CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
 {
-    if(name == NULL)
+    // vcSemCreate and vcSemCreateNamed should ensure the mutex is named.
+    // If it somehow isn't, error out.
+    if (name == NULL)
     {
+        vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_NAMEERROR);
         return NULL;
     }
 
@@ -146,17 +149,16 @@ int semTryWait(CSSem* sem)
     
     #elif __linux__ || __APPLE__ // POSIX version
     int ret = sem_trywait(sem->sem);
-    switch(ret)
+    // 0 - Success. Mark mutex as unavailable.
+    if(!ret)
     {
-        // 0 - Success. Decrement the semaphore count.
-        case 0:
-        {
-            sem->count = sem->count - 1;
-            return 1;
-        }
-
-        // EBUSY - Semaphore currently has no permits. Just leave.
-        case EBUSY:
+        sem->count = sem->count - 1;
+        return 1;
+    }
+    else switch(errno)
+    {
+        // EAGAIN - Semaphore currently has no permits. Just leave.
+        case EAGAIN:
             return 0;
 
         // Default - OS-level error. Just pass it on.

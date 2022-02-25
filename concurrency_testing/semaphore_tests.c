@@ -129,6 +129,36 @@ Ensure(Semaphores, create_named)
     assert_that(vizconSemList, is_equal_to(secondSem));
 }
 
+// trywait - 10 assertions.
+//           Ensure that vcMutexTrywait works.
+Ensure(Semaphores, trywait)
+{
+    // Semaphore starts with two permits.
+    // vcSemTrywait should get one permit and return 1.
+    // Then, semaphore value should be 1.
+    assert_that(vcSemTryWait(firstSem), is_true);
+    assert_that(vcSemValue(firstSem), is_equal_to(1));
+
+    // Try to wait for two permits.
+    // Since only one is available, this should fail.
+    // The value should remain the same.
+    assert_that(vcSemTryWaitMult(firstSem, 2), is_false);
+    assert_that(vcSemValue(firstSem), is_equal_to(1));
+
+    // Release one permit, then try to wait for two again.
+    // This should work, leaving a value of zero.
+    vcSemSignal(firstSem);
+    assert_that(vcSemTryWaitMult(firstSem, 2), is_true);
+    assert_that(vcSemValue(firstSem), is_equal_to(0));
+
+    // Try to wait for one, then two.
+    // Neither should work or change the value.
+    assert_that(vcSemTryWait(firstSem), is_false);
+    assert_that(vcSemValue(firstSem), is_equal_to(0));
+    assert_that(vcSemTryWaitMult(firstSem, 2), is_false);
+    assert_that(vcSemValue(firstSem), is_equal_to(0));
+}
+
 // AfterEach - Close any semaphores still open.
 //             It's okay if there was a vcThreadStart or vcThreadReturn;
 //             in that case, nothing will happen.
