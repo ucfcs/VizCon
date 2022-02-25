@@ -83,27 +83,40 @@ void semWait(CSSem* sem)
     {
         // WAIT_FAILED: OS-level error.
         case WAIT_FAILED:
+        {
             vizconError("vcSemWait/vcSemWaitMult", GetLastError());
+            break;
+        }
         
         // WAIT_OBJECT_0: Success. Decrement the count.
         case WAIT_OBJECT_0:
+        {
             sem->count = sem->count - 1;
+            break;
+        }
 
         // WAIT_ABANDONED: A thread with a permit closed before returning it.
         //                 This is only supposed to happen to mutexes,
         //                 but it's here for safety.
         case WAIT_ABANDONED:
+        {
             vizconError("vcSemWait/vcSemWaitMult", VC_ERROR_ABANDONED);
+            break;
+        }
         
         // WAIT_TIMEOUT - Thread was not available before timeout.
         //                This shouldn't happen, but it's here for safety.
         case WAIT_TIMEOUT:
+        {
             vizconError("vcSemWait/vcSemWaitMult", VC_ERROR_TIMEOUT);
+            break;
+        }
     }
 
     #elif __linux__ || __APPLE__ // POSIX version
     if(sem_wait(sem->sem))
         vizconError("vcSemWait/vcSemWaitMult", errno);
+    sem->count = sem->count - 1;
     
     #endif
 }

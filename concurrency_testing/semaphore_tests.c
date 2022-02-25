@@ -129,6 +129,32 @@ Ensure(Semaphores, create_named)
     assert_that(vizconSemList, is_equal_to(secondSem));
 }
 
+// value - 6 assertions.
+//         Ensure that vcSemValue works.
+Ensure(Semaphores, value)
+{
+    // Mutex starts with two permits.
+    assert_that(vcSemValue(firstSem), is_equal_to(2));
+
+    // Take one permit and the value should be one.
+    // Repeat and it should be 0.
+    vcSemWait(firstSem);
+    assert_that(vcSemValue(firstSem), is_equal_to(1));
+    vcSemWait(firstSem);
+    assert_that(vcSemValue(firstSem), is_equal_to(0));
+
+    // Return both permits and the value should be 2 again.
+    vcSemSignalMult(firstSem, 2);
+    assert_that(vcSemValue(firstSem), is_equal_to(2));
+
+    // Remove both permits and it should be 0.
+    // Add one back and it should be 1.
+    vcSemWaitMult(firstSem, 2);
+    assert_that(vcSemValue(firstSem), is_equal_to(0));
+    vcSemSignal(firstSem);
+    assert_that(vcSemValue(firstSem), is_equal_to(1));
+}
+
 // trywait - 10 assertions.
 //           Ensure that vcMutexTrywait works.
 Ensure(Semaphores, trywait)
@@ -168,7 +194,7 @@ AfterEach(Semaphores)
 }
 
 // End of the suite.
-// Total number of assertions: 39
+// Total number of assertions: 45
 // Total number of exceptions: 0
 
 // main - Initialize and run the suite.
@@ -178,6 +204,7 @@ int main() {
     add_test_with_context(suite, Semaphores, create_first);
     add_test_with_context(suite, Semaphores, create_second);
     add_test_with_context(suite, Semaphores, create_named);
+    add_test_with_context(suite, Semaphores, value);
     add_test_with_context(suite, Semaphores, trywait);
     return run_test_suite(suite, create_text_reporter());
 }
