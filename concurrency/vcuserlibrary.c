@@ -142,14 +142,14 @@ void freeUserThreads()
 
 // vcSemCreate - Create a semaphore with the specified maximum permit count.
 //               Returns: a pointer to the new semaphore.
-vcSem* vcSemCreate(int count)
+CSSem* vcSemCreate(int count)
 {
     // Make sure the count is valid.
     if (count <= 0)
         vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
 
     // If there are no semaphores in the list, make the new semaphore the initial one.
-    vcSem* sem;
+    CSSem* sem;
     if(vizconSemList == NULL)
     {
         sem = semCreate(vizconCreateName(VC_TYPE_SEM, 0), count);
@@ -171,7 +171,7 @@ vcSem* vcSemCreate(int count)
 
 // vcSemCreateNamed - Create a semaphore with the specified name and maximum permit count.
 //                    Returns: a pointer to the new semaphore.
-vcSem* vcSemCreateNamed(int count, char* name)
+CSSem* vcSemCreateNamed(int count, char* name)
 {
     // Make sure the count is valid.
     if (count <= 0)
@@ -183,7 +183,7 @@ vcSem* vcSemCreateNamed(int count, char* name)
         vizconError("vcSemCreateNamed", VC_ERROR_MEMORY);
     
     sprintf(mallocName, "%s", name);
-    vcSem* sem = semCreate(mallocName, count);
+    CSSem* sem = semCreate(mallocName, count);
 
     // If there are no semaphores in the list, make the new semaphore the initial one.
     if(vizconSemList == NULL)
@@ -205,14 +205,14 @@ vcSem* vcSemCreateNamed(int count, char* name)
 
 // vcSemWait - Obtain a permit from the semaphore.
 //             If a permit is not available yet, wait until it is.
-void vcSemWait(vcSem* sem)
+void vcSemWait(CSSem* sem)
 {
     semWait(sem);
 }
 
 // vcSemWaitMult - Obtain the specified number of permits from the semaphore.
 //                 If the permits are not available yet, wait until they are.
-void vcSemWaitMult(vcSem* sem, int num)
+void vcSemWaitMult(CSSem* sem, int num)
 {
     int i;
     for(i = 0; i < num; i++)
@@ -222,7 +222,7 @@ void vcSemWaitMult(vcSem* sem, int num)
 // vcSemTryWait - Try to obtain a permit from the semaphore.
 //                If a permit is unavailable, return without waiting.
 //                Returns: 1 if the permit was obtained, 0 otherwise.
-int vcSemTryWait(vcSem* sem)
+int vcSemTryWait(CSSem* sem)
 {
     return semTryWait(sem);
 }
@@ -230,7 +230,7 @@ int vcSemTryWait(vcSem* sem)
 // vcSemTryWaitMult - Try to obtain the specified number of permits.
 //                    If any permit is unavailable, return without waiting.
 //                    Returns: 1 if the permits were obtained, 0 otherwise.
-int vcSemTryWaitMult(vcSem* sem, int num)
+int vcSemTryWaitMult(CSSem* sem, int num)
 {
     // If the semaphore's current value is too low, don't bother checking.
     if(vcSemValue(sem) < num)
@@ -252,13 +252,13 @@ int vcSemTryWaitMult(vcSem* sem, int num)
 }
 
 // vcSemSignal - Release one permit from the semaphore.
-void vcSemSignal(vcSem* sem)
+void vcSemSignal(CSSem* sem)
 {
     semSignal(sem);
 }
 
 // vcSemSignalMult - Release the given number of permits from the semaphore.
-void vcSemSignalMult(vcSem* sem, int num)
+void vcSemSignalMult(CSSem* sem, int num)
 {
     int i;
     for(i = 0; i < num; i++)
@@ -267,7 +267,7 @@ void vcSemSignalMult(vcSem* sem, int num)
 
 // vcSemValue - Check the amount of permits the given semaphore has available.
 //              Returns: the number of available permits.
-int vcSemValue(vcSem* sem)
+int vcSemValue(CSSem* sem)
 {
     return semValue(sem);
 }

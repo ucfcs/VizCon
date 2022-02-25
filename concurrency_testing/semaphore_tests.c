@@ -6,7 +6,7 @@
 
 #define CREATE_NAMED_TEST_SIZE 5
 
-vcSemaphore* firstSem;
+vcSemaphore firstSem;
 long long int permitTarget = 0;
 int permitFlag = 0;
 
@@ -62,7 +62,7 @@ Ensure(Semaphores, create_first)
 Ensure(Semaphores, create_second)
 {
     // Create the mutex.
-    vcSem* secondSem = vcSemCreate(1);
+    vcSem secondSem = vcSemCreate(1);
 
     // The mutex should not be null.
     assert_that(secondSem, is_not_null);
@@ -96,7 +96,7 @@ Ensure(Semaphores, create_named)
     str[CREATE_NAMED_TEST_SIZE] = '\0';
 
     // Create the mutex.
-    vcSem* secondSem = vcSemCreateNamed(2, str);
+    vcSem secondSem = vcSemCreateNamed(2, str);
 
     // The mutex should not be null.
     assert_that(secondSem, is_not_null);
@@ -129,6 +129,38 @@ Ensure(Semaphores, create_named)
     assert_that(secondSem->next, is_null);
     assert_that(vizconSemListHead, is_equal_to(firstSem));
     assert_that(vizconSemList, is_equal_to(secondSem));
+}
+
+// bad_count - 1 skipped assertion, 1 exception.
+//             Attempt to create a semaphore with an invalid permit count.
+//             This will result in an a vizcon error, code 502.
+Ensure(Semaphores, bad_count)
+{
+    // Pick a random number between 0 and -100.
+    int numPermits = 0 - (rand() % 101);
+
+    // Attempt to make the permit.
+    vcSem badSem = vcSemCreate(numPermits);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
+// bad_count_named - 1 skipped assertion, 1 exception.
+//                   Attempt to create a named semaphore with an invalid permit count.
+//                   This will result in an a vizcon error, code 502.
+Ensure(Semaphores, bad_count_named)
+{
+    // Pick a random number between 0 and -100.
+    int numPermits = 0 - (rand() % 101);
+
+    // Attempt to make the permit.
+    vcSem badSem = vcSemCreateNamed(numPermits, "Bad Semaphore");
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
 }
 
 // waitThread - The thread used by the lock test.
@@ -529,8 +561,8 @@ AfterEach(Semaphores)
 }
 
 // End of the suite.
-// Total number of exceptions: 0
 // Total number of assertions: 63
+// Total number of exceptions: 2
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
@@ -539,6 +571,8 @@ int main() {
     add_test_with_context(suite, Semaphores, create_first);
     add_test_with_context(suite, Semaphores, create_second);
     add_test_with_context(suite, Semaphores, create_named);
+    add_test_with_context(suite, Semaphores, bad_count);
+    add_test_with_context(suite, Semaphores, bad_count_named);
     add_test_with_context(suite, Semaphores, wait);
     add_test_with_context(suite, Semaphores, wait_mult);
     add_test_with_context(suite, Semaphores, wait_two);

@@ -7,7 +7,7 @@
 #define CREATE_NAMED_TEST_SIZE 5
 #define ISOLATION_TEST_SIZE 5
 
-vcMutex *firstMutex;
+vcMutex firstMutex;
 long long int lockTarget = 0;
 int lockFlag = 0;
 
@@ -60,7 +60,7 @@ Ensure(Mutexes, create_first)
 Ensure(Mutexes, create_second)
 {
     // Create the mutex.
-    vcMutex* secondMutex = vcMutexCreate();
+    vcMutex secondMutex = vcMutexCreate();
 
     // The mutex should not be null.
     assert_that(secondMutex, is_not_null);
@@ -94,7 +94,7 @@ Ensure(Mutexes, create_named)
     str[CREATE_NAMED_TEST_SIZE] = '\0';
 
     // Create the mutex.
-    vcMutex* secondMutex = vcMutexCreateNamed(str);
+    vcMutex secondMutex = vcMutexCreateNamed(str);
 
     // The mutex should not be null.
     assert_that(secondMutex, is_not_null);
@@ -203,7 +203,7 @@ THREAD_RET unlockThread(THREAD_PARAM param)
     vcMutexLock(firstMutex);
 
     // Check whether a flag is placed.
-    // If not, add the addend to lockTarget.
+    // If not, set the flag value.
     if(lockFlag == 0)
     {
         assert_that(lockTarget, is_equal_to(0));
@@ -369,7 +369,7 @@ Ensure(Mutexes, cross_unlock)
 Ensure(Mutexes, isolation)
 {
     // Create an array of several mutexes.
-    vcMutex* mutexes[ISOLATION_TEST_SIZE];
+    vcMutex mutexes[ISOLATION_TEST_SIZE];
     int i;
     for(i = 0; i < ISOLATION_TEST_SIZE; i++)
         mutexes[i] = vcMutexCreate(NULL);
