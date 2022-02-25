@@ -1,5 +1,8 @@
 #include "utils.h"
 
+// Reference to external function vcHalt (in vcuserlibrary.c)
+extern void vcHalt(int exitCode);
+
 // vizconCreateName - Creates a string that can be used to name a struct.
 //                    Returns: a pointer to the created string.
 char* vizconCreateName(int type, int value)
@@ -69,27 +72,26 @@ void vizconError(char* func, int err)
     // Get the corresponding string from the system's error descriptions.
     // Then, append it to the end of the message string and set a 
     #ifdef _WIN32 // Windows version
-    LPSTR errorMessage;
-    if(err < 500)
-    {
-        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&errorMessage, 0, NULL);
-        sprintf(message + strlen(message), "system error %d: %s", err, errorMessage);
-        message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
-        printf("%s", message);
-        exit(err);
-    }
-
+        LPSTR errorMessage;
+        if(err < 500)
+        {
+            FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD) err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR) &errorMessage, 0, NULL);
+            sprintf(message + strlen(message), "system error %d: %s", err, errorMessage);
+            message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
+            printf("%s", message);
+            vcHalt(err);
+        }
     #elif __linux__ || __APPLE__ // POSIX version
-    char* errorMessage;
-    if(err < 500)
-    {
-        errno = err;
-        errorMessage = strerror(err);
-        sprintf(message + strlen(message), "errno code %d: %s", err, errorMessage);
-        message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
-        printf("%s\n", message);
-        exit(err);
-    }
+        char* errorMessage;
+        if(err < 500)
+        {
+            errno = err;
+            errorMessage = strerror(err);
+            sprintf(message + strlen(message), "errno code %d: %s", err, errorMessage);
+            message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
+            printf("%s\n", message);
+            vcHalt(err);
+        }
     #endif
 
     // If the error is 500 or greater, it's a VizCon-specific error.
@@ -147,5 +149,5 @@ void vizconError(char* func, int err)
     sprintf(message + strlen(message), "vizcon error code %d: %s\n", err, errorMessage);
     message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
     printf("%s\n", message);
-    exit(err);
+    vcHalt(err);
 }

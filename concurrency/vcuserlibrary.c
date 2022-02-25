@@ -135,6 +135,15 @@ void** vcThreadReturn()
     return arr;
 }
 
+// vcHalt - Close all resources and immediately exit.
+void vcHalt(int exitCode)
+{
+    closeAllThreads();
+    closeAllSemaphores();
+    closeAllMutexes();
+    exit(exitCode);
+}
+
 // closeAllThreads - Free every thread in the thread list.
 void closeAllThreads()
 {
