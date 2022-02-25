@@ -91,7 +91,7 @@ void vcThreadStart()
 
 // vcThreadReturn - Start all threads created by vcThreadQueue and vcThreadQueueNamed.
 //                  Returns: an array of all values returned by the threads.
-THREAD_RET *vcThreadReturn()
+void** vcThreadReturn()
 {
     // If there are no threads in the list, return immediately.
     if (vizconThreadListHead == NULL)
@@ -108,7 +108,7 @@ THREAD_RET *vcThreadReturn()
     }
 
     // Allocate the array of return values.
-    THREAD_RET* arr = (THREAD_RET*) malloc(sizeof(THREAD_RET) * i);
+    void** arr = (void**) malloc(sizeof(void*) * i);
 
     // Wait for all threads to complete and save the return values.
     vizconThreadList = vizconThreadListHead;

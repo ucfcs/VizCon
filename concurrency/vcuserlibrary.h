@@ -7,7 +7,7 @@
 // Thread functions
 void vcThreadQueue(threadFunc func, void *arg);
 void vcThreadStart();
-THREAD_RET *vcThreadReturn();
+void** vcThreadReturn();
 void freeUserThreads();
 
 // Alternate type names.

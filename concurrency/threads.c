@@ -1,5 +1,10 @@
 #include "threads.h"
 
+// On Windows only, define the thread runner.
+#ifdef _WIN32
+    DWORD winThreadRunner(LPVOID threadInput);
+#endif
+
 // createThread - Create a thread, passing in a function
 //                Returns: a pointer to the thread struct.
 CSThread* createThread(threadFunc func, void *arg)
@@ -9,27 +14,23 @@ CSThread* createThread(threadFunc func, void *arg)
     if (thread == NULL)
         vizconError("vcThreadQueue/vcThreadQueueNamed", VC_ERROR_MEMORY);
 
-    // Set the non-platform-dependent properties of the struct.
+    // Set the internal struct properties.
     thread->next = NULL;
     thread->name = NULL;
     thread->num = -1;
+    thread->returnVal = NULL;
 
-    // Platform-dependent thread and return value definition.
-    #if defined(_WIN32) // Windows version
-        // Create the thread in a suspended state.
-        // It will be woken up by a vcThreadStart or vcThreadReturn.
-        thread->thread = CreateThread(NULL, 0, func, arg, CREATE_SUSPENDED, 0);
-        thread->returnVal = 0;
+    // Save the function and argument.
+    thread->func = func;
+    thread->arg = arg;
 
-    #elif defined(__APPLE__) || defined(__linux__) // POSIX version
-        // POSIX cannot create suspended threads, so save everything for later.
-        // The thread will be created by a vcThreadStart or vcThreadReturn.
-        thread->func = func;
-        thread->arg = arg;
-        thread->returnVal = NULL;
-
+    // On Windows only, create the thread in a suspended state.
+    // It will be woken up by a vcThreadStart or vcThreadReturn.
+    // The actual function will be run via winThreadRunner.
+    #ifdef _WIN32    
+        thread->thread = CreateThread(NULL, 0, winThreadRunner, thread, CREATE_SUSPENDED, 0);
     #endif
-    
+
     return thread;
 }
 
@@ -37,36 +38,21 @@ CSThread* createThread(threadFunc func, void *arg)
 void joinThread(CSThread *thread)
 {
     // Platform-dependent thread joining.
-    // Attempt to wait for the object.
+    // Wait for the thread to finish.
     #ifdef _WIN32 // Windows version
         DWORD ret = WaitForSingleObject(thread->thread, INFINITE);
-        switch(ret)
-        {          
-            // WAIT_OBJECT_0 - The thread ended successfully.
-            //                 Save the return value.
-            case WAIT_OBJECT_0:
-            {
-                if (!GetExitCodeThread(thread->thread, &thread->returnVal))
-                    vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-                return;
-            }
-
-            // Default - OS-level error.
-            default:
-            {
-                vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-                return;
-            }
+        if(ret != WAIT_OBJECT_0)
+        {
+            vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+            return;
         }
-
     #elif __APPLE__ || __linux__ // POSIX version
-    int err = pthread_join(thread->thread, &thread->returnVal);
-    if (err)
-    {
-        free(thread);
-        vizconError("vcThreadStart/vcThreadReturn", err);
-    }
-
+        int err = pthread_join(thread->thread, &thread->returnVal);
+        if (err)
+        {
+            free(thread);
+            vizconError("vcThreadStart/vcThreadReturn", err);
+        }
     #endif
 }
 
@@ -89,18 +75,32 @@ void startThread(CSThread* thread)
 {
     // Platform-dependent thread start.
     #ifdef _WIN32 // Windows version
-    // Attempt to resume the thread. If it fails, print an error.
-    if (ResumeThread(thread->thread) == -1)
-        vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-    
-    #elif __APPLE__ || __linux__
-    // Create the thread based on the saved function and argument.
-    int err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
-    if (err)
-    {
-        free(thread);
-        vizconError("vcThreadStart/vcThreadReturn", err);
-    }
-    
+        // Attempt to resume the thread. If it fails, print an error.
+        if (ResumeThread(thread->thread) == -1)
+            vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+    #elif __APPLE__ || __linux__ // POSIX version.
+        // Create the thread based on the saved function and argument.
+        int err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
+        if (err)
+        {
+            free(thread);
+            vizconError("vcThreadStart/vcThreadReturn", err);
+        }
     #endif
 }
+
+// winThreadRunner - A wrapper for threads on Windows that saves
+//                   the function's return value whenit finishes.
+//                   This is because Windows threads return a 32-bit DWORD,
+//                   which is too small for some applications.
+//                   Parameter: A pointer to the thread object.
+//                   Returns: an unused value required by the Windows API.
+#ifdef _WIN32
+    DWORD winThreadRunner(LPVOID threadInput)
+    {
+        CSThread* thread = (CSThread*) threadInput;
+        void* retval = thread->func(thread->arg);
+        thread->returnVal = retval;
+        return 0;
+    }
+#endif
