@@ -168,7 +168,7 @@ Ensure(Semaphores, bad_count_named)
 //              Adds the addend to the global permitTarget,
 //              but only if the global permitFlag is 0.
 //              Returns: an unused value.
-THREAD_RET waitThread(THREAD_PARAM param)
+void* waitThread(void* param)
 {
     // Recast the two parameters.
     int* vals = param;
@@ -220,8 +220,8 @@ Ensure(Semaphores, wait)
     // A lock will stop one, and when it is resumed,
     // the continueThread flag will cause it to skip the addition.
     // The randomized "first" index is used so the order is not guaranteed.
-    vcThreadQueue(waitThread, (THREAD_PARAM) args[first]);
-    vcThreadQueue(waitThread, (THREAD_PARAM) args[!first]);
+    vcThreadQueue(waitThread, (void*) args[first]);
+    vcThreadQueue(waitThread, (void*) args[!first]);
     vcThreadStart();
 
     // When they finish, check that the one scheduled first got the lock.
@@ -239,7 +239,7 @@ Ensure(Semaphores, wait)
 //                  Adds the addend to the global permitTarget,
 //                  but only if the global permitFlag is 0.
 //                  Returns: an unused value.
-THREAD_RET waitMultThread(THREAD_PARAM param)
+void* waitMultThread(void* param)
 {
     // Recast the two parameters.
     int* vals = param;
@@ -288,8 +288,8 @@ Ensure(Semaphores, wait_mult)
     // A lock will stop one, and when it is resumed,
     // the continueThread flag will cause it to skip the addition.
     // The randomized "first" index is used so the order is not guaranteed.
-    vcThreadQueue(waitMultThread, (THREAD_PARAM) args[first]);
-    vcThreadQueue(waitMultThread, (THREAD_PARAM) args[!first]);
+    vcThreadQueue(waitMultThread, args[first]);
+    vcThreadQueue(waitMultThread, args[!first]);
     vcThreadStart();
 
     // When they finish, check that the one scheduled first got the lock.
@@ -307,7 +307,7 @@ Ensure(Semaphores, wait_mult)
 //              Adds the addend to the global permitTarget,
 //              but only if the global permitFlag is 0.
 //              Returns: an unused value.
-THREAD_RET waitTwoThread(THREAD_PARAM param)
+void* waitTwoThread(void* param)
 {
     // Recast the parameter.
     int flagVal = *((int*) param);
@@ -350,8 +350,8 @@ Ensure(Semaphores, wait_two)
     // A lock will stop one, and when it is resumed,
     // the continueThread flag will cause it to skip the addition.
     // The randomized "first" index is used so the order is not guaranteed.
-    vcThreadQueue(waitTwoThread, (THREAD_PARAM) &args[first]);
-    vcThreadQueue(waitTwoThread, (THREAD_PARAM) &args[!first]);
+    vcThreadQueue(waitTwoThread, &args[first]);
+    vcThreadQueue(waitTwoThread, &args[!first]);
     vcThreadStart();
 }
 
@@ -360,7 +360,7 @@ Ensure(Semaphores, wait_two)
 //                Add the addend to the global permitTarget,
 //                but also make sure that the previous thread has finished.
 //                Returns: an unused value.
-THREAD_RET signalThread(THREAD_PARAM param)
+void* signalThread(void* param)
 {
     // Recast the two parameters.
     int* vals = param;
@@ -420,8 +420,8 @@ Ensure(Semaphores, signal)
     // A lock will stop one, and when it is resumed,
     // the continueThread flag will cause it to skip the addition.
     // The randomized "first" index is used so the order is not guaranteed.
-    vcThreadQueue(signalThread, (THREAD_PARAM) args[first]);
-    vcThreadQueue(signalThread, (THREAD_PARAM) args[!first]);
+    vcThreadQueue(signalThread, args[first]);
+    vcThreadQueue(signalThread, args[!first]);
     vcThreadStart();
 
     // When they finish, check that both got to make the edit.
@@ -433,7 +433,7 @@ Ensure(Semaphores, signal)
 //                Add the addend to the global permitTarget,
 //                but also make sure that the previous thread has finished.
 //                Returns: an unused value.
-THREAD_RET signalMultThread(THREAD_PARAM param)
+void* signalMultThread(void* param)
 {
     // Recast the two parameters.
     int* vals = param;
@@ -488,8 +488,8 @@ Ensure(Semaphores, signal_mult)
     // A lock will stop one, and when it is resumed,
     // the continueThread flag will cause it to skip the addition.
     // The randomized "first" index is used so the order is not guaranteed.
-    vcThreadQueue(signalMultThread, (THREAD_PARAM) args[first]);
-    vcThreadQueue(signalMultThread, (THREAD_PARAM) args[!first]);
+    vcThreadQueue(signalMultThread, args[first]);
+    vcThreadQueue(signalMultThread, args[!first]);
     vcThreadStart();
 
     // When they finish, check that both got to make the edit.

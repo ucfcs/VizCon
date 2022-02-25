@@ -129,7 +129,7 @@ Ensure(Mutexes, create_named)
 //              Adds the addend to the global lockTarget,
 //              but only if the global lockFlag is 0.
 //              Returns: an unused value.
-THREAD_RET lockThread(THREAD_PARAM param)
+void* lockThread(void* param)
 {
     // Recast the two parameters.
     int* vals = param;
@@ -176,8 +176,8 @@ Ensure(Mutexes, lock)
     // A lock will stop one, and when it is resumed,
     // the continueThread flag will cause it to skip the addition.
     // The randomized "first" index is used so the order is not guaranteed.
-    vcThreadQueue(lockThread, (THREAD_PARAM) args[first]);
-    vcThreadQueue(lockThread, (THREAD_PARAM) args[!first]);
+    vcThreadQueue(lockThread, args[first]);
+    vcThreadQueue(lockThread, args[!first]);
     vcThreadStart();
 
     // When they finish, check that the one scheduled first got the lock.
@@ -192,7 +192,7 @@ Ensure(Mutexes, lock)
 //                Add the addend to the global lockTarget,
 //                but also make sure that the previous thread has finished.
 //                Returns: an unused value.
-THREAD_RET unlockThread(THREAD_PARAM param)
+void* unlockThread(void* param)
 {
     // Recast the two parameters.
     int* vals = param;
@@ -244,8 +244,8 @@ Ensure(Mutexes, unlock)
     // A lock will stop one, and when it is resumed,
     // the continueThread flag will cause it to skip the addition.
     // The randomized "first" index is used so the order is not guaranteed.
-    vcThreadQueue(unlockThread, (THREAD_PARAM) args[first]);
-    vcThreadQueue(unlockThread, (THREAD_PARAM) args[!first]);
+    vcThreadQueue(unlockThread, args[first]);
+    vcThreadQueue(unlockThread, args[!first]);
     vcThreadStart();
 
     // When they finish, check that both got to make the edit.
@@ -331,7 +331,7 @@ Ensure(Mutexes, double_unlock)
 //                     Parameter: an unused value.
 //                     Attempts to unlock the mutex locked by the spawner.
 //                     Returns: an unused value.
-THREAD_RET crossUnlockThread(THREAD_PARAM param)
+void* crossUnlockThread(void* param)
 {
     // Platform-dependent thread check.
     // Verify that this thread didn't place the lock.
