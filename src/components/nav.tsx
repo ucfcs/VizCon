@@ -15,10 +15,19 @@ interface NavProps {
   showCompileOutput: () => void;
 }
 
-export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs, current, compile, showCompileOutput }: NavProps): React.ReactElement {
+export default function Nav({
+  openFile,
+  openBlankFile,
+  saveFile,
+  saveAll,
+  saveAs,
+  current,
+  compile,
+  showCompileOutput,
+}: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
-  
+
   const [title, setTitle] = useState('');
 
   useEffect(() => {
@@ -28,7 +37,7 @@ export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs
       const titlePrefix = current.dirty ? '• ' : '';
       reactTitle = titlePrefix + shortName + ' - ';
     }
-    
+
     setTitle(reactTitle);
     document.title = reactTitle + 'VizCon';
   }, [current, current.dirty]);
@@ -67,11 +76,11 @@ export default function Nav({ openFile, openBlankFile, saveFile, saveAll, saveAs
                 },
                 {
                   name: 'Show Compile Output',
-                  action: showCompileOutput
-                }
+                  action: showCompileOutput,
+                },
               ]}
             />
-            <MenuItem 
+            <MenuItem
               title="Testing"
               options={[
                 {

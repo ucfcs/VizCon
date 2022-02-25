@@ -28,12 +28,7 @@ export default function Output({ text, current, closePanel }: ConsoleProps): Rea
         <div className="tab-actions">
           <ul className="tab-actions-container">
             <li className="action-item">
-              <a
-                className="action-label codicon codicon-close"
-                role="button"
-                title="Close Panel"
-                onClick={closePanel}
-              />
+              <a className="action-label codicon codicon-close" role="button" title="Close Panel" onClick={closePanel} />
             </li>
           </ul>
         </div>
@@ -61,7 +56,7 @@ export default function Output({ text, current, closePanel }: ConsoleProps): Rea
               bracketPairs: false,
               bracketPairsHorizontal: false,
               highlightActiveBracketPair: false,
-              highlightActiveIndentation: false
+              highlightActiveIndentation: false,
             },
           }}
         />

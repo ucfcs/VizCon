@@ -1,103 +1,106 @@
 #include "threads.h"
 
-// Create a thread, passing in a function
-CSThread *createThread(threadFunc func, void *arg)
-{
-	// Attempts to create the Thread data type. If it fails, print an error
-    CSThread *thread = (CSThread*)malloc(sizeof(CSThread));
-	if (thread == NULL)
-	{
-		vizconError("vcThreadQueue", 8);
-	}
+// On Windows only, define the thread runner.
+#ifdef _WIN32
+    DWORD winThreadRunner(LPVOID threadInput);
+#endif
 
-    // Sets the next value in the linked list to NULL
+// createThread - Create a thread, passing in a function
+//                Returns: a pointer to the thread struct.
+CSThread* createThread(threadFunc func, void *arg)
+{
+    // Allocate the thread struct. Error out if needed.
+    CSThread *thread = (CSThread*) malloc(sizeof(CSThread));
+    if (thread == NULL)
+        vizconError("vcThreadQueue/vcThreadQueueNamed", VC_ERROR_MEMORY);
+
+    // Set the internal struct properties.
     thread->next = NULL;
     thread->name = NULL;
     thread->num = -1;
+    thread->returnVal = NULL;
 
-    // Create thread function for Windows
-    #if defined(_WIN32) 
-        thread->thread = CreateThread(NULL, 0, func, arg, CREATE_SUSPENDED, 0);
+    // Save the function and argument.
+    thread->func = func;
+    thread->arg = arg;
 
-    // Create thread function for POSIX
-    #elif defined(_APPLE_) || defined(_linux_)
-		// Passes in the parameters as arguments for future creation
-		thread->func = func;
-		thread->arg = arg;
+    // On Windows only, create the thread in a suspended state.
+    // It will be woken up by a vcThreadStart or vcThreadReturn.
+    // The actual function will be run via winThreadRunner.
+    #ifdef _WIN32    
+        thread->thread = CreateThread(NULL, 0, winThreadRunner, thread, CREATE_SUSPENDED, 0);
     #endif
-	
-	return thread;
+
+    return thread;
 }
 
+// joinThread - Wait for the thread to finish, then join it.
 void joinThread(CSThread *thread)
 {
-    // Windows join thread function
-    #if defined(_WIN32)
-		// Attempt to wait for the object, rpnting the appropriate error if it fails
+    // Platform-dependent thread joining.
+    // Wait for the thread to finish.
+    #ifdef _WIN32 // Windows version
         DWORD ret = WaitForSingleObject(thread->thread, INFINITE);
-		if (ret == WAIT_FAILED)
-		{
-			vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-		}
-		else if (ret == WAIT_OBJECT_0)
-		{
-			if (!GetExitCodeThread(thread->thread, &thread->returnVal))
-			{
-				vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-			}
-		}
-		else if(ret == WAIT_ABANDONED)
-		{
-			vizconError("vcThreadStart/vcThreadReturn", 500);
-		}
-		else if (ret == WAIT_TIMEOUT)
-		{
-			vizconError("vcThreadStart/vcThreadReturn", 501);
-		}
-
-    // POSIX join thread function
-    #elif defined(__APPLE__) || defined(__linux__)
-    // Attempts to join the thread. If it fails, print an error
-    int err = pthread_join(thread->thread, &thread->returnVal);
-    if (err)
-    {
-        free(thread);
-		vizconError("vcThreadStart/vcThreadReturn", err);
-    }
+        if(ret != WAIT_OBJECT_0)
+        {
+            vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+            return;
+        }
+    #elif __APPLE__ || __linux__ // POSIX version
+        int err = pthread_join(thread->thread, &thread->returnVal);
+        if (err)
+        {
+            free(thread);
+            vizconError("vcThreadStart/vcThreadReturn", err);
+        }
     #endif
 }
 
+// freeThread - Close the thread (if needed) and free the struct.
 void freeThread(CSThread *thread)
 {
-    // Windows free thread function
-    #if defined(_WIN32) 
-		// Attempts to close the thread. If it fails, print an error
+    // On Windows only, attempt to close the thread.
+    // (On POSIX, the thread is closed during the join.)
+    #ifdef _WIN32
         if (!CloseHandle(thread->thread))
-		{
-			vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-		}
+            vizconError("vcThreadStart/vcThreadReturn", GetLastError());
     #endif
 
-    // Frees the struct
+    // Free the struct.
     free(thread);
 }
 
-//Start a given thread that was in a suspended state
+// startThread - Start the thread mapped to the struct.
 void startThread(CSThread* thread)
 {
-    #if defined(_WIN32) // windows
-	// Attempts to resume a thread. If it fails, print an error
-    if (ResumeThread(thread->thread) == -1)
-    {
-        vizconError("vcThreadStart/vcThreadReturn", GetLastError());
-    }
-    #elif defined(__APPLE__) || defined(__linux__)
-	// Attempts to create a pthread using the previously passed in parameters. If it fails, print an error
-    int err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
-    if (err)
-    {
-        free(thread);
-        vizconError("vcThreadQueue", err);
-    }
+    // Platform-dependent thread start.
+    #ifdef _WIN32 // Windows version
+        // Attempt to resume the thread. If it fails, print an error.
+        if (ResumeThread(thread->thread) == -1)
+            vizconError("vcThreadStart/vcThreadReturn", GetLastError());
+    #elif __APPLE__ || __linux__ // POSIX version.
+        // Create the thread based on the saved function and argument.
+        int err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
+        if (err)
+        {
+            free(thread);
+            vizconError("vcThreadStart/vcThreadReturn", err);
+        }
     #endif
 }
+
+// winThreadRunner - A wrapper for threads on Windows that saves
+//                   the function's return value whenit finishes.
+//                   This is because Windows threads return a 32-bit DWORD,
+//                   which is too small for some applications.
+//                   Parameter: A pointer to the thread object.
+//                   Returns: an unused value required by the Windows API.
+#ifdef _WIN32
+    DWORD winThreadRunner(LPVOID threadInput)
+    {
+        CSThread* thread = (CSThread*) threadInput;
+        void* retval = thread->func(thread->arg);
+        thread->returnVal = retval;
+        return 0;
+    }
+#endif

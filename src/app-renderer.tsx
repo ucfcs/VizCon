@@ -18,7 +18,7 @@ function App(): React.ReactElement {
   const [current, setCurrent] = useState(defaultCurrent);
   const [outputVisible, setOutputVisible] = useState(false);
   const [compileResult, setCompileResult] = useState('');
-  const [inVisualizer, setInVisualizer] = useState(true); // TODO: Change back to false later
+  const [inVisualizer, setInVisualizer] = useState(false); // TODO: Change back to false later
 
   function openFile(): void {
     window.platform.openFileDialog().then(async newFiles => {
@@ -155,9 +155,27 @@ function App(): React.ReactElement {
 
   return (
     <>
-      <Nav openFile={openFile} openBlankFile={openBlankFile} saveFile={saveFile} saveAll={saveAll} saveAs={saveAs} current={current} compile={compile} showCompileOutput={() => setOutputVisible(true)} />
-      <IDE files={files} current={current} setCurrent={setCurrent} closeFile={closeFile} compileResults={compileResult} showOutput={outputVisible} closeOutput={() => setOutputVisible(false)} inVisualizer={inVisualizer} />
-      <Visualizer inVisualizer={inVisualizer} current={current} goBack={() => setInVisualizer(false)}/>
+      <Nav
+        openFile={openFile}
+        openBlankFile={openBlankFile}
+        saveFile={saveFile}
+        saveAll={saveAll}
+        saveAs={saveAs}
+        current={current}
+        compile={compile}
+        showCompileOutput={() => setOutputVisible(true)}
+      />
+      <IDE
+        files={files}
+        current={current}
+        setCurrent={setCurrent}
+        closeFile={closeFile}
+        compileResults={compileResult}
+        showOutput={outputVisible}
+        closeOutput={() => setOutputVisible(false)}
+        inVisualizer={inVisualizer}
+      />
+      <Visualizer inVisualizer={inVisualizer} current={current} goBack={() => setInVisualizer(false)} />
     </>
   );
 }

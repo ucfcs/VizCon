@@ -48,7 +48,7 @@ export default function ConsoleOutput({ text, current }: ConsoleOutputProps): Re
               bracketPairs: false,
               bracketPairsHorizontal: false,
               highlightActiveBracketPair: false,
-              highlightActiveIndentation: false
+              highlightActiveIndentation: false,
             },
           }}
         />

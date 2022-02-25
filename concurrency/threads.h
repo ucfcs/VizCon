@@ -1,51 +1,30 @@
-// Universal Libraries
-#include <stdio.h>
-#include <stdlib.h>
+// Utilities library
 #include "utils.h"
 
-// Platform dependent libraries
+// Thread type definition
 #ifdef _WIN32
-typedef DWORD (*threadFunc) (LPVOID param);
-#define THREAD_FUNC_RET DWORD WINAPI
-#define THREAD_RET DWORD
-#define THREAD_PARAM LPVOID
-
-typedef struct CSThread
-{
-    char *name;
-    int num;
-    HANDLE thread;
-    THREAD_RET id;
-    THREAD_RET returnVal;
-    struct CSThread *next;
-} CSThread;
-
+    #define THREAD_TYPE HANDLE
 #elif __linux__ || __APPLE__
-#include <pthread.h>
-#include <semaphore.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-typedef void* (*threadFunc) (void* param);
-#define THREAD_FUNC_RET void*
-#define THREAD_RET void*
-#define THREAD_PARAM void*
-
-typedef struct CSThread
-{
-    char *name;
-    int num;
-    pthread_t thread;
-	threadFunc func;
-	void *arg;
-    THREAD_RET returnVal;
-    struct CSThread *next;
-} CSThread;
-
+    #define THREAD_TYPE pthread_t
 #endif
 
-// Thread Function Prototypes
-THREAD_RET createThread(threadFunc func, void *arg);
+// Thread function definition
+typedef void* (*threadFunc) (void* param);
+
+// CSThread - A wrapper for the thread type.
+typedef struct CSThread
+{
+    char *name;            // Internal name.
+    int num;               // Internal identifier.
+    THREAD_TYPE thread;    // The variable which represents the thread.
+    threadFunc func;       // The function the thread starts with.
+    void *arg;             // The argument(s) the thread starts with.
+    void* returnVal;       // A location for the return value.
+    struct CSThread *next; // The next thread in the global list.
+} CSThread;
+
+// Function prototypes
+CSThread* createThread(threadFunc func, void *arg);
 void joinThread(CSThread *thread);
 void freeThread(CSThread *thread);
 void startThread(CSThread* thread);

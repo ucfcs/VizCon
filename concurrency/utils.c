@@ -1,112 +1,151 @@
 #include "utils.h"
 
-//Creates a name for a concurrency structure
+// vizconCreateName - Creates a string that can be used to name a struct.
+//                    Returns: a pointer to the created string.
 char* vizconCreateName(int type, int value)
 {
-    int i = 1, temp = value/10;
+    // Determine the number of characters in value.
+    int i = 1, temp = value / 10;
     while(temp != 0)
     {
         i++;
         temp = temp / 10;
     }
-    char* ret = (char*)malloc(sizeof(char) * (11+i));
+
+    // Allocate the string. Error out if necessary.
+    char* ret = (char*) malloc(sizeof(char) * (11 + i));
     if(ret == NULL)
-    {
-        vizconError("create function", 502);
-    }
+        vizconError("create function", VC_ERROR_MEMORY);
+    
+    // Add the value to a string based on the type and return.
     switch(type)
     {
-        case 0:
+        // VC_TYPE_THREAD - Thread.
+        case VC_TYPE_THREAD:
         {
             sprintf(ret, "Thread %d", value);
             return ret;
         }
-        case 1:
+
+        // VC_TYPE_SEM - Semaphore.
+        case VC_TYPE_SEM:
         {
             sprintf(ret, "Semaphore %d", value);
             return ret;
         }
-        case 2:
+
+        // VC_TYPE_MUTEX - Mutex lock.
+        case VC_TYPE_MUTEX:
         {
             sprintf(ret, "Mutex %d", value);
             return ret;
         }
+
+        // Default - If anything else, return nothing.
         default:
-        {
             return NULL;
-        }
     }
 }
 
+// vizconStringLength - Calculate the length of the name string.
+//                      Returns: the length.
 int vizconStringLength(char* name)
 {
     int i;
-    for(i=0; name[i] != '\0'; i++);
+    for(i = 0; name[i] != '\0'; i++);
     return i;
 }
 
-//Handles error from concurrencylib and vcuserlibrary
+// vizconError - Prints errors encountered by the user library.
+//               The program closes after this method finishes.
 void vizconError(char* func, int err)
 {
-    char message[200];
+    // Start building the message string.
+    char message[MAX_ERROR_MESSAGE_LENGTH];
     sprintf(message, "\nError from %s.\n", func);
-    #if defined(_WIN32) // windows
+
+    // Platform-dependent error decoding.
+    // If the error is less than 500, it's not from our library.
+    // Get the corresponding string from the system's error descriptions.
+    // Then, append it to the end of the message string and set a 
+    #ifdef _WIN32 // Windows version
     LPSTR errorMessage;
     if(err < 500)
     {
         FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&errorMessage, 0, NULL);
-        sprintf(message, "%ssystem error", message);
+        sprintf(message + strlen(message), "system error %d: %s", err, errorMessage);
+        message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
+        printf("%s", message);
+        exit(err);
     }
-    #elif defined(__linux__) || defined(__APPLE__)
+
+    #elif __linux__ || __APPLE__ // POSIX version
     char* errorMessage;
     if(err < 500)
     {
+        errno = err;
         errorMessage = strerror(err);
-        sprintf(message, "%serrno", message);
+        sprintf(message + strlen(message), "errno code %d: %s", err, errorMessage);
+        message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
+        printf("%s\n", message);
+        exit(err);
     }
     #endif
+
+    // If the error is 500 or greater, it's a VizCon-specific error.
+    // Select the string related to the error.
     if(err >= 500)
     {
-        printf("vizcon error ");
         switch(err)
         {
-            case 500:
+            case VC_ERROR_ABANDONED:
             {
-                errorMessage = "A thread terminated without releasing its mutex lock.";
+                errorMessage = "A thread terminated without releasing a mutex lock it acquired.";
                 break;
             }
-            case 501:
+            case VC_ERROR_TIMEOUT:
             {
                 errorMessage = "An unexpected wait timeout occurred.";
                 break;
             }
-            case 502:
+            case VC_ERROR_MEMORY:
             {
                 errorMessage = "Not enough memory resources are available to process this command.";
                 break;
             }
-            case 510:
+            case VC_ERROR_BADCOUNT:
             {
-                message = "A thread attempted to unlock an already-unlocked mutex.";
+                errorMessage = "A semaphore was created with an invalid maximum permit value.";
                 break;
             }
-            case 511:
+            case VC_ERROR_NAMEERROR:
             {
-                message = "A thread attempted to lock a mutex that it already locked.";
+                errorMessage = "There was an error saving the internal mutex name.";
                 break;
             }
-            case 512:
+            case VC_ERROR_DOUBLEUNLOCK:
             {
-                message = "A thread attempted to unlock an mutex that was locked by another thread.";
+                errorMessage = "A thread attempted to unlock an already-unlocked mutex.";
+                break;
+            }
+            case VC_ERROR_DOUBLELOCK:
+            {
+                errorMessage = "A thread attempted to lock a mutex that it already locked.";
+                break;
+            }
+            case VC_ERROR_CROSSTHREADUNLOCK:
+            {
+                errorMessage = "A thread attempted to unlock an mutex that was locked by another thread.";
                 break;
             }
             default:
-            {
                 errorMessage = "An unknown error has occurred.";
-            }
         }
     }
-    sprintf(message, "%s code %d: %s\n", message, err, errorMessage);
-    printf("%s", message);
-    exit(0);
+
+    // Print the message and leave.
+    sprintf(message + strlen(message), "vizcon error code %d: %s\n", err, errorMessage);
+    message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
+    printf("%s\n", message);
+    exit(err);
 }
