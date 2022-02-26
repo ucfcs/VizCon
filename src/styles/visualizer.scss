@@ -1,17 +1,10 @@
-@mixin basic-table {
-  td, th {
-    border: 1px solid white;
-  }
-  border-collapse: collapse;
-}
-
 #visualizer {
   box-sizing: border-box;
   font-size: 13px;
   height: calc(100vh);
   overflow: hidden;
   background-color: rgb(30, 30, 30);
-  color: white;
+
   &.hidden {
     display: none;
   }
@@ -132,7 +125,7 @@
     flex-direction: row;
 
     .threads-container {
-      width: 20%;
+      width: 25%;
       height: 100%;
       background-color: rgb(37, 37, 38);
 
@@ -149,7 +142,7 @@
           font-size: 11px;
           line-height: 27px;
           height: 35px;
-          padding: 2px 10px;
+          padding: 2px 4px;
 
           .title-border {
             white-space: nowrap;
@@ -159,17 +152,56 @@
           }
         }
       }
-      .threads-table {
-        @include basic-table;
-      }
-      .active-thread {
-        background-color: darkblue;
+
+      .thread-table {
+        user-select: none;
+        width: calc(100% - 16px);
+        margin-left: 8px;
+        font-size: 12px;
+        color:rgb(231, 231, 231);
+        border-color: rgb(231, 231, 231);
+        border-collapse: collapse;
+
+        .thread-active {
+          min-width: 15%;
+        }
+
+        .thread-completed {
+          min-width: 20%;
+        }
+        
+        th {
+          font-size: 13px;
+          text-align: left;
+          font-weight: inherit;
+          white-space: nowrap;
+          text-transform: uppercase;
+          
+          &:not(:first-child) {
+            // padding: 0px 2px;
+            // border-left: 1px solid;
+          }
+        }
+
+        tbody {
+          .thread-row {
+            &.current {
+              background-color: rgb(0, 122, 204);
+            }
+            
+            td {
+              border: 1px solid;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+          }
+        }
       }
     }
 
     .visualizer-console {
       height: 100%;
-      width: 60%;
+      width: 50%;
 
       .title-container {
         display: flex;
@@ -201,7 +233,7 @@
     }
 
     .variables-container {
-      width: 20%;
+      width: 25%;
       height: 100%;
       background-color: rgb(37, 37, 38);
 
@@ -218,7 +250,7 @@
           font-size: 11px;
           line-height: 27px;
           height: 35px;
-          padding: 2px 10px;
+          padding: 2px 4px;
 
           .title-border {
             white-space: nowrap;
@@ -229,8 +261,41 @@
         }
       }
 
-      table.variables-globals {
-        @include basic-table;
+      .variable-table {
+        user-select: none;
+        width: calc(100% - 16px);
+        margin-left: 8px;
+        font-size: 12px;
+        color:rgb(231, 231, 231);
+        border-color: rgb(231, 231, 231);
+        border-collapse: collapse;
+        
+        th {
+          font-size: 13px;
+          text-align: left;
+          font-weight: inherit;
+          white-space: nowrap;
+          text-transform: uppercase;
+          
+          &:not(:first-child) {
+            // padding: 0px 2px;
+            // border-left: 1px solid;
+          }
+        }
+
+        tbody {
+          .variable-row {
+            &.current {
+              background-color: rgb(0, 122, 204);
+            }
+            
+            td {
+              border: 1px solid;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+          }
+        }
       }
     }
   }

@@ -1,15 +1,15 @@
-interface ThreadInfo {
+interface ThreadData {
   name: string;
-  state: string;
+  state: 'running' | 'ready' | 'waiting' | 'completed';
 }
 
-interface VariableInfo {
+interface VariableData {
   name: string;
   type: string;
   value: string;
 }
 
 interface VisualizerState {
-  threads: ThreadInfo[];
-  globals: VariableInfo[];
+  threads: ThreadData[];
+  globals: VariableData[];
 }

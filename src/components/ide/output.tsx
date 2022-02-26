@@ -48,8 +48,6 @@ export default function Output({ text, current, closePanel }: ConsoleProps): Rea
             lineNumbers: 'off',
             renderLineHighlight: 'none',
             scrollBeyondLastLine: false,
-            detectIndentation: false,
-            tabSize: 100000,
             folding: false,
             guides: {
               indentation: false,

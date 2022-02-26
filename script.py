@@ -90,7 +90,7 @@ error = lldb.SBError()
 #print(launch_info.AddOpenFileAction(2, "stderr.txt", False, True))
 launch_info.SetEnvironmentEntries(["lldbMode=1"], True)
 process = target.Launch(launch_info, error)
-print("Error", error.Success(), error, error.GetCString())
+debug_print("Error", error.Success(), error, error.GetCString())
 
 for t in process:
     if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == main_bp.GetID():

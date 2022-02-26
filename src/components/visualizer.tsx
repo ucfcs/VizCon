@@ -86,9 +86,13 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
         simulationSpeed={simulationSpeed}
       />
       <div className='visualizer-main'>
-        <Threads threads={visualizerState?.threads || []}/>
+        <Threads data={visualizerState?.threads || []}/>
         <ConsoleOutput current={current} text={consoleOutput} />
-        <Variables globals={visualizerState?.globals || []}/>
+        <Variables globals={visualizerState?.globals || []} locals={{'1 main': [
+          {name: 'sem',
+          type: 'VCSem*',
+          value: '0x76b949c587f3942a'}
+        ]}}/>
       </div>
     </div>
   );

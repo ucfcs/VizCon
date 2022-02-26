@@ -1,7 +1,7 @@
 {
   "name": "vizcon",
   "productName": "vizcon",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A software tool used for education and demonstration of the concept of concurrency in operating systems.",
   "main": ".webpack/main",
   "scripts": {

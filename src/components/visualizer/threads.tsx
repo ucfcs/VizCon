@@ -1,10 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { getDisplayValueForBool } from '../../util/utils';
 
 interface ThreadsProps {
-  threads: ThreadInfo[];
+  data: ThreadData[];
 }
 
-export default function Threads({ threads }: ThreadsProps): React.ReactElement {
+export default function Threads({ data }: ThreadsProps): React.ReactElement {
+  const [tableValues, setTableValues] = useState([]);
+
+  useEffect(() => {
+    const trs = data.map(thread => {
+      const inProcessor = thread.state === 'running';
+      const active = thread.state === 'running' || thread.state === 'ready';
+      const complete = thread.state === 'completed';
+      const className = 'thread-row' + (inProcessor ? ' current' : '');
+      return (
+        <tr className={className} key={`Thread: ${thread.name}`} title={`Thread: ${thread.name}`}>
+          <td className="thread-name">{thread.name}</td>
+          <td className="thread-active">{getDisplayValueForBool(active)}</td>
+          <td className="thread-completed">{getDisplayValueForBool(complete)}</td>
+        </tr>
+      );
+    });
+
+    setTableValues(trs);
+  }, [data]);
+
   return (
     <div className="threads-container">
       <div className="title-container">
@@ -12,24 +33,15 @@ export default function Threads({ threads }: ThreadsProps): React.ReactElement {
           <div className="title-border">Threads</div>
         </div>
       </div>
-      <table className="threads-table">
-        <caption>Threads:</caption>
-        <thead>
+      <table className="thread-table">
+        <thead className="thread-head">
           <tr>
-            <th>Thread ID</th>
-            <th>State</th>
+            <th className="thread-name">Thread</th>
+            <th className="thread-active">Active</th>
+            <th className="thread-completed">Completed</th>
           </tr>
         </thead>
-        <tbody>
-          {threads.map((thread) => {
-            return (
-              <tr key={thread.name} className={thread.state === 'running' ? 'active-thread' : null}>
-                <td>{thread.name}</td>
-                <td>{thread.state}</td>
-              </tr>
-            );
-          })}
-        </tbody>
+        <tbody className="thread-body">{tableValues}</tbody>
       </table>
     </div>
   );
