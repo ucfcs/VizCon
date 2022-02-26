@@ -153,9 +153,7 @@ CSSem* vcSemCreate(int count)
 {
     // Make sure the count is valid.
     if(count <= 0)
-    {
         vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
-    }
     // If there are no semaphores in the list, make the new semaphore the initial one.
     CSSem* sem;
     if(vizconSemList == NULL)
@@ -177,13 +175,14 @@ CSSem* vcSemCreate(int count)
     return sem;
 }
 
+// vcSemCreateInitial - Create a semaphore with the specified initial and maximum permit count.
+//                      Returns: a pointer to the new semaphore.
 CSSem* vcSemCreateInitial(int initialCount, int maxCount)
 {
-    // Make sure the count is valid.
+    // Make sure the counts are valid.
     if(initialCount < 0 || maxCount <= 0)
-    {
         vizconError("vcSemCreateInitial", VC_ERROR_BADCOUNT);
-    }
+
     // If there are no semaphores in the list, make the new semaphore the initial one.
     CSSem* sem;
     if(vizconSemList == NULL)
@@ -202,12 +201,11 @@ CSSem* vcSemCreateInitial(int initialCount, int maxCount)
         vizconSemList->next = sem;
         vizconSemList = sem;
     }
-    //Consume a number of permits until initial count
+
+    // Consume permits until the current count matches the desired initial count.
     int i;
-    for(i=0; i<maxCount-initialCount; i++)
-    {
+    for(i = 0; i < maxCount - initialCount; i++)
         vcSemWait(sem);
-    }
     return sem;
 }
 
@@ -217,15 +215,16 @@ CSSem* vcSemCreateNamed(int count, char* name)
 {
     // Make sure the count is valid.
     if(count <= 0)
-    {
         vizconError("vcSemCreateNamed", VC_ERROR_BADCOUNT);
-    }
+    
     // Attempt to allocate space for the semaphore name.
     char* mallocName = (char*) malloc(sizeof(char) * (vizconStringLength(name) + 1));
     if (mallocName == NULL) 
         vizconError("vcSemCreateNamed", VC_ERROR_MEMORY);
-    
     sprintf(mallocName, "%s", name);
+
+
+    // Create the semaphore object.
     CSSem* sem = semCreate(mallocName, count);
 
     // If there are no semaphores in the list, make the new semaphore the initial one.
@@ -246,24 +245,21 @@ CSSem* vcSemCreateNamed(int count, char* name)
     return sem;
 }
 
-// vcSemCreateNamed - Create a semaphore with the specified name and maximum permit count.
-//                    Returns: a pointer to the new semaphore.
+// vcSemCreateInitialNamed - Create a semaphore with the specified name, initial count, and maximum count.
+//                           Returns: a pointer to the new semaphore.
 CSSem* vcSemCreateInitialNamed(int initialCount, int maxCount, char* name)
 {
-    // Make sure the count is valid.
+    // Make sure the counts are valid.
     if(initialCount < 0 || maxCount <= 0)
-    {
         vizconError("vcSemCreateInitialNamed", VC_ERROR_BADCOUNT);
-    }
+    
     // Attempt to allocate space for the semaphore name.
-    int i;
-    for(i=0; name[i] != '\0'; i++);
-    char* mallocName = (char*)malloc(sizeof(char) * (i + 1));
+    char* mallocName = (char*) malloc(sizeof(char) * (vizconStringLength(name) + 1));
     if (mallocName == NULL) 
-    {
-        vizconError("vcSemCreateInitialNamed", VC_ERROR_MEMORY);
-    }
+        vizconError("vcSemCreateNamed", VC_ERROR_MEMORY);
     sprintf(mallocName, "%s", name);
+
+    // Create the semaphore object.
     CSSem* sem = semCreate(mallocName, maxCount);
 
     // If there are no semaphores in the list, make the new semaphore the initial one.
@@ -282,11 +278,10 @@ CSSem* vcSemCreateInitialNamed(int initialCount, int maxCount, char* name)
         vizconSemList = sem;
     }
 
-    //Consume semaphores to reach initial count
-    for(i=0; i<maxCount-initialCount; i++)
-    {
+    // Consume permits until the current count matches the desired initial count.
+    int i;
+    for(i = 0; i < maxCount - initialCount; i++)
         vcSemWait(sem);
-    }
     return sem;
 }
 
@@ -299,28 +294,34 @@ void vcSemWait(CSSem* sem)
 
 // vcSemWaitMult - Obtain the specified number of permits from the semaphore.
 //                 If the permits are not available yet, wait until they are.
+//                 Note that the permits are only obtained as a block;
+//                 if even one is unavailable, the wait will continue.
 void vcSemWaitMult(CSSem* sem, int num)
 {
     int i;
     while(1)
     {
+        // Wait for the semaphore to have enough permits available.
         while(vcSemValue(sem) < num);
-        for(i=0; i<num; i++)
+
+        // Now that all permits are available, try to get all of them.
+        for(i = 0; i < num; i++)
         {
+            // If one of the permits suddenly becomes unavailable,
+            // return all the ones already acquired and restart the wait.
             if(!vcSemTryWait(sem))
             {
-                for(i=i; i>0; i--)
-                {
+                for(i = i; i > 0; i--)
                     vcSemSignal(sem);
-                }
                 i = -1;
                 break;
             }
         }
+
+        // If every permit was acquired, i will be 0.
+        // Otherwise, return to the start of the loop.
         if(i != -1)
-        {
             return;
-        }
     }
 }
 
