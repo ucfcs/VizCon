@@ -36,11 +36,37 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
 
   return (
     <div id="visualizer" className={className}>
-      <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack} />
-      <div className="visualizer-main">
-        <Threads data={[]} />
+      <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack}/>
+      <div className='visualizer-main'>
+        <Threads data={[{
+          active: true,
+          complete: false,
+          inProcessor: false,
+          name: "1 main"
+        }, {
+          active: true,
+          complete: false,
+          inProcessor: true,
+          name: "2 coroutine"
+        }]}/>
         <ConsoleOutput current={current} text={consoleOutput} />
-        <Variables data={[]} />
+        <Variables globals={[{
+          name: 'i',
+          type: 'int',
+          value: '0'
+        }, {
+          name: 'counter',
+          type: 'int',
+          value: '42'
+        }, {
+          name: 'ptr',
+          type: 'int *',
+          value: '0x76b949c587f3942a'
+        }]} locals={{'1 main': [
+          {name: 'sem',
+          type: 'VCSem*',
+          value: '0x76b949c587f3942a'}
+        ]}}/>
       </div>
     </div>
   );

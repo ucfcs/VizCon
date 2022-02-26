@@ -250,13 +250,50 @@
           font-size: 11px;
           line-height: 27px;
           height: 35px;
-          padding: 2px 10px;
+          padding: 2px 4px;
 
           .title-border {
             white-space: nowrap;
             text-transform: uppercase;
             border-bottom-color: rgb(231, 231, 231);
             border-bottom: 1px solid;
+          }
+        }
+      }
+
+      .variable-table {
+        user-select: none;
+        width: calc(100% - 16px);
+        margin-left: 8px;
+        font-size: 12px;
+        color:rgb(231, 231, 231);
+        border-color: rgb(231, 231, 231);
+        border-collapse: collapse;
+        
+        th {
+          font-size: 13px;
+          text-align: left;
+          font-weight: inherit;
+          white-space: nowrap;
+          text-transform: uppercase;
+          
+          &:not(:first-child) {
+            // padding: 0px 2px;
+            // border-left: 1px solid;
+          }
+        }
+
+        tbody {
+          .variable-row {
+            &.current {
+              background-color: rgb(0, 122, 204);
+            }
+            
+            td {
+              border: 1px solid;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
           }
         }
       }

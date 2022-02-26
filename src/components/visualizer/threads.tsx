@@ -46,7 +46,7 @@ export default function Threads({ data }: ThreadsProps): React.ReactElement {
             <th className="thread-completed">Completed</th>
           </tr>
         </thead>
-        <tbody className="tread-body">{tableValues}</tbody>
+        <tbody className="thread-body">{tableValues}</tbody>
       </table>
     </div>
   );
