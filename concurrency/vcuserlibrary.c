@@ -2,8 +2,14 @@
 
 // Pointers used to track all concurrency objects.
 CSThread *vizconThreadListHead, *vizconThreadList;
-CSSem    *vizconSemListHead,    *vizconSemList;
-CSMutex  *vizconMutexListHead,  *vizconMutexList;
+CSSem *vizconSemListHead, *vizconSemList;
+CSMutex *vizconMutexListHead, *vizconMutexList;
+
+// Definitions for methods that close objects.
+// They are defined here because a user doesn't need to access them directly.
+void closeAllThreads();
+void closeAllSemaphores();
+void closeAllMutexes();
 
 // vcThreadQueue - Prepare a thread instance with the function and arguments.
 //                 Automatically generate the thread name.
@@ -84,9 +90,10 @@ void vcThreadStart()
         vizconThreadList = vizconThreadList->next;
     }
     
-    // Free all the threads.
-    freeUserThreads();
-    // FIXME: Free threads and semaphores?
+    // Close all the resources.
+    closeAllThreads();
+    closeAllSemaphores();
+    closeAllMutexes();
 }
 
 // vcThreadReturn - Start all threads created by vcThreadQueue and vcThreadQueueNamed.
@@ -121,15 +128,15 @@ void** vcThreadReturn()
         i++;
     }
 
-    // Free all the threads.
-    freeUserThreads();
-    // FIXME: Free threads and semaphores?
-
+    // Free all the resources and return.
+    closeAllThreads();
+    closeAllSemaphores();
+    closeAllMutexes();
     return arr;
 }
 
-// freeUserThreads - Free every thread in the thread list.
-void freeUserThreads()
+// closeAllThreads - Free every thread in the thread list.
+void closeAllThreads()
 {
     while(vizconThreadListHead != NULL)
     {
@@ -145,9 +152,10 @@ void freeUserThreads()
 CSSem* vcSemCreate(int count)
 {
     // Make sure the count is valid.
-    if (count <= 0)
+    if(count <= 0)
+    {
         vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
-
+    }
     // If there are no semaphores in the list, make the new semaphore the initial one.
     CSSem* sem;
     if(vizconSemList == NULL)
@@ -169,14 +177,49 @@ CSSem* vcSemCreate(int count)
     return sem;
 }
 
+CSSem* vcSemCreateInitial(int initialCount, int maxCount)
+{
+    // Make sure the count is valid.
+    if(initialCount < 0 || maxCount <= 0)
+    {
+        vizconError("vcSemCreateInitial", VC_ERROR_BADCOUNT);
+    }
+    // If there are no semaphores in the list, make the new semaphore the initial one.
+    CSSem* sem;
+    if(vizconSemList == NULL)
+    {
+        sem = semCreate(vizconCreateName(VC_TYPE_SEM, 0), maxCount);
+        sem->num = 0;
+        vizconSemListHead = sem;
+        vizconSemList = sem;
+    }
+
+    // Otherwise, add the semaphore to the end of the list.
+    else
+    {
+        sem = semCreate(vizconCreateName(VC_TYPE_SEM, vizconSemList->num + 1), maxCount);
+        sem->num = vizconSemList->num + 1;
+        vizconSemList->next = sem;
+        vizconSemList = sem;
+    }
+    //Consume a number of permits until initial count
+    int i;
+    for(i=0; i<maxCount-initialCount; i++)
+    {
+        vcSemWait(sem);
+    }
+    return sem;
+}
+
 // vcSemCreateNamed - Create a semaphore with the specified name and maximum permit count.
 //                    Returns: a pointer to the new semaphore.
 CSSem* vcSemCreateNamed(int count, char* name)
 {
     // Make sure the count is valid.
-    if (count <= 0)
-        vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
-
+    if(count <= 0)
+    {
+        vizconError("vcSemCreateNamed", VC_ERROR_BADCOUNT);
+    }
     // Attempt to allocate space for the semaphore name.
     char* mallocName = (char*) malloc(sizeof(char) * (vizconStringLength(name) + 1));
     if (mallocName == NULL) 
@@ -203,6 +246,50 @@ CSSem* vcSemCreateNamed(int count, char* name)
     return sem;
 }
 
+// vcSemCreateNamed - Create a semaphore with the specified name and maximum permit count.
+//                    Returns: a pointer to the new semaphore.
+CSSem* vcSemCreateInitialNamed(int initialCount, int maxCount, char* name)
+{
+    // Make sure the count is valid.
+    if(initialCount < 0 || maxCount <= 0)
+    {
+        vizconError("vcSemCreateInitialNamed", VC_ERROR_BADCOUNT);
+    }
+    // Attempt to allocate space for the semaphore name.
+    int i;
+    for(i=0; name[i] != '\0'; i++);
+    char* mallocName = (char*)malloc(sizeof(char) * (i + 1));
+    if (mallocName == NULL) 
+    {
+        vizconError("vcSemCreateInitialNamed", VC_ERROR_MEMORY);
+    }
+    sprintf(mallocName, "%s", name);
+    CSSem* sem = semCreate(mallocName, maxCount);
+
+    // If there are no semaphores in the list, make the new semaphore the initial one.
+    if(vizconSemList == NULL)
+    {
+        sem->num = 0;
+        vizconSemListHead = sem;
+        vizconSemList = sem;
+    }
+
+    // Otherwise, add the semaphore to the end of the list.
+    else
+    {
+        sem->num = vizconSemList->num + 1;
+        vizconSemList->next = sem;
+        vizconSemList = sem;
+    }
+
+    //Consume semaphores to reach initial count
+    for(i=0; i<maxCount-initialCount; i++)
+    {
+        vcSemWait(sem);
+    }
+    return sem;
+}
+
 // vcSemWait - Obtain a permit from the semaphore.
 //             If a permit is not available yet, wait until it is.
 void vcSemWait(CSSem* sem)
@@ -215,8 +302,26 @@ void vcSemWait(CSSem* sem)
 void vcSemWaitMult(CSSem* sem, int num)
 {
     int i;
-    for(i = 0; i < num; i++)
-        semWait(sem);
+    while(1)
+    {
+        while(vcSemValue(sem) < num);
+        for(i=0; i<num; i++)
+        {
+            if(!vcSemTryWait(sem))
+            {
+                for(i=i; i>0; i--)
+                {
+                    vcSemSignal(sem);
+                }
+                i = -1;
+                break;
+            }
+        }
+        if(i != -1)
+        {
+            return;
+        }
+    }
 }
 
 // vcSemTryWait - Try to obtain a permit from the semaphore.
@@ -269,7 +374,7 @@ void vcSemSignalMult(CSSem* sem, int num)
 //              Returns: the number of available permits.
 int vcSemValue(CSSem* sem)
 {
-    return semValue(sem);
+    return sem->count;
 }
 
 // closeAllSemaphores - Close and destroy all semaphores.
@@ -386,4 +491,13 @@ void closeAllMutexes()
         mutexClose(vizconMutexListHead);
         vizconMutexListHead = vizconMutexList;
     }
+}
+
+// vcHalt - Close all resources and immediately exit.
+void vcHalt(int exitCode)
+{
+    closeAllThreads();
+    closeAllSemaphores();
+    closeAllMutexes();
+    exit(exitCode);
 }
