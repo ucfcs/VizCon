@@ -1,4 +1,8 @@
 #include "threads.h"
+extern int isLldbActive;
+
+// TODO! Temporary
+#include "lldb_lib.h"
 
 // On Windows only, define the thread runner.
 #ifdef _WIN32
@@ -27,7 +31,7 @@ CSThread* createThread(threadFunc func, void *arg)
     // On Windows only, create the thread in a suspended state.
     // It will be woken up by a vcThreadStart or vcThreadReturn.
     // The actual function will be run via winThreadRunner.
-    #ifdef _WIN32    
+    #ifdef _WIN32
         thread->thread = CreateThread(NULL, 0, winThreadRunner, thread, CREATE_SUSPENDED, 0);
     #endif
 
@@ -37,6 +41,10 @@ CSThread* createThread(threadFunc func, void *arg)
 // startThread - Start the thread mapped to the struct.
 void startThread(CSThread* thread)
 {
+    if (isLldbActive) {
+        doCreateThread(&thread->pthread, thread->func, thread->arg);
+        return;
+    }
     // Platform-dependent thread start.
     #ifdef _WIN32 // Windows version
         // Attempt to resume the thread. If it fails, print an error.
@@ -74,6 +82,10 @@ void joinThread(CSThread *thread)
 {
     // Platform-dependent thread joining.
     // Wait for the thread to finish.
+    if (isLldbActive) {
+        vcJoin(thread->pthread, NULL);
+        return;
+    }
     #ifdef _WIN32 // Windows version
         DWORD ret = WaitForSingleObject(thread->thread, INFINITE);
         if(ret != WAIT_OBJECT_0)
@@ -97,7 +109,10 @@ void freeThread(CSThread *thread)
     // On Windows only, attempt to close the thread.
     // (On POSIX, the thread is closed during the join.)
     #ifdef _WIN32
-        if (!CloseHandle(thread->thread))
+        if (isLldbActive) {
+            fprintf(stderr, "freeThread: FIXME\n");
+        }
+        else if (!CloseHandle(thread->thread))
             vizconError("vcThreadStart/vcThreadReturn", GetLastError());
     #endif
 

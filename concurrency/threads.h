@@ -1,6 +1,9 @@
 // Utilities library
 #include "utils.h"
 
+// Temporary
+#include <pthread.h>
+
 // Thread type definition
 #ifdef _WIN32
     #define THREAD_TYPE HANDLE
@@ -17,6 +20,7 @@ typedef struct CSThread
     char *name;            // Internal name.
     int num;               // Internal identifier.
     THREAD_TYPE thread;    // The variable which represents the thread.
+    pthread_t pthread; // Temporary for experimentation. Deleteme
     threadFunc func;       // The function the thread starts with.
     void *arg;             // The argument(s) the thread starts with.
     void* returnVal;       // A location for the return value.

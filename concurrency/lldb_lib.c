@@ -1,12 +1,14 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <semaphore.h>
 #include "lldb_lib.h"
 
 int real_main(void);
 sem_t sem_wait_create_thread;
+int isLldbActive; 
 
 void do_post(pthread_t thread) {
 	sem_post(&sem_wait_create_thread);
@@ -38,6 +40,14 @@ void vcJoin(pthread_t thread, void *ret) {
 }
 
 void vc_internal_init() {
+	char *lldbMode = getenv("lldbMode");
+	isLldbActive = lldbMode != NULL && strcmp(lldbMode, "1") == 0;
+	if (isLldbActive) {
+		fprintf(stderr, "LLDB is active\n");
+	}
+	else {
+		fprintf(stderr, "LLDB is NOT active\n");
+	}
 	sem_init(&sem_wait_create_thread, 0, 0);
 }
 

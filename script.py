@@ -36,11 +36,21 @@ def isUserCode(thread):
         return False
     file = line.GetFileSpec().GetFilename()
     # TODO: keep this updated
+    if file is None:
+        return False
     if "lldb_lib.c" in file:
         return False
+    full_file = str(line.GetFileSpec())
+    if "mingw-w64" in full_file or "mingw64" in full_file:
+        return False
+    if "vcuserlibrary" in file:
+        return False
+    if "threads.c" in file or "semaphore.c" in file or "mutexes.c" in file:
+        return False
+    #print("File is user code", file, str(line.GetFileSpec()), file=sys.stderr)
     return True
 
-os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(True)
+#os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(True)
 # Create a new debugger instance
 debugger = lldb.SBDebugger.Create()
 
@@ -72,10 +82,15 @@ printf_hook_bp = target.BreakpointCreateByName ("printf_hook", target.GetExecuta
 vcWait_bp = target.BreakpointCreateByName ("vcWait", target.GetExecutable().GetFilename())
 vcSignal_bp = target.BreakpointCreateByName ("vcSignal", target.GetExecutable().GetFilename())
 
-# Launch the process. Since we specified synchronous mode, we won't return
-# from this function until we hit the breakpoint at main
-process = target.LaunchSimple (None, None, os.getcwd())
+launch_info = target.GetLaunchInfo()
 
+error = lldb.SBError()
+#print(launch_info.AddOpenFileAction(0, "CONIN$", True, False))
+#print(launch_info.AddOpenFileAction(1, "stdout.txt", False, True))
+#print(launch_info.AddOpenFileAction(2, "stderr.txt", False, True))
+launch_info.SetEnvironmentEntries(["lldbMode=1"], True)
+process = target.Launch(launch_info, error)
+print("Error", error.Success(), error, error.GetCString())
 
 for t in process:
     if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == main_bp.GetID():
@@ -113,8 +128,10 @@ while True:
     if running_thread.GetThreadID() in ignore_set:
         ignore_set.remove(running_thread.GetThreadID())
 
+    #debug_print("Before stepInstruction", chosen_cthread['name'])
     running_thread.StepInstruction(False)
     current_function = running_thread.GetFrameAtIndex(0).GetFunction().GetDisplayName()
+    #debug_print("After stepInstruction", current_function, chosen_cthread['name'])
     if current_function == 'vc_internal_thread_wrapper':
         # TODO: much more cleanup is needed!
         # for example, remove it from managed threads
@@ -134,6 +151,10 @@ while True:
         debug_print("Main function exited.")
         interleave_log.write("End.\n")
         interleave_log.close()
+        # Allow the process to finish (allows cleanup to run)
+        for t in process:
+            t.Resume()
+        process.Continue()
         respondToVisualizer({'type': 'process_end'})
         sys.exit(0)
     else:
@@ -141,62 +162,78 @@ while True:
             debug_print("Special stepout from", running_thread.GetFrameAtIndex(0))
             running_thread.StepOut()
     printed_lines = []
-    for t in process:
-        if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == printf_hook_bp.GetID(): 
-            the_str = t.GetFrameAtIndex(0).FindVariable("str")
-            captured_str = process.ReadCStringFromMemory(the_str.GetValueAsUnsigned(), 1024, lldb.SBError())
-            printed_lines.append(captured_str)
-            process.Continue()
-            continue
-        if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vc_internal_registerSem_bp.GetID():
-            new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-            # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
-            thread_man.registerSem(str(new_sem))
-            process.Continue()
-            continue
-        if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcWait_bp.GetID():
-            new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-            # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
-            thread_man.onWaitSem(t, str(new_sem))
-            # TODO: Add a better resume to replace this
-            process.Continue()
-            continue
-        if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcSignal_bp.GetID():
-            new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-            # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
-            thread_man.onSignalSem(t, str(new_sem))
-            process.Continue()
-            continue
-        if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcJoin_bp.GetID():
-            if t.GetThreadID() in ignore_set:
-                if verbose:
-                    debug_print("Ignoring a thread")
+    handlingBreakpoints = True
+    while handlingBreakpoints:
+        handledBreakpoint = False
+        for t in process:
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == printf_hook_bp.GetID(): 
+                the_str = t.GetFrameAtIndex(0).FindVariable("str")
+                captured_str = process.ReadCStringFromMemory(the_str.GetValueAsUnsigned(), 1024, lldb.SBError())
+                printed_lines.append(captured_str)
+                process.Continue()
+                handledBreakpoint = True
                 continue
-            thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
-            ignore_set.add(t.GetThreadID())
-            thread_man.onJoin(t, thread_val)
-        if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == thread_bp.GetID():
-            if t.GetThreadID() in ignore_set:
-                if verbose:
-                    debug_print("Ignoring a thread that already hit thread_bp")
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vc_internal_registerSem_bp.GetID():
+                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
+                thread_man.registerSem(str(new_sem))
+                process.Continue()
+                handledBreakpoint = True
                 continue
-            pthread_id = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
-            for other_thread in getThreads():
-                if other_thread != t:
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcWait_bp.GetID():
+                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
+                thread_man.onWaitSem(t, str(new_sem))
+                # TODO: Add a better resume to replace this
+                process.Continue()
+                handledBreakpoint = True
+                continue
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcSignal_bp.GetID():
+                new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                # TODO: why is this a problem when vc_internal_init is stepi instead of stepover
+                thread_man.onSignalSem(t, str(new_sem))
+                process.Continue()
+                handledBreakpoint = True
+                continue
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcJoin_bp.GetID():
+                if t.GetThreadID() in ignore_set:
                     if verbose:
-                        debug_print("Temporarily suspending other thread", other_thread)
-                    other_thread.Suspend()
-            thread_man.onCreateThread({'thread': t, 'pthread_id': pthread_id})
-            t.StepOut()
-            while True:
-                if isUserCode(t):
-                    break
-                t.StepInstruction(False)
-            for t2 in getThreads():
-                t2.Suspend()
-            running_thread.Resume()
-            process.Continue()
-            ignore_set.add(t.GetThreadID())
+                        debug_print("Ignoring a thread")
+                    continue
+                thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                ignore_set.add(t.GetThreadID())
+                thread_man.onJoin(t, thread_val)
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == thread_bp.GetID():
+                #debug_print("Stopped", t, "running thread", running_thread)
+                if t.GetThreadID() in ignore_set:
+                    #debug_print("Ignoring a thread that already hit thread_bp (this should never happen)")
+                    continue
+                pthread_id = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                for other_thread in getThreads():
+                    if other_thread != t:
+                        if verbose:
+                            debug_print("Temporarily suspending other thread", other_thread)
+                        other_thread.Suspend()
+                thread_man.onCreateThread({'thread': t, 'pthread_id': pthread_id})
+                t.StepOut()
+                while True:
+                    if isUserCode(t):
+                        break
+                    t.StepInstruction(False)
+                for t2 in getThreads():
+                    t2.Suspend()
+                #debug_print("Resume", main_thread.is_suspended, running_thread, chosen_cthread, chosen_cthread['thread'] == running_thread)
+                running_thread.Resume()
+                process.Continue()
+                #debug_print("Finished resume", main_thread.GetFrameAtIndex(0))
+                #debug_print(main_thread.stop_reason, main_thread.stop_reason == lldb.eStopReasonBreakpoint)
+                #for fr in main_thread:
+                #    debug_print("\t", fr)
+                running_thread.Suspend()
+                ignore_set.add(t.GetThreadID())
+                handledBreakpoint = True
+                continue
+        handlingBreakpoints = handledBreakpoint
     # Send the program state to the visualizer
     if chosen_cthread is not None:
         frame = running_thread.GetFrameAtIndex(0)
