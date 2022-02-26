@@ -12,4 +12,8 @@ function filePathToFileName(name: string): string {
   return shortName.substring(0, idx);
 }
 
-export { filePathToShortName, filePathToFileName };
+function getDisplayValueForBool(bool: boolean): string {
+  return bool ? 'true' : 'false';
+}
+
+export { filePathToShortName, filePathToFileName, getDisplayValueForBool };

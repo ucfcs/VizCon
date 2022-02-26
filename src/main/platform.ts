@@ -11,10 +11,12 @@ if (app.isPackaged) {
   resourcesPrefix = process.resourcesPath.replace(/\\\\/g, pathSep);
 }
 
+const concurrencyFolder = resourcesPrefix + pathSep + 'concurrency' + pathSep;
+
 // TODO: add vcuserlibrary.c
 const library = ['utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
-  return resourcesPrefix + pathSep + 'concurrency' + pathSep + file;
+  return concurrencyFolder + file;
 });
 
 ipcMain.handle('minimize', e => {
@@ -90,7 +92,7 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [path, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
-  const commandString = `gcc -g ${files.join(' ')} -o ${outputFile}`;
+  const commandString = `gcc -g ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
   console.log(outputFile, commandString);
 
   const prom = new Promise(resolve => {
