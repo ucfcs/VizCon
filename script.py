@@ -247,7 +247,7 @@ while True:
         globals_list = []
         for frame_var in globals:
             global_value = frame_var.GetValue()
-            if frame_var.GetTypeName() == 'vcSem *':
+            if frame_var.GetTypeName() == 'CSSem *':
                 global_value = thread_man.getSemaphoreValue(str(global_value))    
             globals_list.append({'name': frame_var.GetName(), 'type': frame_var.GetTypeName(), 'value': global_value})
         respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list, 'printed_lines': printed_lines})

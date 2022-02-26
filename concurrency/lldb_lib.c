@@ -53,22 +53,15 @@ void vc_internal_init() {
 
 
 
-void vc_internal_registerSem(struct vcSem *sem) {
-
-}
-struct vcSem *vcCreateSemaphore()
-{
-	// TODO: ?
-	struct vcSem *sem = malloc(sizeof(struct vcSem));
-	vc_internal_registerSem(sem);
-	return sem;
-}
-
-void vcWait(struct vcSem *sem) {
+void vc_internal_registerSem(CSSem *sem) {
 
 }
 
-void vcSignal(struct vcSem *sem) {
+void vcWait(CSSem *sem) {
+
+}
+
+void vcSignal(CSSem *sem) {
 
 }
 

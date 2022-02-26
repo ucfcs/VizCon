@@ -1,4 +1,7 @@
 #include "semaphores.h"
+#include "lldb_lib.h"
+
+extern int isLldbActive;
 
 // semCreate - Create a semaphore with the given name and max value.
 //             Returns: a pointer to the semaphore struct.
@@ -21,7 +24,13 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     sem->next = NULL;
     sem->name = (char*) name;
     sem->num = -1;
-    
+    sem->count = maxValue;
+    if (isLldbActive) {
+        sem->sem = NULL;
+        // TODO: initial value
+        vc_internal_registerSem(sem);
+        return sem;
+    }
     // Platform-dependent semaphore creation.
     // Create a mutex with default settings. Error out where needed.
     #ifdef _WIN32 // Windows version
@@ -32,8 +41,7 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
             free(sem);
             vizconError("vcSemCreate/vcSemCreateNamed", err);
             return NULL;
-        }
-        sem->count = maxValue;
+        } 
     #elif __linux__ || __APPLE__ // POSIX version
         // Use sem_open to create a named semaphore, which macOS requires.
         sem->sem = sem_open(name, O_CREAT | O_EXCL, 0644, maxValue);
@@ -47,7 +55,6 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
             free(sem);
             vizconError("vcSemCreate/vcSemCreateNamed", errno);
         }
-        sem->count = maxValue;
     #endif
     
     return sem;
@@ -57,6 +64,14 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
 //           When it is, attain 1 permit and decrement its count
 void semWait(CSSem* sem)
 {
+    if (isLldbActive)
+    {
+        vcWait(sem);
+        // The simulation controller should ensure this executes uninterrupted
+        // but the other usages might need attention
+        sem->count = sem->count - 1;
+        return;
+    }
     // Platform-dependent waiting.
     #ifdef _WIN32 // Windows version
         DWORD ret = WaitForSingleObject(sem->sem, INFINITE);
@@ -105,6 +120,11 @@ void semWait(CSSem* sem)
 //              Returns: 1 if permit was available, 0 otherwise.
 int semTryWait(CSSem* sem)
 {
+    if (isLldbActive)
+    {
+        fprintf(stderr, "Warning: semTryWait is unimplemented!\n"); 
+        return 0;
+    }
     // Platform-dependent trywaiting.
     #if defined(_WIN32) // Windows version
         DWORD ret = WaitForSingleObject(sem->sem, 0);
@@ -167,6 +187,14 @@ int semTryWait(CSSem* sem)
 // semSignal - Release 1 permit from sem and increment its count.
 void semSignal(CSSem* sem)
 {
+    if (isLldbActive)
+    {
+        vcSignal(sem);
+        // The simulation controller should ensure this executes uninterrupted
+        // but the other usages might need attention
+        sem->count = sem->count + 1;
+        return;
+    }
     // Platform-dependent senaphore release.
     #ifdef _WIN32 // Windows version
         if(!ReleaseSemaphore(sem->sem, 1, NULL))
@@ -182,6 +210,11 @@ void semSignal(CSSem* sem)
 // semClose - Close the semaphore and free the associated struct.
 void semClose(CSSem* sem)
 {
+    if (isLldbActive)
+    {
+        fprintf(stderr, "Warning: semClose is unimplemented!\n"); 
+        return;
+    }
     // Platform-dependent closure and memory management.
     #ifdef _WIN32 // Windows version.
         if(!CloseHandle(sem->sem))
