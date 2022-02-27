@@ -31,3 +31,6 @@ void semWait(CSSem* sem);                            // Waits for a permit.
 int semTryWait(CSSem* sem);                          // Tries to get a permit without waiting.
 void semSignal(CSSem* sem);                          // Signals the semaphore.
 void semClose(CSSem* sem);                           // Closes the semaphore and frees memory.
+
+void platform_semSignal(CSSem* sem);
+void platform_semWait(CSSem* sem);

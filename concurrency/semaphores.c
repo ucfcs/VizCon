@@ -72,6 +72,11 @@ void semWait(CSSem* sem)
         sem->count = sem->count - 1;
         return;
     }
+    platform_semWait(sem);
+}
+
+void platform_semWait(CSSem* sem)
+{
     // Platform-dependent waiting.
     #ifdef _WIN32 // Windows version
         DWORD ret = WaitForSingleObject(sem->sem, INFINITE);
@@ -195,6 +200,11 @@ void semSignal(CSSem* sem)
         sem->count = sem->count + 1;
         return;
     }
+    platform_semSignal(sem);
+}
+
+void platform_semSignal(CSSem* sem)
+{
     // Platform-dependent senaphore release.
     #ifdef _WIN32 // Windows version
         if(!ReleaseSemaphore(sem->sem, 1, NULL))

@@ -1,11 +1,6 @@
 #include "threads.h"
 
-
-
-// TODO! Temporary
 #include "lldb_lib.h"
-#include <semaphore.h>
-extern sem_t sem_wait_create_thread;
 
 extern int isLldbActive;
 
@@ -40,7 +35,8 @@ CSThread* createThread(threadFunc func, void *arg)
 // startThread - Start the thread mapped to the struct.
 void startThread(CSThread* thread)
 {
-    if (isLldbActive) {
+    if (isLldbActive)
+    {
         lldb_hook_createThread(thread);
     }
     // Platform-dependent thread start.
@@ -69,7 +65,7 @@ void startThread(CSThread* thread)
 
     if (isLldbActive)
     {
-        sem_wait(&sem_wait_create_thread);
+        lldb_waitForThreadStart();
     }
 }
 

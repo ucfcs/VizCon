@@ -1,19 +1,19 @@
-#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <semaphore.h>
 #include "lldb_lib.h"
 
 int real_main(void);
-sem_t sem_wait_create_thread;
+CSSem *sem_wait_create_thread;
 int isLldbActive; 
 
 void do_post(void) {
-	sem_post(&sem_wait_create_thread);
+	platform_semSignal(sem_wait_create_thread);
 }
-
+void lldb_waitForThreadStart(void) {
+	platform_semWait(sem_wait_create_thread);
+}
 void *vc_internal_thread_wrapper(void *parameter) {
 	CSThread *thread = parameter;
 	//printf("Thread runs!\n");
@@ -38,7 +38,14 @@ void vc_internal_init() {
 	else {
 		fprintf(stderr, "LLDB is NOT active\n");
 	}
-	sem_init(&sem_wait_create_thread, 0, 0);
+
+	if (isLldbActive)
+	{
+		isLldbActive = 0; // Global state is bad
+		sem_wait_create_thread = semCreate("sem_wait_create_thread", 1);
+		platform_semWait(sem_wait_create_thread);
+		isLldbActive = 1;
+	}
 }
 
 
