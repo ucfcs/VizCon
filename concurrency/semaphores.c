@@ -27,8 +27,7 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     sem->count = maxValue;
     if (isLldbActive) {
         sem->sem = NULL;
-        // TODO: initial value
-        vc_internal_registerSem(sem);
+        vc_internal_registerSem(sem, sem->name, sem->count, maxValue);
         return sem;
     }
     // Platform-dependent semaphore creation.

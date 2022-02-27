@@ -8,6 +8,6 @@ int lldb_printf(const char *format_string, ...);
 void lldb_hook_createThread(CSThread *thread);
 void lldb_waitForThreadStart(void);
 
-void vc_internal_registerSem(CSSem *sem); 
+void vc_internal_registerSem(CSSem *sem, char *name, int initialValue, int maxValue);
 void vcWait(CSSem *sem);
 void vcSignal(CSSem *sem);

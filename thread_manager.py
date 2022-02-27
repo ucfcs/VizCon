@@ -13,6 +13,7 @@ class ThreadManager:
     managed_threads = []
     exited_threads = set()
     semaphoreMap = {}
+    semaphoreMapByName = {}
     semWaitLists = {}
     nextThreadID = 2
     def __init__(self, main_lldb_thread):
@@ -47,14 +48,15 @@ class ThreadManager:
     def getSemaphoreValue(self, sem):
         if sem not in self.semaphoreMap:
             return None
-        return self.semaphoreMap[sem]
+        return self.semaphoreMap[sem]['value']
     def onWaitSem(self, lldb_thread, sem):
         c_thread = self.__lookupFromLLDB(lldb_thread)
         debug_print("Semaphore wait:", c_thread['name'], "waited on", sem)
-        old_val = self.semaphoreMap[sem]
+        sem_obj = self.semaphoreMap[sem]
+        old_val = sem_obj['value']
         if old_val > 0:
-            self.semaphoreMap[sem] -= 1
-            debug_print("Wait: sem value updated (no wait) from", old_val, "to", self.semaphoreMap[sem])
+            sem_obj['value'] -= 1
+            debug_print("Wait: sem value updated (no wait) from", old_val, "to", sem_obj['value'])
             return
         if not sem in self.semWaitLists:
             self.semWaitLists[sem] = []
@@ -63,15 +65,19 @@ class ThreadManager:
         c_thread['state'] = 'waiting (sempahore)'
     def onSignalSem(self, lldb_thread, sem):
         c_thread = self.__lookupFromLLDB(lldb_thread)
-        old_val = self.semaphoreMap[sem]
-        self.semaphoreMap[sem] += 1
-        debug_print("Signal: sem value updated from", old_val, "to", self.semaphoreMap[sem])
+        sem_obj = self.semaphoreMap[sem]
+        old_val = sem_obj['value']
+        if old_val >= sem_obj['max_value']:
+            debug_print("Unimplemented error handling: semaphore max value reached")
+            sys.exit(1)
+        sem_obj['value'] += 1
+        debug_print("Signal: sem value updated from", old_val, "to", sem_obj['value'])
         if not sem in self.semWaitLists:
             return
-        while self.semaphoreMap[sem] > 0:
+        while sem_obj['value'] > 0:
             if len(self.semWaitLists[sem]) == 0:
                 return
-            self.semaphoreMap[sem] -= 1
+            sem_obj['value'] -= 1
             # TODO: there's an api to just choose k. no need to loop
             woken_thread = thread_scheduler_rng.choice(self.semWaitLists[sem])
             self.semWaitLists[sem].remove(woken_thread)
@@ -110,9 +116,13 @@ class ThreadManager:
         else:
             debug_print("\tNo thread is waiting on it")
         #self.managed_threads.remove(t)
-    def registerSem(self, sem):
+    def registerSem(self, sem, new_sem_name, new_sem_initial_value, new_sem_max_value):
         # sem is a string for now
-        self.semaphoreMap[sem] = 1
+        if new_sem_name in self.semaphoreMapByName:
+            debug_print("Unimplemented error handling: duplicate semaphore name")
+            sys.exit(1)
+        self.semaphoreMap[sem] = {'value': new_sem_initial_value, 'name': new_sem_name, 'max_value': new_sem_max_value}
+        self.semaphoreMapByName[new_sem_name] = self.semaphoreMap[sem]
     
     def getManagedThreads(self):
         return self.managed_threads

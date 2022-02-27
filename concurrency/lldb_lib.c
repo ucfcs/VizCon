@@ -50,7 +50,7 @@ void vc_internal_init() {
 
 
 
-void vc_internal_registerSem(CSSem *sem) {
+void vc_internal_registerSem(CSSem *sem, char *name, int initialValue, int maxValue) {
 
 }
 
