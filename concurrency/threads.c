@@ -1,8 +1,14 @@
 #include "threads.h"
-extern int isLldbActive;
+
+
 
 // TODO! Temporary
 #include "lldb_lib.h"
+#include <semaphore.h>
+extern sem_t sem_wait_create_thread;
+
+extern int isLldbActive;
+
 
 // On Windows only, define the thread runner.
 #ifdef _WIN32
@@ -28,13 +34,6 @@ CSThread* createThread(threadFunc func, void *arg)
     thread->func = func;
     thread->arg = arg;
 
-    // On Windows only, create the thread in a suspended state.
-    // It will be woken up by a vcThreadStart or vcThreadReturn.
-    // The actual function will be run via winThreadRunner.
-    #ifdef _WIN32
-        thread->thread = CreateThread(NULL, 0, winThreadRunner, thread, CREATE_SUSPENDED, 0);
-    #endif
-
     return thread;
 }
 
@@ -42,23 +41,36 @@ CSThread* createThread(threadFunc func, void *arg)
 void startThread(CSThread* thread)
 {
     if (isLldbActive) {
-        doCreateThread(thread, thread->func, thread->arg);
-        return;
+        lldb_hook_createThread(thread);
     }
     // Platform-dependent thread start.
     #ifdef _WIN32 // Windows version
+        thread->thread = CreateThread(NULL, 0, winThreadRunner, thread, CREATE_SUSPENDED, 0);
         // Attempt to resume the thread. If it fails, print an error.
         if (ResumeThread(thread->thread) == -1)
             vizconError("vcThreadStart/vcThreadReturn", GetLastError());
     #elif __APPLE__ || __linux__ // POSIX version.
         // Create the thread based on the saved function and argument.
-        int err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
+        int err;
+        if (!isLldbActive)
+        {
+            err = pthread_create(&thread->thread, NULL, thread->func, thread->arg);
+        }
+        else
+        {
+            err = pthread_create(&thread->thread, NULL, vc_internal_thread_wrapper, thread);
+        }
         if (err)
         {
             free(thread);
             vizconError("vcThreadStart/vcThreadReturn", err);
         }
     #endif
+
+    if (isLldbActive)
+    {
+        sem_wait(&sem_wait_create_thread);
+    }
 }
 
 // winThreadRunner - A wrapper for threads on Windows that saves
@@ -71,7 +83,15 @@ void startThread(CSThread* thread)
     DWORD winThreadRunner(LPVOID threadInput)
     {
         CSThread* thread = (CSThread*) threadInput;
-        void* retval = thread->func(thread->arg);
+        void* retval;
+        if (!isLldbActive)
+        {
+            retval = thread->func(thread->arg);
+        }
+        else
+        {
+            retval = vc_internal_thread_wrapper(thread);
+        }
         thread->returnVal = retval;
         return 0;
     }

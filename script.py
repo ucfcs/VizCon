@@ -215,7 +215,7 @@ while True:
                         new_thread_lldb = t2
                         break
                 if new_thread_lldb is None:
-                    debug_print("Error")
+                    debug_print("Couldn't locate new thread")
                     sys.exit(1)
                 
                 for other_thread in getThreads():

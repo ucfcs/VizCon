@@ -13,32 +13,18 @@ int isLldbActive;
 void do_post(void) {
 	sem_post(&sem_wait_create_thread);
 }
-struct vc_internal_wrapped_thread {
-	void *parameter;
-	void *(*thefunc)(void *);
-	pthread_t thread;
-};
+
 void *vc_internal_thread_wrapper(void *parameter) {
-	struct vc_internal_wrapped_thread *threadinfo = parameter;
+	CSThread *thread = parameter;
 	//printf("Thread runs!\n");
 	do_post();
-	void *retval = threadinfo->thefunc(threadinfo->parameter);
-	free(threadinfo);
+	void *retval = thread->func(thread->arg);
 	return retval;
 }
 void lldb_hook_createThread(CSThread *thread) {
 	// LLDB
 }
-void doCreateThread(CSThread *thethread, void *thefunc(void *), void *theparam)
-{
-	struct vc_internal_wrapped_thread *threadinfo = malloc(sizeof(struct vc_internal_wrapped_thread));
-	threadinfo->parameter = theparam;
-	threadinfo->thefunc = thefunc;
-	lldb_hook_createThread(thethread);
-	pthread_create(&thethread->pthread, NULL, vc_internal_thread_wrapper, threadinfo);
-	sem_wait(&sem_wait_create_thread);
-	//printf("doCreateThread is over\n");
-}
+
 void vcJoin(CSThread *thread, void *ret) {
 	// pthread_join(thread, &ret);
 }
