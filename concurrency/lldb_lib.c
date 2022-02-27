@@ -10,7 +10,7 @@ int real_main(void);
 sem_t sem_wait_create_thread;
 int isLldbActive; 
 
-void do_post(pthread_t thread) {
+void do_post(void) {
 	sem_post(&sem_wait_create_thread);
 }
 struct vc_internal_wrapped_thread {
@@ -21,21 +21,25 @@ struct vc_internal_wrapped_thread {
 void *vc_internal_thread_wrapper(void *parameter) {
 	struct vc_internal_wrapped_thread *threadinfo = parameter;
 	//printf("Thread runs!\n");
-	do_post(pthread_self());
+	do_post();
 	void *retval = threadinfo->thefunc(threadinfo->parameter);
 	free(threadinfo);
 	return retval;
 }
-void doCreateThread(pthread_t *thethread, void *thefunc(void *), void *theparam)
+void lldb_hook_createThread(CSThread *thread) {
+	// LLDB
+}
+void doCreateThread(CSThread *thethread, void *thefunc(void *), void *theparam)
 {
 	struct vc_internal_wrapped_thread *threadinfo = malloc(sizeof(struct vc_internal_wrapped_thread));
 	threadinfo->parameter = theparam;
 	threadinfo->thefunc = thefunc;
-	pthread_create(thethread, NULL, vc_internal_thread_wrapper, threadinfo);
+	lldb_hook_createThread(thethread);
+	pthread_create(&thethread->pthread, NULL, vc_internal_thread_wrapper, threadinfo);
 	sem_wait(&sem_wait_create_thread);
 	//printf("doCreateThread is over\n");
 }
-void vcJoin(pthread_t thread, void *ret) {
+void vcJoin(CSThread *thread, void *ret) {
 	// pthread_join(thread, &ret);
 }
 

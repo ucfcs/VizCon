@@ -1,7 +1,9 @@
 #include "semaphores.h"
 #include <pthread.h>
-void vcJoin(pthread_t thread, void *ret);
-void doCreateThread(pthread_t *thethread, void *thefunc(void *), void *theparam);
+#include "threads.h"
+
+void vcJoin(CSThread *thread, void *ret);
+void doCreateThread(CSThread *thethread, void *thefunc(void *), void *theparam);
 int lldb_printf(const char *format_string, ...);
 
 void vc_internal_registerSem(CSSem *sem); 

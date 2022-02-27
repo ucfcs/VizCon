@@ -1,5 +1,5 @@
 // VizCon libraries.
-#include "../vcuserlibrary.h"
+#include "vcuserlibrary.h"
 
 // Standard libraries.
 #include <stdio.h>

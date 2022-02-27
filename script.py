@@ -64,7 +64,6 @@ debug_print("Creating a target for " + exe)
 
 #target = debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
 target = debugger.CreateTarget(exe)
-interleave_log = open("interleave_log.txt", "w")
 
 verbose = False
 
@@ -81,6 +80,7 @@ printf_hook_bp = target.BreakpointCreateByName ("printf_hook", target.GetExecuta
 
 vcWait_bp = target.BreakpointCreateByName ("vcWait", target.GetExecutable().GetFilename())
 vcSignal_bp = target.BreakpointCreateByName ("vcSignal", target.GetExecutable().GetFilename())
+hook_createThread_bp = target.BreakpointCreateByName ("lldb_hook_createThread", target.GetExecutable().GetFilename())
 
 launch_info = target.GetLaunchInfo()
 
@@ -120,7 +120,7 @@ while True:
         respondToVisualizer({'type': 'error', 'error': 'ready list is empty'})
         sys.exit(1)
     running_thread = chosen_cthread['thread']
-    interleave_log.write(chosen_cthread['pthread_id']+"\n")
+
     for t in getThreads():
         t.Suspend()
 
@@ -149,8 +149,6 @@ while True:
     elif current_function == 'main':
         # TODO: what if other threads are still running?
         debug_print("Main function exited.")
-        interleave_log.write("End.\n")
-        interleave_log.close()
         # Allow the process to finish (allows cleanup to run)
         for t in process:
             t.Resume()
@@ -203,25 +201,39 @@ while True:
                 thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
                 ignore_set.add(t.GetThreadID())
                 thread_man.onJoin(t, thread_val)
-            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == thread_bp.GetID():
-                #debug_print("Stopped", t, "running thread", running_thread)
-                if t.GetThreadID() in ignore_set:
-                    #debug_print("Ignoring a thread that already hit thread_bp (this should never happen)")
-                    continue
-                pthread_id = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == hook_createThread_bp.GetID():
+                new_thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                #debug_print("New thread", new_thread_ptr)
+                running_thread.Resume()
+                process.Continue()
+                new_thread_lldb = None
+                for t2 in process:
+                    if t2.stop_reason == lldb.eStopReasonBreakpoint and t2.GetStopReasonDataAtIndex(0) == thread_bp.GetID():
+                        if t.GetThreadID() in ignore_set:
+                            #debug_print("Ignoring a thread that already hit thread_bp (this should never happen)")
+                            continue
+                        new_thread_lldb = t2
+                        break
+                if new_thread_lldb is None:
+                    debug_print("Error")
+                    sys.exit(1)
+                
                 for other_thread in getThreads():
-                    if other_thread != t:
+                    if other_thread != new_thread_lldb:
                         if verbose:
                             debug_print("Temporarily suspending other thread", other_thread)
                         other_thread.Suspend()
-                thread_man.onCreateThread({'thread': t, 'pthread_id': pthread_id})
-                t.StepOut()
+                thread_man.onCreateThread({'thread': new_thread_lldb, 'csthread_ptr': new_thread_ptr})
+                for fr in new_thread_lldb:
+                    debug_print(fr)
+                new_thread_lldb.StepOut()
                 while True:
-                    if isUserCode(t):
+                    if isUserCode(new_thread_lldb):
                         break
-                    t.StepInstruction(False)
+                    new_thread_lldb.StepInstruction(False)
                 for t2 in getThreads():
                     t2.Suspend()
+                
                 #debug_print("Resume", main_thread.is_suspended, running_thread, chosen_cthread, chosen_cthread['thread'] == running_thread)
                 running_thread.Resume()
                 process.Continue()
@@ -229,8 +241,6 @@ while True:
                 #debug_print(main_thread.stop_reason, main_thread.stop_reason == lldb.eStopReasonBreakpoint)
                 #for fr in main_thread:
                 #    debug_print("\t", fr)
-                running_thread.Suspend()
-                ignore_set.add(t.GetThreadID())
                 handledBreakpoint = True
                 continue
         handlingBreakpoints = handledBreakpoint

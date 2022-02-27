@@ -42,7 +42,7 @@ CSThread* createThread(threadFunc func, void *arg)
 void startThread(CSThread* thread)
 {
     if (isLldbActive) {
-        doCreateThread(&thread->pthread, thread->func, thread->arg);
+        doCreateThread(thread, thread->func, thread->arg);
         return;
     }
     // Platform-dependent thread start.
@@ -83,7 +83,7 @@ void joinThread(CSThread *thread)
     // Platform-dependent thread joining.
     // Wait for the thread to finish.
     if (isLldbActive) {
-        vcJoin(thread->pthread, NULL);
+        vcJoin(thread, NULL);
         return;
     }
     #ifdef _WIN32 // Windows version
