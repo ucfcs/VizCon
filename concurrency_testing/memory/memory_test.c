@@ -4,8 +4,8 @@
 // On macOS, test using Leaks: leaks -atExit -- ./a.out
 // On Windows, test using Dr. Memory: drmemory -- a.exe
 
-//#include "../concurrency/useroverwrite.h"
-#include "../concurrency/vcuserlibrary.h"
+//#include "../../concurrency/useroverwrite.h"
+#include "../../concurrency/vcuserlibrary.h"
 
 #define SPAWN_COUNT 100
 

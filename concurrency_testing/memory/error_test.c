@@ -5,8 +5,9 @@
 // On macOS, test using Leaks: leaks -atExit -- ./a.out
 // On Windows, test using Dr. Memory: drmemory -- a.exe
 
-//#include "../concurrency/useroverwrite.h"
-#include "../concurrency/vcuserlibrary.h"
+//#include "../../concurrency/useroverwrite.h"
+#include "../../concurrency/vcuserlibrary.h"
+#include <unistd.h>
 
 #define SPAWN_COUNT 100
 
@@ -35,7 +36,7 @@ void* ErrorThread(void* param)
     // Attempt to unlock an unused mutex. This will fail.
     vcMutexUnlock(mutexes[0]);
 
-    return (void*) val;
+    return NULL;
 }
 
 int main(void)
@@ -51,7 +52,7 @@ int main(void)
     vcThreadQueue(ErrorThread, &i);
 
     // Run the threads.
-    // An error will appear once vcThreadStart starts.
+    // An error will appear once ErrorThread starts.
     vcThreadStart();
 
     return 0;
