@@ -562,7 +562,7 @@ AfterEach(Semaphores)
 
 // End of the suite.
 // Total number of assertions: 63
-// Total number of exceptions: 2
+// Total number of exceptions: 2  (bad_count: 502, bad_count_named: 502)
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
