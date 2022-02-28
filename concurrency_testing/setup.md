@@ -48,7 +48,9 @@ To compile and run a test, change the value of "testfile" to the appropriate tes
 
 Note that this must be done in MSYS2 is on Windows. Don't worry; the windows.h library is still accessed.<br/>
 
-Each file has an expected number of passes and exceptions, which you can find at the bottom of the file. Make sure to check that even if make returns an error.
+Each file has an expected number of passes and exceptions, which you can find at the bottom of the file. Make sure to check that even if make returns an error.<br/>
+
+Note that if you're having an issue with a specific test, you can replace the "Ensure" statement of every other test with an "xEnsure" to only run that one.
 
 # Standalone Tests
 
