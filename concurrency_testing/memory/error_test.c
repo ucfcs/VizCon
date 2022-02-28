@@ -1,7 +1,8 @@
 // A simple program that spawns threads, mutexes and semaphores
 // and then causes a fatal error
 // for the purposes of checking whether the memory is properly freed.
-// On POSIX, test using Valgrind: valgrind --leak-check=full --show-leak-kinds=all -s ./a.out
+// On Linux, test using Valgrind: valgrind --leak-check=full --show-leak-kinds=all -s ./a.out
+// On macOS, test using Leaks: leaks -atExit -- ./a.out
 // On Windows, test using Dr. Memory: drmemory -- a.exe
 
 //#include "../concurrency/useroverwrite.h"

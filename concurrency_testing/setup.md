@@ -56,11 +56,15 @@ Note that if you're having an issue with a specific test, you can replace the "E
 
 Standalone tests are located in a subfolder of concurrency_testing. They are short, non-unit test programs with varying uses.<br/>
 
-Note that the tests in the memory subfolder, while they run on their own, are intended for use with a memory checker. I recommend [Valgrind](https://valgrind.org) on Linux/macOS and [Dr. Memory](https://drmemory.org) on Windows.
+Note that the tests in the memory subfolder, while they run on their own, are intended for use with a memory checker. I recommend [Valgrind](https://valgrind.org) on Linux, [Leaks](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/ManagingMemory/Articles/FindingLeaks.html) on macOS, and [Dr. Memory](https://drmemory.org) on Windows. There are prebuilt statements for these checkers in the makefile.
 
 ## Installing Valgrind
 
 If you have administrative privileges, most versions of Linux will allow you to install Valgrind via the package manager. The exact command will vary depending on what package manager you are using. macOS also has a package aailable for the package manager Brew.
+
+## Installing Leaks
+
+Leaks is either preinstalled with macOS or included with Xcode.
 
 ## Installing Dr. Memory
 

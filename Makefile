@@ -6,7 +6,7 @@
 # any issues with the Cgreen library and MinGW libraries are ignored.
 
 # Change the name of the variable below to change the test suite run.
-testfile = thread_tests
+testfile = memory/error_test
 
 # macOS Only: If the cgreen library was not make installed to /usr/local due to a lack of permissions,
 # set the location for use by the linker.
@@ -40,8 +40,8 @@ compile :
 # macOS
 else ifeq ($(shell uname -s),Darwin)
 run : compile
-	./a.out
-#	valgrind --leak-check=full --show-leak-kinds=all -s ./a.out
+#	./a.out
+	leaks -atExit -- ./a.out
 compile :
 	gcc -pthread ./concurrency/utils.c ./concurrency/threads.c ./concurrency/semaphores.c ./concurrency/mutexes.c ./concurrency/vcuserlibrary.c ./concurrency_testing/$(testfile).c $(cgreenloc)/lib/libcgreen.dylib -I $(cgreenloc)/include/
 	install_name_tool -change @rpath/libcgreen.1.dylib $(cgreenloc)/lib/libcgreen.1.dylib ./a.out
