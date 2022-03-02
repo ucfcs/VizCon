@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getDisplayValueForBool } from '../../util/utils';
+import type { ThreadData } from './visualizerController';
 
 interface ThreadsProps {
   data: ThreadData[];

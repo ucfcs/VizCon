@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import type { VariableData } from './visualizerController';
 
 interface VariablesProps {
   globals: VariableData[];

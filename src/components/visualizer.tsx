@@ -4,6 +4,7 @@ import Controls from './visualizer/controls';
 import ConsoleOutput from './visualizer/output';
 import Threads from './visualizer/threads';
 import Variables from './visualizer/variables';
+import { VisualizerController, VisualizerState } from './visualizer/visualizerController';
 
 interface VisualizerProps {
   inVisualizer: boolean;
@@ -19,7 +20,6 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   const visualizerController = useRef(null)
   const [consoleOutput, setConsoleOutput] = useState('');
   const [simulationSpeed, setSimulationSpeed] = useState(100);
-
   useEffect(() => {
     console.log('some event happened on the visualizer', inVisualizer, current);
   }, [inVisualizer, current]);
@@ -33,37 +33,25 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     console.log('test start');
     
     let running = true;
-    let delayMilliseconds = simulationSpeed;
     setRunState("Starting...");
-    const task = async function() {
-        await window.platform._temp_launchProgram("path");
-        setRunState("Started");
-        // TODO: improve cancellation
-        // possibly refactor this into some sort of controller class
-        while (running) {
-            const msg = await window.platform._temp_doStep();
-            console.log("received visualizer state", msg);
-            if (msg.type === 'process_end') {
-              setRunState("Finished");
-              return;
-            }
-            setConsoleOutput((console_out) => {
-              let new_out = console_out;
-              // Not actually lines
-              for (const printed_line of msg.printed_lines) {
-                new_out += printed_line;
-              }
-              return new_out;
-            });
-            
-            setVisualizerState(msg);
-            await delay(delayMilliseconds);
-        }
-    }();
-    visualizerController.current = {
-      stop: () => {running = false;},
-      setSpeed: (delay: number) => {delayMilliseconds = delay;}
-    };
+    visualizerController.current = new VisualizerController({
+      // TODO: pass the path to the executable file
+      executableFile: "executable",
+      speed: simulationSpeed,
+      onVisualizerStateChange: (newState) => {setVisualizerState(newState)},
+      onVisualizerRunStateChange: (newRunState) => {setRunState(newRunState)},
+      onConsoleOutput: (data) => {
+        setConsoleOutput((console_out) => {
+          let new_out = console_out;
+          
+          for (const entry of data) {
+            new_out += entry;
+          }
+          return new_out;
+        });
+      },
+    });
+    const task = visualizerController.current.start();
   }
   function restart() {
     console.log('test restart');
@@ -88,21 +76,8 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
       <div className='visualizer-main'>
         <Threads data={visualizerState?.threads || []}/>
         <ConsoleOutput current={current} text={consoleOutput} />
-        <Variables globals={visualizerState?.globals || []} locals={{'1 main': [
-          {name: 'sem',
-          type: 'VCSem*',
-          value: '0x76b949c587f3942a'}
-        ]}}/>
+        <Variables globals={visualizerState?.globals || []} locals={{/*TODO: locals*/}}/>
       </div>
     </div>
   );
-}
-
-function delay(millis: number): Promise<void> {
-  return new Promise((resolve, reject) => {
-    setTimeout(
-      () => { resolve(); },
-      millis
-    );
-  });
 }
