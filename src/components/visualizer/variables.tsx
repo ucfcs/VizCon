@@ -38,23 +38,22 @@ function VarTable({ vars, title }: VarTableProps): React.ReactElement {
     setTableValues(trs);
   }, vars);
 
-
   return (
-    <div className='accordion-parent'>
+    <div className="accordion-parent">
       <div className="title-container sm">
         <div className="title">
           <div className="title-border">{title}</div>
         </div>
       </div>
       <table className="variable-table">
-        <thead className='variable-head'>
+        <thead className="variable-head">
           <tr>
-            <th className='variable-name'>Name</th>
-            <th className='variable-type'>Type</th>
-            <th className='variable-value'>Value</th>
+            <th className="variable-name">Name</th>
+            <th className="variable-type">Type</th>
+            <th className="variable-value">Value</th>
           </tr>
         </thead>
-        <tbody className='variable-body'>{tableValues}</tbody>
+        <tbody className="variable-body">{tableValues}</tbody>
       </table>
     </div>
   );
@@ -69,14 +68,12 @@ export default function Variables({ globals, locals }: VariablesProps): React.Re
     // possible overly complex loop to get an array of the elements and give them their title
     for (const key in locals) {
       const varArray = locals[key];
-      varTableList.push(<VarTable vars={varArray} title={key}/>)
+      varTableList.push(<VarTable vars={varArray} title={key} />);
     }
 
-    setLocalTabs(<>
-      {varTableList}
-    </>);
+    setLocalTabs(<>{varTableList}</>);
   }, [locals]);
-  
+
   return (
     <div className="variables-container">
       <div className="title-container">
@@ -84,7 +81,7 @@ export default function Variables({ globals, locals }: VariablesProps): React.Re
           <div className="title-border">Variables</div>
         </div>
       </div>
-      <VarTable vars={globals} title='Globals' key='GlobalVariables' />
+      <VarTable vars={globals} title="Globals" key="GlobalVariables" />
       {localTabs}
     </div>
   );
