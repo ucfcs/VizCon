@@ -8,41 +8,45 @@ Unit tests are in C files not located in the main folder.
 
 Running these tests requires installing [CGreen](https://github.com/cgreen-devs/cgreen/releases). This can be finicky, especially without administrative permissions.<br/>
 
+Also, make sure that you are using the latest release, because there are issues building from the current main branch.
+
 ### Linux / macOS
 
-If you are on Linux or macOS as an administrator, you can install CGreen by running the following three commands in the CGreen root directory:
+If you are on Linux or macOS, you will need [CMake](https://cmake.org/download/) and the GNU C++ compiler (aka g++). Then, if you are an administrator, you can install CGreen by running the following three commands in the CGreen root directory:
 
-> make
-> make test
+> make<br/>
+> make test<br/>
 > sudo make install
 
 If you do not have administrative privileges, then the process is more complicated.<br/>
 
-> **Note: the following steps have only been confirmed on macOS.**
-
 You will need to select a location for the library, install it there, and then modify the Makefile so it properly adds the library. I used "~/cgreen-lib". This can be done with the following commands:
 
-> make
-> make test
+> make<br/>
+> make test<br/>
 > make DESTDIR=\<destination\> install
 
-Once this completes, change the value of "cgreenloc" in the Makefile to the destination.
+Once this completes, change the value in the Makefile of "cgreenlocal" to 1 and "cgreenlocation" to the destination. On Linux (but not MacOS), you must also add this folder to the LD_LIBRARY_PATH:
+
+> LD_LIBRARY_PATH=$LD_LIBRARY_PATH:\<destination\>/usr/local/<br/>
+> export LD_LIBRARY_PATH
 
 ### Windows
 
 If you are on Windows, you cannot install CGreen directly. Instead, download [MSYS2](https://www.msys2.org), then use it to run the following in the CGreen root directory:
 
-> pacman -Syu
-> pacman -S cmake gcc
-> make
-> make test
+> pacman -Syu<br/>
+> pacman -S base-devel gcc cmake<br/>
+> make unit<br/>
 > make install
 
 Note that the "make test" may report an error in the XML formatter. You can ignore this.
 
 ## Running
 
-To compile and run a test, change the value of "testfile" to the appropriate test file name (e.g. "mutex_tests"). Then, use the following command:
+Before running these tests, make sure that "usecgreen" is set to 1 and "usememcheck" is set to 0.<br/>
+
+Then, change the value of "testfile" to the appropriate test file name (e.g. "mutex_tests"). Then, use the following command:
 
 > make
 
@@ -72,13 +76,11 @@ If you have administrative privileges, download and install the MSI installer.<b
 
 If you do not have administrative privileges, download the Dr. Memory ZIP, extract it to a specific location, and add that location to your PATH.<br/>
 
-Note that, if run normally, a good portion of the results with Dr. Memory will be false positives due to issues with MinGW. I have added a suppression file by default, which should cut down on false positives, but some may slip through. As a general rule, if you see a "__mingw" in a reported stack trace, you can ignore it.
+Note that, if run normally, some of the results with Dr. Memory will be false positives due to issues with MinGW. I have added a suppression file to cut down on false positives, but I make no guarantees. As a general rule, if you see a "__mingw" in a reported stack trace, you can ignore it.
 
 ## Running
 
-Before running these tests, edit the makefile so that the compile process does not require Cgreen.<br/>
-
-To do this, find the "compile" branch that corresponds to your OS, comment out any uncommented lines, and uncomment any commented lines. If you are running a memory test, do the same with the "run" branch.<br/>
+Before running these tests, make sure that "usecgreen" is set to 0 and "usememcheck" is set to 1.<br/>
 
 Additionally, change the value of "testfile" to the appropriate test path and file name (e.g. "memory/memory_test"). Then, use the following command:
 
