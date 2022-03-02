@@ -26,6 +26,7 @@ function VarTable({ vars, title }: VarTableProps): React.ReactElement {
     const trs = vars.map(variable => {
       const className = 'variable-row';
       return (
+        // TODO: give more detailed information in the title?
         <tr className={className} key={`Variable: ${variable.name}`} title={`Variable: ${variable.name}`}>
           <td className="variable-name">{variable.name}</td>
           <td className="variable-type">{variable.type}</td>
