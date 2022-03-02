@@ -139,10 +139,10 @@
 
         .title {
           user-select: none;
-          font-size: 11px;
+          font-size: 12px;
           line-height: 27px;
           height: 35px;
-          padding: 2px 4px;
+          padding: 2px;
 
           .title-border {
             white-space: nowrap;
@@ -155,8 +155,8 @@
 
       .thread-table {
         user-select: none;
-        width: calc(100% - 16px);
-        margin-left: 8px;
+        width: calc(100% - 20px);
+        margin-left: 12px;
         font-size: 12px;
         color:rgb(231, 231, 231);
         border-color: rgb(231, 231, 231);
@@ -177,10 +177,13 @@
           white-space: nowrap;
           text-transform: uppercase;
           
+          // Method to add vertical borders to table head
+          /* Move the closing comment up to enable
           &:not(:first-child) {
-            // padding: 0px 2px;
-            // border-left: 1px solid;
+            padding: 0px 2px;
+            border-left: 1px solid;
           }
+          */
         }
 
         tbody {
@@ -213,7 +216,7 @@
 
         .title {
           user-select: none;
-          font-size: 11px;
+          font-size: 12px;
           line-height: 27px;
           height: 35px;
           padding: 2px 10px;
@@ -237,6 +240,10 @@
       height: 100%;
       background-color: rgb(37, 37, 38);
 
+      .accordion-parent {
+        margin-bottom: 1.5em;
+      }
+
       .title-container {
         display: flex;
         overflow: hidden;
@@ -244,27 +251,36 @@
         padding: 0px 8px;
         height: 35px;
         color: rgb(231, 231, 231);
+        
+        &.sm {
+          height: 22px;
+          .title {
+            height: 22px;
+            font-size: 11px;
+            line-height: 16px;
+            text-transform: capitalize;
+          }
+        }
 
         .title {
           user-select: none;
-          font-size: 11px;
+          font-size: 12px;
           line-height: 27px;
           height: 35px;
-          padding: 2px 4px;
+          padding: 2px;
+          white-space: nowrap;
+          text-transform: uppercase;
 
           .title-border {
-            white-space: nowrap;
-            text-transform: uppercase;
-            border-bottom-color: rgb(231, 231, 231);
-            border-bottom: 1px solid;
+            border-bottom: 1px solid rgb(231, 231, 231);
           }
         }
       }
 
       .variable-table {
         user-select: none;
-        width: calc(100% - 16px);
-        margin-left: 8px;
+        width: calc(100% - 20px);
+        margin-left: 12px;
         font-size: 12px;
         color:rgb(231, 231, 231);
         border-color: rgb(231, 231, 231);
@@ -277,10 +293,13 @@
           white-space: nowrap;
           text-transform: uppercase;
           
+          // Method to add vertical borders to table head
+          /* Move the closing comment up to enable
           &:not(:first-child) {
-            // padding: 0px 2px;
-            // border-left: 1px solid;
+            padding: 0px 2px;
+            border-left: 1px solid;
           }
+          */
         }
 
         tbody {

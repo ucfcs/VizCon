@@ -66,6 +66,13 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
           {name: 'sem',
           type: 'VCSem*',
           value: '0x76b949c587f3942a'}
+        ], '2 corutine': [
+          {name: 'sem',
+          type: 'VCSem*',
+          value: '0x76b949c587f3942a'},
+          {name: 'counter',
+          type: 'long',
+          value: '3506'}
         ]}}/>
       </div>
     </div>
