@@ -4,7 +4,7 @@ import Controls from './visualizer/controls';
 import ConsoleOutput from './visualizer/output';
 import Threads from './visualizer/threads';
 import Variables from './visualizer/variables';
-import { ThreadData, VisualizerController, VisualizerState } from './visualizer/visualizerController';
+import VisualizerController from './visualizer/visualizerController';
 
 interface VisualizerProps {
   inVisualizer: boolean;

@@ -1,22 +1,6 @@
 import { delay } from '../../util/utils';
 
-export interface ThreadData {
-  name: string;
-  state: 'running' | 'ready' | 'waiting' | 'completed';
-}
-
-export interface VariableData {
-  name: string;
-  type: string;
-  value: string;
-}
-
-export interface VisualizerState {
-  threads: ThreadData[];
-  globals: VariableData[];
-}
-
-export class VisualizerController {
+export default class VisualizerController {
   private running = false;
   private readonly executableFile: string;
   private delayMilliseconds: number;
