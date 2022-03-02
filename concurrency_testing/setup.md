@@ -60,11 +60,11 @@ Note that the tests in the memory subfolder, while they run on their own, are in
 
 ## Installing Valgrind
 
-If you have administrative privileges, most versions of Linux will allow you to install Valgrind via the package manager. The exact command will vary depending on what package manager you are using. macOS also has a package aailable for the package manager Brew.
+If you have administrative privileges, most versions of Linux will allow you to install Valgrind via the package manager. The exact command will vary depending on what package manager you are using.
 
 ## Installing Leaks
 
-Leaks is either preinstalled with macOS or included with Xcode.
+Leaks is included with Xcode. You should already have this for GCC.
 
 ## Installing Dr. Memory
 
@@ -72,7 +72,7 @@ If you have administrative privileges, download and install the MSI installer.<b
 
 If you do not have administrative privileges, download the Dr. Memory ZIP, extract it to a specific location, and add that location to your PATH.<br/>
 
-Note that a good portion of the results with Dr. Memory will be false positives due to issues with MinGW. You can ignore any error involving printf or sprintf, for example.
+Note that, if run normally, a good portion of the results with Dr. Memory will be false positives due to issues with MinGW. I have added a suppression file by default, which should cut down on false positives, but some may slip through. As a general rule, if you see a "__mingw" in a reported stack trace, you can ignore it.
 
 ## Running
 

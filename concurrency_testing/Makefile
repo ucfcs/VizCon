@@ -23,16 +23,16 @@ compile :
 # Non-MSYS2 Windows - Only for use with tests that do not require Cgreen.
 else ifeq ($(OS),Windows_NT)
 run : compile
-#	drmemory -- a.exe
-	./a.exe
+	drmemory -suppress suppress.in -- a.exe
+#	./a.exe
 compile :
 	gcc ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c
 
 # Linux
 else ifeq ($(shell uname -s),Linux)
 run : compile
-	./a.out
-#	valgrind --leak-check=full --show-leak-kinds=all -s ./a.out
+#	./a.out
+	valgrind --leak-check=full --show-leak-kinds=all -s ./a.out
 compile :
 	gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c -lcgreen
 #	gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c
