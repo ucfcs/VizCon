@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import child_process, { exec } from 'child_process';
-import {cwd} from 'process';
+import { cwd } from 'process';
 import { sep as pathSep } from 'path';
 import split2 from 'split2';
 import { filePathToFileName } from '../util/utils';
@@ -119,16 +119,15 @@ ipcMain.handle('_temp_launchProgram', (e, path: string) => {
   return new Promise((resolve, reject) => {
     // TODO: use executable path
     console.log(`Current directory: ${cwd()}`);
-    child = child_process.spawn('python', [concurrencyFolder+'controller'+pathSep+'script.py', 'addsem.exe'])
-    child.on('close', (code) => {
-        console.log(`child process exited with code ${code}`);
+    child = child_process.spawn('python', [concurrencyFolder + 'controller' + pathSep + 'script.py', 'addsem.exe']);
+    child.on('close', code => {
+      console.log(`child process exited with code ${code}`);
     });
 
-    handleLldbMsg = (msg) => {
+    handleLldbMsg = msg => {
       console.log(`Received process hello`, msg);
-      handleLldbMsg = (msg) => {
-        if (doStepResolveFunc === null)
-          throw new Error("No response was requested!");
+      handleLldbMsg = msg => {
+        if (doStepResolveFunc === null) throw new Error('No response was requested!');
         doStepResolveFunc(msg);
         doStepResolveFunc = null;
       };
@@ -140,17 +139,17 @@ ipcMain.handle('_temp_launchProgram', (e, path: string) => {
     child.stdout.pipe(split2()).on('data', (data: string) => {
       console.log(`child process data: "${data}"`);
       const msg = JSON.parse(data);
-      handleLldbMsg(msg);  
-    })
-    child.stderr.on('data', (data) => {
+      handleLldbMsg(msg);
+    });
+    child.stderr.on('data', data => {
       console.log(`child process error: "${data}"`);
-    })
+    });
   });
 });
 
 ipcMain.handle('_temp_doStep', (e, msg: any) => {
   return new Promise((resolve, reject) => {
     doStepResolveFunc = resolve;
-    child.stdin.write(JSON.stringify({type: 'request'})+"\n");
+    child.stdin.write(JSON.stringify({ type: 'request' }) + '\n');
   });
 });

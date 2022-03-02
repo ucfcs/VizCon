@@ -18,10 +18,9 @@ function getDisplayValueForBool(bool: boolean): string {
 
 function delay(millis: number): Promise<void> {
   return new Promise((resolve, reject) => {
-    setTimeout(
-      () => { resolve(); },
-      millis
-    );
+    setTimeout(() => {
+      resolve();
+    }, millis);
   });
 }
 

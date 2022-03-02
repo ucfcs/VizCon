@@ -77,16 +77,21 @@ export default function Controls({
         <div className="padding-container label">Status: {status}</div>
       </div>
       {/*This input is for testing only and should probably be removed*/}
-      <input type="range" min="0" max="1000" value={simulationSpeed} step="20"
-            onChange={ (e) => {
-              setSimulationSpeed(e.target.valueAsNumber)
-            }}
+      <input
+        type="range"
+        min="0"
+        max="1000"
+        value={simulationSpeed}
+        step="20"
+        onChange={e => {
+          setSimulationSpeed(e.target.valueAsNumber);
+        }}
       />
       <Control
         label="Return to Editor"
         action={{ title: 'Return to Editor', codiconClass: 'codicon-discard', action: goBack }}
         className="f-end"
-      /> 
+      />
     </div>
   );
 }

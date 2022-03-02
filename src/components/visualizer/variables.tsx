@@ -32,17 +32,16 @@ function VarTable({ vars, title }: VarTableProps): React.ReactElement {
     setTableValues(trs);
   }, [vars]);
 
-
   return (
     <table className="variable-table">
-      <thead className='variable-head'>
+      <thead className="variable-head">
         <tr>
-          <th className='variable-name'>Name</th>
-          <th className='variable-type'>Type</th>
-          <th className='variable-value'>Value</th>
+          <th className="variable-name">Name</th>
+          <th className="variable-type">Type</th>
+          <th className="variable-value">Value</th>
         </tr>
       </thead>
-      <tbody className='variable-body'>{tableValues}</tbody>
+      <tbody className="variable-body">{tableValues}</tbody>
     </table>
   );
 }

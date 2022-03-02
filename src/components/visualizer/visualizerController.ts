@@ -1,4 +1,4 @@
-import { delay } from "../../util/utils";
+import { delay } from '../../util/utils';
 
 export interface ThreadData {
   name: string;
@@ -23,12 +23,18 @@ export class VisualizerController {
   private readonly onConsoleOutput: (out: string[]) => void;
   private readonly onVisualizerStateChange: (newState: VisualizerState) => void;
   private readonly onVisualizerRunStateChange: (newRunState: string) => void;
-  constructor({executableFile, speed, onConsoleOutput, onVisualizerStateChange, onVisualizerRunStateChange} : {
-    executableFile: string,
-    speed: number,
-    onConsoleOutput: (out: string[]) => void,
-    onVisualizerStateChange: (newState: VisualizerState) => void,
-    onVisualizerRunStateChange: (newRunState: string) => void,
+  constructor({
+    executableFile,
+    speed,
+    onConsoleOutput,
+    onVisualizerStateChange,
+    onVisualizerRunStateChange,
+  }: {
+    executableFile: string;
+    speed: number;
+    onConsoleOutput: (out: string[]) => void;
+    onVisualizerStateChange: (newState: VisualizerState) => void;
+    onVisualizerRunStateChange: (newRunState: string) => void;
   }) {
     this.executableFile = executableFile;
     this.delayMilliseconds = speed;
@@ -48,19 +54,19 @@ export class VisualizerController {
   }
   private async _startLoop() {
     await window.platform._temp_launchProgram(this.executableFile);
-    this.onVisualizerRunStateChange("Running")
+    this.onVisualizerRunStateChange('Running');
     this.running = true;
     while (this.running) {
-        const msg = await window.platform._temp_doStep();
-        console.log("received visualizer state", msg);
-        if (msg.type === 'process_end') {
-          this.onVisualizerRunStateChange("Finished");
-          return;
-        }
-        // Not actually lines
-        this.onConsoleOutput(msg.printed_lines)
-        this.onVisualizerStateChange(msg);
-        await delay(this.delayMilliseconds);
+      const msg = await window.platform._temp_doStep();
+      console.log('received visualizer state', msg);
+      if (msg.type === 'process_end') {
+        this.onVisualizerRunStateChange('Finished');
+        return;
+      }
+      // Not actually lines
+      this.onConsoleOutput(msg.printed_lines);
+      this.onVisualizerStateChange(msg);
+      await delay(this.delayMilliseconds);
     }
   }
 }

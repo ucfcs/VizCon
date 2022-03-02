@@ -12,12 +12,11 @@ interface VisualizerProps {
   goBack: () => void;
 }
 
-
 export default function Visualizer({ inVisualizer, current, goBack }: VisualizerProps): React.ReactElement {
   const [className, setClassName] = useState('');
   const [visualizerState, setVisualizerState] = useState<VisualizerState | null>(null);
   const [runState, setRunState] = useState('not started');
-  const visualizerController = useRef(null)
+  const visualizerController = useRef(null);
   const [consoleOutput, setConsoleOutput] = useState('');
   const [simulationSpeed, setSimulationSpeed] = useState(100);
   useEffect(() => {
@@ -31,19 +30,23 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   // TODO: actual functions
   function start() {
     console.log('test start');
-    
+
     let running = true;
-    setRunState("Starting...");
+    setRunState('Starting...');
     visualizerController.current = new VisualizerController({
       // TODO: pass the path to the executable file
-      executableFile: "executable",
+      executableFile: 'executable',
       speed: simulationSpeed,
-      onVisualizerStateChange: (newState) => {setVisualizerState(newState)},
-      onVisualizerRunStateChange: (newRunState) => {setRunState(newRunState)},
-      onConsoleOutput: (data) => {
-        setConsoleOutput((console_out) => {
+      onVisualizerStateChange: newState => {
+        setVisualizerState(newState);
+      },
+      onVisualizerRunStateChange: newRunState => {
+        setRunState(newRunState);
+      },
+      onConsoleOutput: data => {
+        setConsoleOutput(console_out => {
           let new_out = console_out;
-          
+
           for (const entry of data) {
             new_out += entry;
           }
@@ -63,9 +66,15 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
 
   return (
     <div id="visualizer" className={className}>
-      <Controls fileName={current.path} simulationActive={false} start={start} restart={restart} stop={stop} goBack={goBack}
+      <Controls
+        fileName={current.path}
+        simulationActive={false}
+        start={start}
+        restart={restart}
+        stop={stop}
+        goBack={goBack}
         status={runState}
-        setSimulationSpeed={(simulationSpeed) => {
+        setSimulationSpeed={simulationSpeed => {
           if (visualizerController.current !== null) {
             visualizerController.current.setSpeed(simulationSpeed);
           }
@@ -73,10 +82,17 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
         }}
         simulationSpeed={simulationSpeed}
       />
-      <div className='visualizer-main'>
-        <Threads data={visualizerState?.threads || []}/>
+      <div className="visualizer-main">
+        <Threads data={visualizerState?.threads || []} />
         <ConsoleOutput current={current} text={consoleOutput} />
-        <Variables globals={visualizerState?.globals || []} locals={{/*TODO: locals*/}}/>
+        <Variables
+          globals={visualizerState?.globals || []}
+          locals={
+            {
+              /*TODO: locals*/
+            }
+          }
+        />
       </div>
     </div>
   );
