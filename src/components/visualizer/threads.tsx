@@ -19,7 +19,7 @@ export default function Threads({ data }: ThreadsProps): React.ReactElement {
         <tr className={className} key={`Thread: ${thread.name}`} title={`Thread: ${thread.name}`}>
           <td className="thread-name">{thread.name}</td>
           <td className="thread-active">{getDisplayValueForBool(active)}</td>
-          <td className="thread-completed">{getDisplayValueForBool(complete)}</td>
+          <td className="thread-complete">{getDisplayValueForBool(complete)}</td>
         </tr>
       );
     });
@@ -39,7 +39,7 @@ export default function Threads({ data }: ThreadsProps): React.ReactElement {
           <tr>
             <th className="thread-name">Thread</th>
             <th className="thread-active">Active</th>
-            <th className="thread-completed">Completed</th>
+            <th className="thread-complete">Complete</th>
           </tr>
         </thead>
         <tbody className="thread-body">{tableValues}</tbody>

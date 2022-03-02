@@ -11,6 +11,7 @@ interface NavProps {
   saveAll: () => void;
   saveAs: () => void;
   current: OpenFileData;
+  visualizerActive: boolean;
   compile: () => void;
   showCompileOutput: () => void;
 }
@@ -22,6 +23,7 @@ export default function Nav({
   saveAll,
   saveAs,
   current,
+  visualizerActive,
   compile,
   showCompileOutput,
 }: NavProps): React.ReactElement {
@@ -37,10 +39,12 @@ export default function Nav({
       const titlePrefix = current.dirty ? '• ' : '';
       reactTitle = titlePrefix + shortName + ' - ';
     }
+    const titleSuffix = visualizerActive ? 'Visualier - ' : 'Editor - ';
+    reactTitle += titleSuffix;
 
     setTitle(reactTitle);
     document.title = reactTitle + 'VizCon';
-  }, [current, current.dirty]);
+  }, [current, current.dirty, visualizerActive]);
 
   return (
     <div className="titlebar">
