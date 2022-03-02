@@ -25,7 +25,8 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     sem->name = (char*) name;
     sem->num = -1;
     sem->count = maxValue;
-    if (isLldbActive) {
+    if (isLldbActive)
+    {
         sem->sem = NULL;
         vc_internal_registerSem(sem, sem->name, sem->count, maxValue);
         return sem;
