@@ -16,10 +16,15 @@ const testingThreadData: ThreadData[] = [
   {
     state: 'running',
     name: '1 main',
+    locals: [{ name: 'sem', type: 'VCSem*', value: '0x76b949c587f3942a' }],
   },
   {
     state: 'ready',
     name: '2 coroutine',
+    locals: [
+      { name: 'sem', type: 'VCSem*', value: '0x76b949c587f3942a' },
+      { name: 'counter', type: 'long', value: '3506' },
+    ],
   },
 ];
 
@@ -40,14 +45,6 @@ const testingGlobalVars = [
     value: '0x76b949c587f3942a',
   },
 ];
-
-const testingLocalVars = {
-  '1 main': [{ name: 'sem', type: 'VCSem*', value: '0x76b949c587f3942a' }],
-  '2 corutine': [
-    { name: 'sem', type: 'VCSem*', value: '0x76b949c587f3942a' },
-    { name: 'counter', type: 'long', value: '3506' },
-  ],
-};
 
 export default function Visualizer({ inVisualizer, current, goBack }: VisualizerProps): React.ReactElement {
   const [className, setClassName] = useState('');
@@ -125,14 +122,7 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
       <div className="visualizer-main">
         <Threads data={visualizerState?.threads || testingThreadData} />
         <ConsoleOutput current={current} text={consoleOutput} />
-        <Variables
-          globals={visualizerState?.globals || testingGlobalVars}
-          locals={
-            {
-              /*TODO: locals*/
-            } || testingLocalVars
-          }
-        />
+        <Variables globals={visualizerState?.globals || testingGlobalVars} threads={visualizerState?.threads || []} />
       </div>
     </div>
   );

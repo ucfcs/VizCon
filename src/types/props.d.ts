@@ -13,6 +13,7 @@ interface EditorProps {
 interface ThreadData {
   name: string;
   state: 'running' | 'ready' | 'waiting' | 'completed';
+  locals: VariableData[];
 }
 
 interface VariableData {

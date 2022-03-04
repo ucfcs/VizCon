@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 interface VariablesProps {
   globals: VariableData[];
-  locals: {
-    [key: string]: VariableData[];
-  };
+  threads: ThreadData[];
 }
 
 interface VarTableProps {
@@ -54,19 +52,15 @@ function VarTable({ vars, title }: VarTableProps): React.ReactElement {
 }
 
 // TODO: display locals, and titles
-export default function Variables({ globals, locals }: VariablesProps): React.ReactElement {
+export default function Variables({ globals, threads }: VariablesProps): React.ReactElement {
   const [localTabs, setLocalTabs] = useState(<></>);
 
   useEffect(() => {
-    const varTableList: React.ReactElement[] = [];
-    // possible overly complex loop to get an array of the elements and give them their title
-    for (const key in locals) {
-      const varArray = locals[key];
-      varTableList.push(<VarTable vars={varArray} title={key} />);
-    }
-
+    const varTableList: React.ReactElement[] = threads.map(thread => {
+      return <VarTable vars={thread.locals || []} title={thread.name} />;
+    });
     setLocalTabs(<>{varTableList}</>);
-  }, [locals]);
+  }, [threads]);
 
   return (
     <div className="variables-container">

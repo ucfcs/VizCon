@@ -108,6 +108,12 @@ chosen_cthread = None
 def getThreads():
     for thread in thread_man.getManagedThreads():
         yield thread['thread']
+def serializeVariable(thread_man, lldb_var):
+    var_value = lldb_var.GetValue()
+    if lldb_var.GetTypeName() == 'CSSem *':
+        var_value = thread_man.getSemaphoreValue(str(var_value))    
+    return {'name': lldb_var.GetName(), 'type': lldb_var.GetTypeName(), 'value': var_value}
+
 ignore_set = set()
 respondToVisualizer({'type': 'hello'})
 while True:
@@ -249,12 +255,15 @@ while True:
             thread_state = thread['state']
             if thread == chosen_cthread:
                 thread_state = 'running'
-            thread_list.append({'name': thread['name'], 'state': thread_state})
+            locals = None
+            if thread_state != 'completed':
+                locals = []
+                frame = thread['thread'].GetFrameAtIndex(0)
+                for local in frame.GetVariables(True, True, False, True):
+                    locals.append(serializeVariable(thread_man, local))
+            thread_list.append({'name': thread['name'], 'state': thread_state, 'locals': locals})
         globals = frame.get_statics()
         globals_list = []
-        for frame_var in globals:
-            global_value = frame_var.GetValue()
-            if frame_var.GetTypeName() == 'CSSem *':
-                global_value = thread_man.getSemaphoreValue(str(global_value))    
-            globals_list.append({'name': frame_var.GetName(), 'type': frame_var.GetTypeName(), 'value': global_value})
+        for frame_var in globals:  
+            globals_list.append(serializeVariable(thread_man, frame_var))
         respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list}) 
