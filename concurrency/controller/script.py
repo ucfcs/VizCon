@@ -10,8 +10,12 @@ if len(sys.argv) < 2:
     sys.exit(1)
 exe = sys.argv[1]
 visualizerMode = True
+
 if (len(sys.argv) >= 3 and sys.argv[2] == 'no_visualizer'):
     visualizerMode = False
+    dataOutputFile = sys.stdout
+else:
+    dataOutputFile = os.fdopen(3, 'w')
 
 # TODO
 def debug_print(*args, **kwargs):
@@ -23,9 +27,9 @@ def waitForVisualizer():
     lineIn = sys.stdin.readline()
     objIn = json.loads(lineIn)
 def respondToVisualizer(msg):
-    sys.stdout.write(json.dumps(msg))
-    sys.stdout.write("\n")
-    sys.stdout.flush()
+    dataOutputFile.write(json.dumps(msg))
+    dataOutputFile.write("\n")
+    dataOutputFile.flush()
 def isUserCode(thread):
     frame = thread.GetFrameAtIndex(0)
     line = frame.GetLineEntry()
@@ -76,7 +80,6 @@ main_bp = target.BreakpointCreateByName ("real_main", target.GetExecutable().Get
 thread_bp = target.BreakpointCreateByName ("do_post", target.GetExecutable().GetFilename())
 vcJoin_bp = target.BreakpointCreateByName ("vcJoin", target.GetExecutable().GetFilename())
 vc_internal_registerSem_bp = target.BreakpointCreateByName ("vc_internal_registerSem", target.GetExecutable().GetFilename())
-printf_hook_bp = target.BreakpointCreateByName ("printf_hook", target.GetExecutable().GetFilename())
 
 vcWait_bp = target.BreakpointCreateByName ("vcWait", target.GetExecutable().GetFilename())
 vcSignal_bp = target.BreakpointCreateByName ("vcSignal", target.GetExecutable().GetFilename())
@@ -159,18 +162,10 @@ while True:
         if not isUserCode(running_thread):
             debug_print("Special stepout from", running_thread.GetFrameAtIndex(0))
             running_thread.StepOut()
-    printed_lines = []
     handlingBreakpoints = True
     while handlingBreakpoints:
         handledBreakpoint = False
         for t in process:
-            if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == printf_hook_bp.GetID(): 
-                the_str = t.GetFrameAtIndex(0).FindVariable("str")
-                captured_str = process.ReadCStringFromMemory(the_str.GetValueAsUnsigned(), 1024, lldb.SBError())
-                printed_lines.append(captured_str)
-                process.Continue()
-                handledBreakpoint = True
-                continue
             if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vc_internal_registerSem_bp.GetID():
                 new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
                 new_sem_name_ptr = t.GetFrameAtIndex(0).FindVariable("name")
@@ -262,4 +257,4 @@ while True:
             if frame_var.GetTypeName() == 'CSSem *':
                 global_value = thread_man.getSemaphoreValue(str(global_value))    
             globals_list.append({'name': frame_var.GetName(), 'type': frame_var.GetTypeName(), 'value': global_value})
-        respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list, 'printed_lines': printed_lines})
+        respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list}) 

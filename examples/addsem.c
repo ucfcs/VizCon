@@ -15,6 +15,7 @@ void* SimpleThread(void* param)
     {
         vcSemWait(counter_sem);
         counter++;
+        printf("Counter updated to %d\n", counter);
         vcSemSignal(counter_sem);
     }
     return NULL;
@@ -22,6 +23,7 @@ void* SimpleThread(void* param)
 extern int isLldbActive;
 int real_main()
 {
+    printf("Hello world!\n");
     counter = 0;
     counter_sem = vcSemCreate(1);
     vcThreadQueue(SimpleThread, NULL);

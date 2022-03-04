@@ -33,8 +33,13 @@ contextBridge.exposeInMainWorld('platform', {
   compileFile: async (path: string): Promise<string> => {
     return await ipcRenderer.invoke('compileFile', path);
   },
-  _temp_launchProgram: async (path: string): Promise<any> => {
-    return await ipcRenderer.invoke('_temp_launchProgram', path);
+  _temp_launchProgram: async (path: string, stdoutHandler: (data: string) => void): Promise<any> => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = (e) => {
+      console.log("Port message", e);
+      stdoutHandler(e.data)
+    }
+    ipcRenderer.postMessage('launchProgram', {path}, [channel.port2])
   },
   _temp_doStep: async (): Promise<any> => {
     // Returns an object representing a message from the debugger

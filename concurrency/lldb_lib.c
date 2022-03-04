@@ -40,6 +40,7 @@ void vc_internal_init()
     isLldbActive = lldbMode != NULL && strcmp(lldbMode, "1") == 0;
     if (isLldbActive)
     {
+        setbuf(stdout, NULL);
         fprintf(stderr, "LLDB is active\n");
     }
     else
@@ -77,20 +78,4 @@ int main(void)
 {
     vc_internal_init();
     return real_main();
-}
-
-void printf_hook(const char* str)
-{
-}
-// From 
-
-int lldb_printf(const char *format_string, ...)
-{
-    va_list args;
-    va_start(args, format_string);
-    char buf[1024];
-    int ret = vsnprintf(buf, 1024, format_string, args);
-    printf_hook(buf);
-    va_end(args);
-    return ret;
 }

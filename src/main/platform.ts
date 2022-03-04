@@ -115,11 +115,11 @@ ipcMain.handle('compileFile', async (e, path: string) => {
 let child: child_process.ChildProcess;
 let doStepResolveFunc: (msg: any) => void = null;
 let handleLldbMsg: (msg: any) => void;
-ipcMain.handle('_temp_launchProgram', (e, path: string) => {
+function launchProgram(path: string, stdoutHandler: any): any {
   return new Promise((resolve, reject) => {
     // TODO: use executable path
     console.log(`Current directory: ${cwd()}`);
-    child = child_process.spawn('python', [concurrencyFolder + 'controller' + pathSep + 'script.py', 'addsem.exe']);
+    child = child_process.spawn('python', [concurrencyFolder + 'controller' + pathSep + 'script.py', 'addsem.exe'], {stdio: ['pipe', 'pipe', 'pipe', 'pipe']});
     child.on('close', code => {
       console.log(`child process exited with code ${code}`);
     });
@@ -136,16 +136,29 @@ ipcMain.handle('_temp_launchProgram', (e, path: string) => {
       }
       resolve(msg);
     };
-    child.stdout.pipe(split2()).on('data', (data: string) => {
+    child.stdio[3].pipe(split2()).on('data', (data: string) => {
       console.log(`child process data: "${data}"`);
       const msg = JSON.parse(data);
       handleLldbMsg(msg);
     });
+
+    child.stdout.on('data', (data: string) => {
+      console.log(`child process stdout: ${data}`);
+      stdoutHandler(data);
+    })
     child.stderr.on('data', data => {
       console.log(`child process error: "${data}"`);
     });
   });
-});
+};
+
+ipcMain.on('launchProgram', (event, msg) => {
+  const port = event.ports[0];
+  port.start();
+  launchProgram(msg.path, (data: any) => {
+    port.postMessage(data+"");
+  })
+})
 
 ipcMain.handle('_temp_doStep', (e, msg: any) => {
   return new Promise((resolve, reject) => {
