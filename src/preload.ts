@@ -57,6 +57,17 @@ contextBridge.exposeInMainWorld('platform', {
                 };
               });
             },
+            stop: () => {
+              return new Promise((resolve2, reject2) => {
+                if (waitingHandler !== null) {
+                  throw new Error('Attempted to step again before previous step completed');
+                }
+                channel.port1.postMessage({ type: 'stop' });
+                waitingHandler = msg => {
+                  resolve2(msg);
+                };
+              });
+            },
           });
           return;
         }

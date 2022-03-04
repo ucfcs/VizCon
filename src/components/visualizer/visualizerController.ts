@@ -53,5 +53,10 @@ export default class VisualizerController {
       this.onVisualizerStateChange(msg);
       await delay(this.delayMilliseconds);
     }
+    console.log('Stopping visualizer...');
+    this.onVisualizerRunStateChange('Manually stopping...');
+    const res = await debuggerHandle.stop();
+    this.onVisualizerRunStateChange('Stopped.');
+    console.log('Visualizer stopped', res);
   }
 }

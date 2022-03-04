@@ -29,4 +29,5 @@ interface VisualizerState {
 
 interface DebuggerHandle {
   doStep: () => Promise<any>;
+  stop: () => Promise<any>;
 }

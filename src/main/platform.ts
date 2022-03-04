@@ -122,6 +122,12 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   });
 
   port.on('message', evt => {
+    if (evt.data.type === 'stop') {
+      console.log('Stopping child');
+      const res = child.kill();
+      port.postMessage({ result: res });
+      return;
+    }
     if (evt.data.type !== 'request') {
       throw new Error('Invalid message type');
     }
