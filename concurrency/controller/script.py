@@ -54,7 +54,7 @@ def isUserCode(thread):
     #print("File is user code", file, str(line.GetFileSpec()), file=sys.stderr)
     return True
 
-#os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(True)
+os.environ['LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE'] = str(True)
 # Create a new debugger instance
 debugger = lldb.SBDebugger.Create()
 

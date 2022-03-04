@@ -37,14 +37,14 @@ export default class VisualizerController {
     this.delayMilliseconds = delayMilliseconds;
   }
   private async _startLoop() {
-    await window.platform._temp_launchProgram(this.executableFile, (data) => {
+    const debuggerHandle = await window.platform._temp_launchProgram(this.executableFile, data => {
       //console.log("Console stdout output", data);
       this.onConsoleOutput([data]);
     });
     this.onVisualizerRunStateChange('Running');
     this.running = true;
     while (this.running) {
-      const msg = await window.platform._temp_doStep();
+      const msg = await debuggerHandle.doStep();
       //console.log('received visualizer state', msg);
       if (msg.type === 'process_end') {
         this.onVisualizerRunStateChange('Finished');

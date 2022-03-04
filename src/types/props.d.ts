@@ -25,3 +25,7 @@ interface VisualizerState {
   threads: ThreadData[];
   globals: VariableData[];
 }
+
+interface DebuggerHandle {
+  doStep: () => Promise<any>;
+}
