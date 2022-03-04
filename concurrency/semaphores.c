@@ -26,7 +26,7 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     // Create a mutex with default settings. Error out where needed.
     #ifdef _WIN32 // Windows version
         sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, name);
-        if(sem->sem == NULL)
+        if(sem->sem == NULL || GetLastError() == ERROR_ALREADY_EXISTS)
         {
             int err = (int) GetLastError();
             free(sem);
