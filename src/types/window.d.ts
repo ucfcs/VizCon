@@ -13,6 +13,7 @@ declare global {
       openFileDialog: () => Promise<string[]>;
       saveFileToDisk: (path: string, content: string, forceDialog?: boolean) => Promise<string>;
       compileFile: (path: string) => Promise<string>;
+      _temp_launchProgram: (path: string, stdoutHandler: (data: string) => void) => Promise<DebuggerHandle>;
     };
   }
 }

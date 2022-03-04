@@ -162,6 +162,7 @@ function App(): React.ReactElement {
         saveAll={saveAll}
         saveAs={saveAs}
         current={current}
+        visualizerActive={inVisualizer}
         compile={compile}
         showCompileOutput={() => setOutputVisible(true)}
       />

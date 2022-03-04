@@ -1,7 +1,9 @@
 import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
-import { exec } from 'child_process';
+import child_process, { exec } from 'child_process';
+import { cwd } from 'process';
 import { sep as pathSep } from 'path';
+import split2 from 'split2';
 import { filePathToFileName } from '../util/utils';
 
 // determine where the concurrency folder is
@@ -107,4 +109,49 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   });
 
   return await prom;
+});
+
+function launchProgram(path: string, port: Electron.MessagePortMain): void {
+  // TODO: use executable path
+  console.log(`Current directory: ${cwd()}`);
+  const child = child_process.spawn('python', [concurrencyFolder + 'controller' + pathSep + 'script.py', 'addsem.exe'], {
+    stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
+  });
+  child.on('close', code => {
+    console.log(`child process exited with code ${code}`);
+  });
+
+  port.on('message', evt => {
+    if (evt.data.type === 'stop') {
+      console.log('Stopping child');
+      const res = child.kill();
+      port.postMessage({ result: res });
+      return;
+    }
+    if (evt.data.type !== 'request') {
+      throw new Error('Invalid message type');
+    }
+    console.log('Writing');
+    child.stdin.write(JSON.stringify({ type: 'request' }) + '\n');
+  });
+
+  child.stdio[3].pipe(split2()).on('data', (data: string) => {
+    console.log(`child process data: "${data}"`);
+    const msg = JSON.parse(data);
+    port.postMessage(msg);
+  });
+  child.stdout.on('data', (data: string) => {
+    console.log(`child process stdout: ${data}`);
+    port.postMessage({ type: 'stdout', data: data + '' });
+  });
+
+  child.stderr.on('data', data => {
+    console.log(`child process error: "${data}"`);
+  });
+}
+
+ipcMain.on('launchProgram', (event, msg) => {
+  const port = event.ports[0];
+  port.start();
+  launchProgram(msg.path, port);
 });

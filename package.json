@@ -101,12 +101,14 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.3.1",
+    "@types/split2": "^3.2.1",
     "electron-squirrel-startup": "^1.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-router-dom": "^6.2.1",
     "sass": "^1.47.0",
-    "sass-loader": "^12.4.0"
+    "sass-loader": "^12.4.0",
+    "split2": "^4.1.0"
   },
   "engines": {
     "npm": ">=8",

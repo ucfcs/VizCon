@@ -49,7 +49,7 @@ const createWindow = (): void => {
     mainWindow.webContents.openDevTools();
   }
 
-  // track the fullsreen state of the window for darwin
+  // track the fullscreen state of the window for darwin
   mainWindow.on('enter-full-screen', () => {
     mainWindow.webContents.executeJavaScript(`
     document.getElementById('vizcon').classList.add('fullscreen')
