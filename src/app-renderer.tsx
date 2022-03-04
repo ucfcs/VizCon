@@ -18,7 +18,7 @@ function App(): React.ReactElement {
   const [current, setCurrent] = useState(defaultCurrent);
   const [outputVisible, setOutputVisible] = useState(false);
   const [compileResult, setCompileResult] = useState('');
-  const [inVisualizer, setInVisualizer] = useState(true); // TODO: Change back to false later
+  const [inVisualizer, setInVisualizer] = useState(false); // TODO: Change back to false later
 
   function openFile(): void {
     window.platform.openFileDialog().then(async newFiles => {
@@ -165,6 +165,7 @@ function App(): React.ReactElement {
         visualizerActive={inVisualizer}
         compile={compile}
         showCompileOutput={() => setOutputVisible(true)}
+        showVisualizer={() => setInVisualizer(true)}
       />
       <IDE
         files={files}

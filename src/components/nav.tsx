@@ -14,6 +14,7 @@ interface NavProps {
   visualizerActive: boolean;
   compile: () => void;
   showCompileOutput: () => void;
+  showVisualizer: () => void;
 }
 
 export default function Nav({
@@ -26,6 +27,7 @@ export default function Nav({
   visualizerActive,
   compile,
   showCompileOutput,
+  showVisualizer
 }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
@@ -82,6 +84,10 @@ export default function Nav({
                   name: 'Show Compile Output',
                   action: showCompileOutput,
                 },
+                {
+                  name: 'Show Visualizer',
+                  action: showVisualizer
+                }
               ]}
             />
             <MenuItem
