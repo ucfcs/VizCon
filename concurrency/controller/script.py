@@ -206,6 +206,8 @@ while True:
                 thread_man.onJoin(t, thread_val)
             if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == hook_createThread_bp.GetID():
                 new_thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                new_thread_name_ptr = t.GetFrameAtIndex(0).FindVariable("name")
+                new_thread_name = process.ReadCStringFromMemory(new_thread_name_ptr.GetValueAsUnsigned(), 1024, lldb.SBError())
                 #debug_print("New thread", new_thread_ptr)
                 running_thread.Resume()
                 process.Continue()
@@ -226,7 +228,7 @@ while True:
                         if verbose:
                             debug_print("Temporarily suspending other thread", other_thread)
                         other_thread.Suspend()
-                thread_man.onCreateThread({'thread': new_thread_lldb, 'csthread_ptr': new_thread_ptr})
+                thread_man.onCreateThread({'thread': new_thread_lldb, 'csthread_ptr': new_thread_ptr, 'name': new_thread_name})
                 for fr in new_thread_lldb:
                     debug_print(fr)
                 new_thread_lldb.StepOut()

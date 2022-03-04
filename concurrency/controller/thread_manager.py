@@ -87,7 +87,6 @@ class ThreadManager:
 
     def onCreateThread(self, thread):
         thread['state'] = 'ready'
-        thread['name'] = str(self.nextThreadID)
         self.nextThreadID += 1
         self.managed_threads.append(thread)
         self.ready_list2.append(thread)

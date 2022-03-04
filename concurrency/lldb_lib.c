@@ -24,7 +24,7 @@ void *vc_internal_thread_wrapper(void *parameter)
     void *retval = thread->func(thread->arg);
     return retval;
 }
-void lldb_hook_createThread(CSThread *thread)
+void lldb_hook_createThread(CSThread *thread, char *name)
 {
     // LLDB
 }

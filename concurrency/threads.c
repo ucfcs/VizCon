@@ -37,7 +37,7 @@ void startThread(CSThread* thread)
 {
     if (isLldbActive)
     {
-        lldb_hook_createThread(thread);
+        lldb_hook_createThread(thread, thread->name);
     }
     // Platform-dependent thread start.
     #ifdef _WIN32 // Windows version
