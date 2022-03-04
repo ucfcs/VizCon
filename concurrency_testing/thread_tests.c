@@ -280,7 +280,7 @@ AfterEach(Threads)
 }
 
 // End of the suite.
-// Total number of assertions: 26 + 4 * START_TEST_SIZE
+// Total number of assertions: 46 (26 + 4 * START_TEST_SIZE)
 // Total number of exceptions: 0
 
 // main - Initialize and run the suite.

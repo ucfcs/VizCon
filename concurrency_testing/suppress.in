@@ -1,0 +1,58 @@
+# This is a suppression file for Dr. Memory.
+# It is used to prevent the reporting of errors in the MinGW libraries.
+
+UNADDRESSABLE ACCESS
+name=Runtime Relocator
+a.exe!.text
+a.exe!_pei386_runtime_relocator
+a.exe!__tmainCRTStartup
+a.exe!.l_start
+ntdll.dll!RtlUserThreadStart
+
+UNADDRESSABLE ACCESS
+name=MinGW-W64 printf
+a.exe!.text
+a.exe!...
+a.exe!__mingw_vfprintf
+a.exe!printf
+a.exe!...
+a.exe!main
+
+UNADDRESSABLE ACCESS
+name=MinGW-W64 printf (in thread)
+a.exe!.text
+a.exe!...
+a.exe!__mingw_vfprintf
+a.exe!printf
+a.exe!...
+ntdll.dll!RtlUserThreadStart
+
+UNADDRESSABLE ACCESS
+name=MinGW-W64 sprintf
+a.exe!.text
+a.exe!...
+a.exe!__mingw_vsprintf
+a.exe!sprintf
+a.exe!...
+a.exe!main
+
+UNADDRESSABLE ACCESS
+name=MinGW-W64 sprintf (in thread)
+a.exe!.text
+a.exe!...
+a.exe!__mingw_vsprintf
+a.exe!sprintf
+a.exe!...
+ntdll.dll!RtlUserThreadStart
+
+POSSIBLE LEAK
+name=Dr. Memory Malloc Replacement
+drmemorylib.dll!replace_malloc
+msvcrt.dll!malloc_crt
+msvcrt.dll!_setargv
+msvcrt.dll!_getmainargs
+a.exe!pre_cpp_init
+msvcrt.dll!initterm
+a.exe!__tmainCRTStartup
+a.exe!.l_start
+ntdll.dll!RtlUserThreadStart

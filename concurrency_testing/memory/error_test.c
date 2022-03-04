@@ -1,11 +1,13 @@
 // A simple program that spawns threads, mutexes and semaphores
 // and then causes a fatal error
 // for the purposes of checking whether the memory is properly freed.
-// On POSIX, test using Valgrind: valgrind --leak-check=full --show-leak-kinds=all -s ./a.out
+// On Linux, test using Valgrind: valgrind --leak-check=full --show-leak-kinds=all -s ./a.out
+// On macOS, test using Leaks: leaks -atExit -- ./a.out
 // On Windows, test using Dr. Memory: drmemory -- a.exe
 
-//#include "../concurrency/useroverwrite.h"
-#include "../concurrency/vcuserlibrary.h"
+//#include "../../concurrency/useroverwrite.h"
+#include "../../concurrency/vcuserlibrary.h"
+#include <unistd.h>
 
 #define SPAWN_COUNT 100
 
@@ -34,7 +36,7 @@ void* ErrorThread(void* param)
     // Attempt to unlock an unused mutex. This will fail.
     vcMutexUnlock(mutexes[0]);
 
-    return (void*) val;
+    return NULL;
 }
 
 int main(void)
@@ -50,7 +52,7 @@ int main(void)
     vcThreadQueue(ErrorThread, &i);
 
     // Run the threads.
-    // An error will appear once vcThreadStart starts.
+    // An error will appear once ErrorThread starts.
     vcThreadStart();
 
     return 0;

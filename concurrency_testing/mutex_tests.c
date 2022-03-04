@@ -398,8 +398,8 @@ AfterEach(Mutexes)
 }
 
 // End of the suite.
-// Total number of assertions: 45 + ISOLATION_TEST_SIZE
-// Total number of exceptions: 3
+// Total number of assertions: 50 (45 + ISOLATION_TEST_SIZE)
+// Total number of exceptions: 3  (double_lock: 511, double_unlock: 510, cross_unlock: 512)
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.

@@ -261,18 +261,23 @@ void* waitMultThread(void* param)
     // Use the system unlock function instead of the VC version
     // because the VC version hasn't been checked yet.
     // Check the return value so we're informed if something went wrong.
+    // Also increase and assert the count, because vcSemWaitMult checks that.
     #ifdef _WIN32 // Windows version
         assert_that(ReleaseSemaphore(firstSem->sem, 1, NULL), is_not_equal_to(0));
         assert_that(ReleaseSemaphore(firstSem->sem, 1, NULL), is_not_equal_to(0));
+        firstSem->count += 2;
+        assert_that(firstSem->count, is_equal_to(2));
     #elif __linux__ || __APPLE__ // POSIX version
         assert_that(sem_post(firstSem->sem), is_equal_to(0));
         assert_that(sem_post(firstSem->sem), is_equal_to(0));
+        firstSem->count += 2;
+        assert_that(firstSem->count, is_equal_to(2));
     #endif
 
     return 0;
 }
 
-// wait_mult - 5 assertions (1 in test body, 2 in each waitMultThread instance), 1 skipped assertion.
+// wait_mult - 7 assertions (1 in test body, 3 in each waitMultThread instance), 1 skipped assertion.
 //             Ensure that vcSemWaitMult works.
 Ensure(Semaphores, wait_mult)
 {
@@ -337,7 +342,6 @@ void* waitTwoThread(void* param)
 
 // wait_two - 2 assertions (1 in each waitThread instance).
 //            Wait with two permits, so both threads run at the same time.
-//            The shared object should be whichever thread started second.
 Ensure(Semaphores, wait_two)
 {
     // Create a 2-D array of argument pairs,
@@ -561,8 +565,8 @@ AfterEach(Semaphores)
 }
 
 // End of the suite.
-// Total number of assertions: 63
-// Total number of exceptions: 2
+// Total number of assertions: 65
+// Total number of exceptions: 2  (bad_count: 502, bad_count_named: 502)
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
