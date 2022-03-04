@@ -3,12 +3,12 @@ import { test, expect, Page } from "@playwright/test";
 var electronApp;
 let window: Page;
 
-// Simple Tests - The list of tests begins below.
-test.describe("Simple Tests", async () => {
+// Sample Tests - The list of tests begins below.
+test.describe("Sample Tests", async () => {
   // Before All - Launch the app, print the path, and get the first window.
   test.beforeAll(async () => {
     // Launch Electron app.
-    electronApp = await electron.launch({ args: ['.'] });
+    electronApp = await electron.launch({ args: ['.'] , executablePath: "./out/vizcon-win32-x64/vizcon.exe" });
 
     // Evaluation expression in the Electron context.
     const appPath = await electronApp.evaluate(async ({ app }) => {
@@ -24,7 +24,7 @@ test.describe("Simple Tests", async () => {
   // Known Pass - Passes by checking for a known window title.
   test('Known Pass', async () => {
     const title = await window.title();
-    expect(title).toBe("VizCon - Concurrency Visualizer");
+    expect(title).toBe("VizCon");
   });
 
   // Known Fail - Fails by checking for a known incorrect window title.
