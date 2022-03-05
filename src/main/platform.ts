@@ -15,8 +15,7 @@ if (app.isPackaged) {
 
 const concurrencyFolder = resourcesPrefix + pathSep + 'concurrency' + pathSep;
 
-// TODO: add vcuserlibrary.c
-const library = ['utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
+const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
   return concurrencyFolder + file;
 });
@@ -94,7 +93,7 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [path, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
-  const commandString = `gcc -g ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
+  const commandString = `clang -g ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
   console.log(outputFile, commandString);
 
   const prom = new Promise(resolve => {
@@ -112,9 +111,10 @@ ipcMain.handle('compileFile', async (e, path: string) => {
 });
 
 function launchProgram(path: string, port: Electron.MessagePortMain): void {
-  // TODO: use executable path
+  const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
+
   console.log(`Current directory: ${cwd()}`);
-  const child = child_process.spawn('python', [concurrencyFolder + 'controller' + pathSep + 'script.py', 'addsem.exe'], {
+  const child = child_process.spawn('python', [concurrencyFolder + 'controller' + pathSep + 'script.py', exeFile], {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
   });
   child.on('close', code => {
@@ -140,6 +140,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
     const msg = JSON.parse(data);
     port.postMessage(msg);
   });
+
   child.stdout.on('data', (data: string) => {
     console.log(`child process stdout: ${data}`);
     port.postMessage({ type: 'stdout', data: data + '' });

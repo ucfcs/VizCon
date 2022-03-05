@@ -1,62 +1,63 @@
 import { delay } from '../../util/utils';
 
+interface VisualizerControllerOptions {
+  exeFile: string;
+  speed: number;
+  onConsoleOutput: (out: string[]) => void;
+  onStateChange: (newState: VisualizerState) => void;
+  onRunStateChange: (newRunState: string) => void;
+}
+
 export default class VisualizerController {
   private running = false;
-  private readonly executableFile: string;
+  private readonly exeFile: string;
   private delayMilliseconds: number;
   private readonly onConsoleOutput: (out: string[]) => void;
-  private readonly onVisualizerStateChange: (newState: VisualizerState) => void;
-  private readonly onVisualizerRunStateChange: (newRunState: string) => void;
-  constructor({
-    executableFile,
-    speed,
-    onConsoleOutput,
-    onVisualizerStateChange,
-    onVisualizerRunStateChange,
-  }: {
-    executableFile: string;
-    speed: number;
-    onConsoleOutput: (out: string[]) => void;
-    onVisualizerStateChange: (newState: VisualizerState) => void;
-    onVisualizerRunStateChange: (newRunState: string) => void;
-  }) {
-    this.executableFile = executableFile;
+  private readonly onStateChange: (newState: VisualizerState) => void;
+  private readonly onRunStateChange: (newRunState: string) => void;
+
+  constructor({ exeFile, speed, onConsoleOutput, onStateChange, onRunStateChange }: VisualizerControllerOptions) {
+    this.exeFile = exeFile;
     this.delayMilliseconds = speed;
     this.onConsoleOutput = onConsoleOutput;
-    this.onVisualizerStateChange = onVisualizerStateChange;
-    this.onVisualizerRunStateChange = onVisualizerRunStateChange;
+    this.onStateChange = onStateChange;
+    this.onRunStateChange = onRunStateChange;
   }
-  start() {
-    this._startLoop();
+
+  start(): void {
+    this.startAsync();
   }
-  stop() {
+
+  stop(): void {
     // TODO: improve cancellation
     this.running = false;
   }
-  setSpeed(delayMilliseconds: number) {
+
+  setSpeed(delayMilliseconds: number): void {
     this.delayMilliseconds = delayMilliseconds;
   }
-  private async _startLoop() {
-    const debuggerHandle = await window.platform._temp_launchProgram(this.executableFile, data => {
+
+  private async startAsync() {
+    const debuggerHandle = await window.platform.launchProgram(this.exeFile, data => {
       //console.log("Console stdout output", data);
       this.onConsoleOutput([data]);
     });
-    this.onVisualizerRunStateChange('Running');
+    this.onRunStateChange('Running');
     this.running = true;
     while (this.running) {
       const msg = await debuggerHandle.doStep();
       //console.log('received visualizer state', msg);
       if (msg.type === 'process_end') {
-        this.onVisualizerRunStateChange('Finished');
+        this.onRunStateChange('Finished');
         return;
       }
-      this.onVisualizerStateChange(msg);
+      this.onStateChange(msg);
       await delay(this.delayMilliseconds);
     }
     console.log('Stopping visualizer...');
-    this.onVisualizerRunStateChange('Manually stopping...');
+    this.onRunStateChange('Manually stopping...');
     const res = await debuggerHandle.stop();
-    this.onVisualizerRunStateChange('Stopped.');
+    this.onRunStateChange('Stopped.');
     console.log('Visualizer stopped', res);
   }
 }

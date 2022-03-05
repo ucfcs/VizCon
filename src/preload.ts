@@ -33,7 +33,7 @@ contextBridge.exposeInMainWorld('platform', {
   compileFile: async (path: string): Promise<string> => {
     return await ipcRenderer.invoke('compileFile', path);
   },
-  _temp_launchProgram: (path: string, stdoutHandler: (data: string) => void): Promise<DebuggerHandle> => {
+  launchProgram: (path: string, stdoutHandler: (data: string) => void): Promise<DebuggerHandle> => {
     return new Promise((resolve, reject) => {
       const channel = new MessageChannel();
       let hasStarted = false;
@@ -85,7 +85,7 @@ contextBridge.exposeInMainWorld('platform', {
       ipcRenderer.postMessage('launchProgram', { path }, [channel.port2]);
     });
   },
-  _temp_doStep: async (): Promise<any> => {
+  doStep: async (): Promise<any> => {
     // Returns an object representing a message from the debugger
     // TODO: add type
     return await ipcRenderer.invoke('_temp_doStep');
