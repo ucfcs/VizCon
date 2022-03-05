@@ -152,7 +152,7 @@ void closeAllThreads()
 CSSem* vcSemCreate(int count)
 {
     // Make sure the count is valid.
-    if(count <= 0)
+    if(count < 0)
         vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
     // If there are no semaphores in the list, make the new semaphore the initial one.
     CSSem* sem;
