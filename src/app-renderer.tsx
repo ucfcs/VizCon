@@ -13,8 +13,6 @@ let untitledCount = 1;
 
 function App(): React.ReactElement {
   const [files, setFiles] = useState<Array<OpenFileData>>([]);
-  // TODO: remove the files length check, that is for when we hard code the initial files
-  // Unless we allow the initial content of the files array to be the files they previously had open
   const [current, setCurrent] = useState(defaultCurrent);
   const [outputVisible, setOutputVisible] = useState(false);
   const [compileResult, setCompileResult] = useState('');
@@ -143,7 +141,6 @@ function App(): React.ReactElement {
     }
 
     const results = await window.platform.compileFile(current.path);
-    console.log(results);
     if (results !== '') {
       setOutputVisible(true);
       setCompileResult(results);

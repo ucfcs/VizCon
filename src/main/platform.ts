@@ -98,7 +98,6 @@ ipcMain.handle('compileFile', async (e, path: string) => {
 
   const prom = new Promise(resolve => {
     exec(commandString, (err, stdout, stderr) => {
-      console.log('err:', err, 'out:', stdout, 'err:', stderr);
       if (err && err.code !== 0) {
         resolve(stderr);
         return;
