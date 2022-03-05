@@ -94,7 +94,7 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
   const commandString = `clang -g ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
-  console.log(outputFile, commandString);
+  console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
     exec(commandString, (err, stdout, stderr) => {
@@ -141,7 +141,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   });
 
   child.stdout.on('data', (data: string) => {
-    console.log(`child process stdout: ${data}`);
+    console.log(`child process stdout: "${data}"`);
     port.postMessage({ type: 'stdout', data: data + '' });
   });
 
