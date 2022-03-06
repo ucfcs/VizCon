@@ -70,26 +70,26 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     setRunState('Starting...');
     visualizerController.current = new VisualizerController({
       // TODO: pass the path to the executable file
-      executableFile: 'executable',
+      exeFile: current.path,
       speed: simulationSpeed,
-      onVisualizerStateChange: newState => {
+      onStateChange: newState => {
         setVisualizerState(newState);
       },
-      onVisualizerRunStateChange: newRunState => {
+      onRunStateChange: newRunState => {
         setRunState(newRunState);
       },
       onConsoleOutput: data => {
-        setConsoleOutput(console_out => {
-          let new_out = console_out;
+        setConsoleOutput(consoleOut => {
+          let newOut = consoleOut;
 
           for (const entry of data) {
-            new_out += entry;
+            newOut += entry;
           }
-          return new_out;
+          return newOut;
         });
       },
     });
-    const task = visualizerController.current.start();
+    visualizerController.current.start();
   }
 
   function restart() {

@@ -37,7 +37,6 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
   }
 
   function globalClickReset(e: MouseEvent) {
-    console.log("click reset")
     const element = e.target as HTMLElement;
 
     document.body.removeEventListener('click', globalClickReset);
@@ -51,7 +50,6 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
   }
 
   function onItemClick(e: React.MouseEvent) {
-    console.log("ItemClick")
     if (e.button !== 0) {
       // ignore non left click
       return;
@@ -62,8 +60,6 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
       reset();
       return;
     }
-
-    console.log("setting expanded")
 
     setExpanded(true);
     setClassName('menu-item open');
