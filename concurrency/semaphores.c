@@ -5,16 +5,8 @@ extern int isLldbActive;
 
 // semCreate - Create a semaphore with the given name and max value.
 //             Returns: a pointer to the semaphore struct.
-CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
+CSSem* semCreate(SEM_VALUE maxValue)
 {
-    // vcSemCreate and vcSemCreateNamed should ensure the mutex is named.
-    // If it somehow isn't, error out.
-    if (name == NULL)
-    {
-        vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_NAMEERROR);
-        return NULL;
-    }
-
     // Attempt to allocate the struct. Error out on failure.
     CSSem* sem = (CSSem*) malloc(sizeof(CSSem));
     if (sem == NULL) 
@@ -22,20 +14,18 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     
     // Set non-semaphore properties.
     sem->next = NULL;
-    sem->name = (char*) name;
-    sem->num = -1;
     sem->count = maxValue;
     if (isLldbActive)
     {
         sem->sem = NULL;
-        vc_internal_registerSem(sem, sem->name, sem->count, maxValue);
+        vc_internal_registerSem(sem, sem->count, maxValue);
         return sem;
     }
     // Platform-dependent semaphore creation.
     // Create a mutex with default settings. Error out where needed.
     #ifdef _WIN32 // Windows version
-        sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, name);
-        if(sem->sem == NULL || GetLastError() == ERROR_ALREADY_EXISTS)
+        sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, NULL);
+        if(sem->sem == NULL)
         {
             int err = (int) GetLastError();
             free(sem);
@@ -44,13 +34,13 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
         } 
     #elif __linux__ || __APPLE__ // POSIX version
         // Use sem_open to create a named semaphore, which macOS requires.
-        sem->sem = sem_open(name, O_CREAT | O_EXCL, 0644, maxValue);
+        sem->sem = sem_open("/VizconTempName", O_CREAT | O_EXCL, 0644, maxValue);
         if(sem->sem == SEM_FAILED)
         {
             free(sem);
             vizconError("vcSemCreate/vcSemCreateNamed", errno);
         }
-        if(sem_unlink(name))
+        if(sem_unlink("/VizconTempName"))
         {
             free(sem);
             vizconError("vcSemCreate/vcSemCreateNamed", errno);

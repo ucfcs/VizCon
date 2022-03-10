@@ -2,16 +2,8 @@
 
 // mutexCreate - Create a mutex struct with the given name.
 //               Returns: a pointer to the mutex struct.
-CSMutex* mutexCreate(char* name)
+CSMutex* mutexCreate()
 {
-    // vcMutexCreate and vcMutexCreateNamed should ensure the mutex is named.
-    // If it somehow isn't, error out.
-    if (name == NULL)
-    {
-        vizconError("vcMutexCreate/vcMutexCreateNamed", VC_ERROR_NAMEERROR);
-        return NULL;
-    }
-
     // Attempt to allocate the struct. Error out on failure.
     CSMutex* mutex = (CSMutex*) malloc(sizeof(CSMutex));
     if (mutex == NULL)
@@ -21,18 +13,16 @@ CSMutex* mutexCreate(char* name)
     }
 
     // Set the mutex name.
-    mutex->name = (char*) name;
 
     // Set other non-mutex properties to default values.
     mutex->available = 1;
     mutex->holderID = (THREAD_ID_TYPE) 0;
-    mutex->num = -1;
     mutex->next = NULL;
 
     // Platform-dependent mutex creation.
     // Create a mutex with default settings. Error out where needed.
     #ifdef _WIN32 // Windows version
-        mutex->mutex = CreateMutexA(NULL, FALSE, name);
+        mutex->mutex = CreateMutexA(NULL, FALSE, NULL);
         if(mutex->mutex == NULL)
         {
             int err = (int) GetLastError();

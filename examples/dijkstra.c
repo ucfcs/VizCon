@@ -1,7 +1,7 @@
 int BigInSmall = 20000, SmallInBig = -20000;
-vcSem *freeBinS, *freeSinB, *readyBinS, *readySinB, *display;
+vcSem freeBinS, freeSinB, readyBinS, readySinB, display;
 
-char* printArray(int setInt, int stateInt, int* list, int len)
+void printArray(int setInt, int stateInt, int* list, int len)
 {
     int i;
     char *set, *state;

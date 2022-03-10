@@ -5,8 +5,12 @@
 // Thread type definition
 #ifdef _WIN32
     #define THREAD_TYPE HANDLE
+    #define THREAD_RET DWORD
+    #define THREAD_PARAM LPVOID
 #elif __linux__ || __APPLE__
     #define THREAD_TYPE pthread_t
+    #define THREAD_RET void*
+    #define THREAD_PARAM void*
 #endif
 
 // Thread function definition

@@ -16,11 +16,6 @@
     #include <errno.h>
 #endif
 
-// VizCon type codes used by vizconCreateName
-#define VC_TYPE_THREAD 0
-#define VC_TYPE_SEM 1
-#define VC_TYPE_MUTEX 2
-
 // VizCon error codes
 // 50X - Error with object creation
 #define VC_ERROR_MEMORY 500
@@ -40,6 +35,4 @@
 #define MAX_ERROR_MESSAGE_LENGTH 200
 
 // Function prototypes
-char* vizconCreateName(int type, int value); // Generates a default name for objects
-int vizconStringLength(char* name);          // Calculates length of a string
 void vizconError(char* func, int err);       // Reports an error and then closes the program

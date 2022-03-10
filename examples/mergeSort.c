@@ -95,7 +95,6 @@ int main(void)
     int end = size;
     int param1[2] = {begin, mid};
     int param2[2] = {mid, end};
-    srand(abs(vcThreadId()));
     for(i=0; i<size; i++)
     {
         array[i] = rand() % 100;

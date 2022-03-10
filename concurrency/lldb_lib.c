@@ -51,7 +51,7 @@ void vc_internal_init()
     if (isLldbActive)
     {
         isLldbActive = 0; // Global state is bad
-        sem_wait_create_thread = semCreate("sem_wait_create_thread", 1);
+        sem_wait_create_thread = semCreate(1);
         platform_semWait(sem_wait_create_thread);
         isLldbActive = 1;
     }
@@ -59,7 +59,7 @@ void vc_internal_init()
 
 
 
-void vc_internal_registerSem(CSSem *sem, char *name, int initialValue, int maxValue)
+void vc_internal_registerSem(CSSem *sem, int initialValue, int maxValue)
 {
 
 }

@@ -1,4 +1,4 @@
-vcSem *s;
+vcSem s;
 
 THREAD_RET P1(THREAD_PARAM param)
 {

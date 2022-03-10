@@ -1,9 +1,9 @@
 #define accountCount 4
 
-vcSem **accountSemArray;
-vcSem *semPrint;
-vcSem *tellerSem;
-vcSem *mainSem;
+vcSem *accountSemArray;
+vcSem semPrint;
+vcSem tellerSem;
+vcSem mainSem;
 int accountArray[accountCount];
 
 void DisplayBalance(int teller, int accountNum, int balance)
@@ -43,7 +43,6 @@ int Withdraw(int accountNum, int amount)
 THREAD_RET Teller(THREAD_PARAM param)
 {
     int accountNum, amount, teller = (int)param;
-    srand(abs(vcThreadId()));
     while(TRUE)
     {
         vcSemWait(tellerSem);
@@ -87,7 +86,7 @@ int main(void)
 {
     int i;
     srand(abs(vcThreadId()));
-    accountSemArray = (vcSem**)malloc(sizeof(vcSem*)*accountCount);
+    accountSemArray = (vcSem*)malloc(sizeof(vcSem)*accountCount);
     semPrint = vcSemCreate(1);
     tellerSem = vcSemCreateInitial(0, 1);
     mainSem = vcSemCreateInitial(0, 1);
