@@ -113,9 +113,10 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
   console.log(`Current directory: ${cwd()}`);
-  const child = child_process.spawn('python', [concurrencyFolder + 'controller' + pathSep + 'script.py', exeFile], {
+  let child = child_process.spawn('C:\\Users\\PC\\.vscode\\extensions\\vadimcn.vscode-lldb-1.6.10\\lldb\\bin\\lldb.exe', {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
   });
+  child.stdin.write("script import sys; sys.path.append('./concurrency/controller'); import script; script.start('addsem.exe', True)\n")
   child.on('close', code => {
     console.log(`child process exited with code ${code}`);
   });
@@ -135,14 +136,24 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   });
 
   child.stdio[3].pipe(split2()).on('data', (data: string) => {
-    console.log(`child process data: "${data}"`);
+    //console.log(`child process data: "${data}"`);
     const msg = JSON.parse(data);
+    if (msg.type === 'process_end') {
+      console.log("Terminating the lldb process.\n");
+      child.kill();
+    }
     port.postMessage(msg);
   });
 
+  let haveSeenLldbMessage = false;
   child.stdout.on('data', (data: string) => {
     console.log(`child process stdout: "${data}"`);
-    port.postMessage({ type: 'stdout', data: data + '' });
+    const str = data + "";
+    if (!haveSeenLldbMessage && str.startsWith("(lldb) script import sys; sys.path.append('./concurrency/controller'); import script;")) {
+      haveSeenLldbMessage = true;
+      return;
+    }
+    port.postMessage({ type: 'stdout', data: str });
   });
 
   child.stderr.on('data', data => {

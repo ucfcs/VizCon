@@ -2,7 +2,8 @@ from random import Random, randint
 import sys
 
 def debug_print(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+    return
+    #print(*args, file=sys.stderr, **kwargs)
 
 seed = randint(0, 10000)
 debug_print("Using RNG seed", seed)
