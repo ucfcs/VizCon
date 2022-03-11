@@ -6,6 +6,12 @@ import os
 import sys
 
 def start(exe, visualizerMode):
+    try:
+        _start(exe, visualizerMode)
+    except SystemExit as e:
+        # Exit immediately to bypass LLDB catching the SystemExit
+        os._exit(e.code)
+def _start(exe, visualizerMode):
     print("Writing to stderr", file=sys.stderr)
     if not visualizerMode:
         dataOutputFile = sys.stdout
