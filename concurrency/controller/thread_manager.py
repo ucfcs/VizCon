@@ -33,6 +33,7 @@ class ThreadManager:
         for thread in self.managed_threads:
             if thread['csthread_ptr'] == csthread_ptr:
                 return thread
+        debug_print("Thread lookup by pointer failed!", csthread_ptr, self.managed_threads)
         return None
     def onJoin(self, lldb_thread, joined_on_ptr):
         c_thread = self.__lookupFromLLDB(lldb_thread)

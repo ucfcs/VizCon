@@ -2,17 +2,24 @@ from time import sleep
 from thread_manager import ThreadManager
 import lldb
 import json
+import base64
 import os
 import sys
+import traceback
 
 def start(exe, visualizerMode):
     try:
-        _start(exe, visualizerMode)
+        _start(base64.b64decode(exe).decode(), visualizerMode)
     except SystemExit as e:
         # Exit immediately to bypass LLDB catching the SystemExit
         os._exit(e.code)
+    except Exception as e:
+        traceback.print_exc()
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)
 def _start(exe, visualizerMode):
-    print("Writing to stderr", file=sys.stderr)
     if not visualizerMode:
         dataOutputFile = sys.stdout
     else:

@@ -111,12 +111,13 @@ ipcMain.handle('compileFile', async (e, path: string) => {
 
 function launchProgram(path: string, port: Electron.MessagePortMain): void {
   const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
-
+  const controllerDir = resourcesPrefix + pathSep + 'concurrency' + pathSep + 'controller';
   console.log(`Current directory: ${cwd()}`);
-  let child = child_process.spawn('C:\\Users\\PC\\.vscode\\extensions\\vadimcn.vscode-lldb-1.6.10\\lldb\\bin\\lldb.exe', {
+  const lldb = resourcesPrefix + pathSep + 'platform' + pathSep + 'lldb' + pathSep + 'bin' + pathSep + 'lldb' + (process.platform === 'win32' ? '.exe' : '');
+  let child = child_process.spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
   });
-  child.stdin.write("script import sys; sys.path.append('./concurrency/controller'); import script; script.start('addsem.exe', True)\n")
+  child.stdin.write(`script import sys; import base64; sys.path.append(base64.b64decode('${btoa(controllerDir)}').decode()); import script; script.start('${btoa(exeFile)}', True)\n`)
   child.on('close', code => {
     console.log(`child process exited with code ${code}`);
   });
@@ -131,7 +132,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
     if (evt.data.type !== 'request') {
       throw new Error('Invalid message type');
     }
-    console.log('Writing');
+    //console.log('Writing');
     child.stdin.write(JSON.stringify({ type: 'request' }) + '\n');
   });
 
@@ -149,7 +150,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   child.stdout.on('data', (data: string) => {
     console.log(`child process stdout: "${data}"`);
     const str = data + "";
-    if (!haveSeenLldbMessage && str.startsWith("(lldb) script import sys; sys.path.append('./concurrency/controller'); import script;")) {
+    if (!haveSeenLldbMessage && str.startsWith("(lldb) script import sys;")) {
       haveSeenLldbMessage = true;
       return;
     }
