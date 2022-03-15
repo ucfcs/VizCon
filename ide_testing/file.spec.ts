@@ -6,8 +6,8 @@ let window: Page;
 // File Menu - The list of tests begins below.
 test.describe("File Menu", async () =>
 {
-  // Before All - Launch the app and get the first window.
-  test.beforeAll(async () =>
+  // Before Each - Launch the app and get the first window.
+  test.beforeEach(async () =>
   {
     // Launch Electron app.
     electronApp = await electron.launch({ args: ['.'] , executablePath: "./out/vizcon-win32-x64/vizcon.exe" });
@@ -32,20 +32,6 @@ test.describe("File Menu", async () =>
     expect(tab_title).toBe("Untitled-1");
     const file_contents = await window.locator('#ide div.view-line').textContent();
     expect(file_contents).toBe("");
-
-    // Write a word to the blank file space and check that.
-    // (This is more a demonstration for future testing.)
-    await window.locator('#ide div.view-lines.monaco-mouse-cursor-text').click();
-    await window.keyboard.insertText("Hello!");
-    const file_contents2 = await window.locator('#ide div.view-lines.monaco-mouse-cursor-text').textContent();
-    expect(file_contents2).toBe("Hello!");
-
-    // Write a second word to a second line and check that.
-    // (This is more a demonstration for future testing.)
-    await window.keyboard.press('Enter');
-    await window.keyboard.insertText("Goodbye!");
-    const file_contents3 = await window.locator('#ide div.view-lines.monaco-mouse-cursor-text').textContent();
-    expect(file_contents3).toBe("Hello!Goodbye!");
   });
 
   // Open File - Check that an existing file is opened.
@@ -77,8 +63,9 @@ test.describe("File Menu", async () =>
     await expect(tab_title).toHaveText("dummy.c");
     await expect(file_contents).toHaveText("// This is a dummy file for the purposes of checking the IDE.");
   });
-  // After All - Exit app.
-  test.afterAll(async () =>
+  
+  // After Each - Exit app.
+  test.afterEach(async () =>
   {
     window = null;
     await electronApp.close();
