@@ -57,7 +57,35 @@ test.describe("Clipboard", async () =>
     expect(file_contents).toBe("");
   });
 
-  // After Each - Exit app.
+  // Cut Overwrite - Check that only the most-recently cut string is saved.
+  test('Cut Overwrite', async () =>
+  {
+    // Generate a random string, type it, and select it.
+    const rand = makeString(testStringSize);
+    await window.type('#ide div.view-line', rand);
+    await window.keyboard.press('Control+A');
+
+    // Press Ctrl + X.
+    await window.keyboard.press('Control+X');
+
+    // Check the clipboard and compare it to the random string.
+    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardText).toBe(rand);
+
+    // Generate another random string, type it, and select it.
+    const rand2 = makeString(testStringSize);
+    await window.type('#ide div.view-line', rand2);
+    await window.keyboard.press('Control+A');
+
+    // Press Ctrl + X.
+    await window.keyboard.press('Control+X');
+
+    // Check the clipboard and compare it to both the second string and previous contents.
+    const clipboardText2 = await window.evaluate(() => navigator.clipboard.readText())
+    expect(clipboardText2).toBe(rand2);
+    expect(clipboardText2).not.toBe(clipboardText);
+  });
+
   // After Each - Clear the text area and clipboard.
   test.afterEach(async () =>
   {
