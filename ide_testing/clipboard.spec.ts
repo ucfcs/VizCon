@@ -96,7 +96,11 @@ test.describe("Clipboard", async () =>
     await window.type('#ide div.view-line', rand1 + " " + rand2 + " " + rand3);
 
     // Select the second string.
-    await window.locator('#ide div.view-line >> text=' + rand2).dblclick();
+    // Move the cursor to the word and double-click.
+    await window.keyboard.press('ArrowRight');
+    for(var i = 0; i < testStringSize + 1; i++)
+      await window.keyboard.press('ArrowLeft');
+    await window.keyboard.press('Control+D');
 
     // Press Ctrl + X.
     await window.keyboard.press('Control+X');
