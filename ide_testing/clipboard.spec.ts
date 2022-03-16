@@ -86,6 +86,31 @@ test.describe("Clipboard", async () =>
     expect(clipboardText2).not.toBe(clipboardText);
   });
 
+  // Cut Portion - Check that the cut function only saves and removes selected text.
+  test('Cut Portion', async () =>
+  {
+    // Generate three random strings and type all of them in order.
+    const rand1 = makeString(testStringSize);
+    const rand2 = makeString(testStringSize);
+    const rand3 = makeString(testStringSize);
+    await window.type('#ide div.view-line', rand1 + " " + rand2 + " " + rand3);
+
+    // Select the second string.
+    await window.locator('#ide div.view-line >> text=' + rand2).dblclick();
+
+    // Press Ctrl + X.
+    await window.keyboard.press('Control+X');
+
+    // Check the clipboard and compare it to the second string.
+    const clipboardText = await window.evaluate(() => navigator.clipboard.readText())
+    expect(clipboardText).toBe(rand2);
+
+    // Check that the text area still contains the first and third string but not the second.
+    const file_contents = await window.locator('#ide div.view-line');
+    await expect(file_contents).toHaveText(rand1 + "  " + rand3);
+    await expect(file_contents).not.toHaveText(rand2);
+  });
+
   // After Each - Clear the text area and clipboard.
   test.afterEach(async () =>
   {
