@@ -27,7 +27,7 @@ export default function Nav({
   visualizerActive,
   compile,
   showCompileOutput,
-  showVisualizer
+  showVisualizer,
 }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
@@ -86,8 +86,8 @@ export default function Nav({
                 },
                 {
                   name: 'Show Visualizer',
-                  action: showVisualizer
-                }
+                  action: showVisualizer,
+                },
               ]}
             />
             <MenuItem
