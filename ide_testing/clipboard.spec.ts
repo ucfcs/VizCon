@@ -115,6 +115,81 @@ test.describe("Clipboard", async () =>
     await expect(file_contents).not.toHaveText(rand2);
   });
 
+  // Copy - Check that the copy keyboard shortcut adds text to the clipboard without removing it.
+  test('Copy', async () =>
+  {
+    // Generate a random string, type it, and select it.
+    const rand = makeString(testStringSize);
+    await window.type('#ide div.view-line', rand);
+    await window.keyboard.press('Control+A');
+
+    // Press Ctrl + C.
+    await window.keyboard.press('Control+C');
+
+    // Check the clipboard and compare it to the random string.
+    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardText).toBe(rand);
+
+    // Check that the string is in the text area.
+    const file_contents = await window.locator('#ide div.view-line');
+    expect(file_contents).toContainText(rand);
+  });
+
+  // Copy Overwrite - Check that only the most-recently copied string is saved.
+  test('Copy Overwrite', async () =>
+  {
+    // Generate a random string, type it, and select it.
+    const rand = makeString(testStringSize);
+    await window.type('#ide div.view-line', rand);
+    await window.keyboard.press('Control+A');
+
+    // Press Ctrl + C.
+    await window.keyboard.press('Control+C');
+
+    // Check the clipboard and compare it to the random string.
+    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardText).toBe(rand);
+
+    // Generate another random string and type it.
+    // Then select the full text, which should be rand and rand2 together.
+    const rand2 = makeString(testStringSize);
+    await window.keyboard.press('ArrowRight');
+    await window.type('#ide div.view-line', rand2);
+    await window.keyboard.press('Control+A');
+
+    // Press Ctrl + C.
+    await window.keyboard.press('Control+C');
+
+    // Check the clipboard and compare it to both the concatenated string and previous contents.
+    const clipboardText2 = await window.evaluate(() => navigator.clipboard.readText())
+    expect(clipboardText2).toBe(rand + rand2);
+    expect(clipboardText2).not.toBe(clipboardText);
+  });
+
+  // Copy Portion - Check that the cut function only saves selected text.
+  test('Copy Portion', async () =>
+  {
+    // Generate three random strings and type all of them in order.
+    const rand1 = makeString(testStringSize);
+    const rand2 = makeString(testStringSize);
+    const rand3 = makeString(testStringSize);
+    await window.type('#ide div.view-line', rand1 + " " + rand2 + " " + rand3);
+
+    // Select the second string.
+    // Move the cursor to the word and press Ctrl + D.
+    await window.keyboard.press('ArrowRight');
+    for(var i = 0; i < testStringSize + 1; i++)
+      await window.keyboard.press('ArrowLeft');
+    await window.keyboard.press('Control+D');
+
+    // Press Ctrl + C.
+    await window.keyboard.press('Control+C');
+
+    // Check the clipboard and compare it to the second string.
+    const clipboardText = await window.evaluate(() => navigator.clipboard.readText())
+    expect(clipboardText).toBe(rand2);
+  });
+
   // After Each - Clear the text area and clipboard.
   test.afterEach(async () =>
   {
