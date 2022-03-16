@@ -190,6 +190,83 @@ test.describe("Clipboard", async () =>
     expect(clipboardText).toBe(rand2);
   });
 
+  // Paste - Check that the paste keyboard shortcut writes the clipboard content.
+  test('Paste', async () =>
+  {
+    // Generate a random string and copy it to the clipboard.
+    const rand = makeString(testStringSize);
+    await window.evaluate(str => navigator.clipboard.writeText(str), rand);
+
+    // Press Ctrl + V.
+    await window.keyboard.press('Control+V');
+
+    // Check the text and compare it to the random string.
+    const file_contents = await window.locator('#ide div.view-line');
+    expect(file_contents).toContainText(rand);
+    
+    // Check that the string is still in the clipboard.
+    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    expect(clipboardText).toBe(rand);
+  });
+
+  // Paste at Cursor - Check that the paste function occurs at the cursor.
+  test('Paste at Cursor', async () =>
+  {
+    // Generate three random strings.
+    // Type the first two and save the third to the clipboard.
+    const rand1 = makeString(testStringSize);
+    const rand2 = makeString(testStringSize);
+    const rand3 = makeString(testStringSize);
+    await window.type('#ide div.view-line', rand1 + rand2);
+    await window.evaluate(str => navigator.clipboard.writeText(str), rand3);
+    
+    // Move the cursor between the first and second string.
+    await window.keyboard.press('ArrowRight');
+    for(var i = 0; i < testStringSize; i++)
+      await window.keyboard.press('ArrowLeft');
+
+    // Press Ctrl + V.
+    await window.keyboard.press('Control+V');
+
+    // Check that the text area contains the strings in the correct order (1, 3, 2).
+    const file_contents = await window.locator('#ide div.view-line');
+    expect(file_contents).toContainText(rand1 + rand3 + rand2);
+
+    // Move to the front and paste again.
+    await window.keyboard.press('Control+A');
+    await window.keyboard.press('ArrowLeft');
+    await window.keyboard.press('Control+V');
+
+    // Check that the text area contains the strings in the correct order (3, 1, 3, 2).
+    const file_contents2 = await window.locator('#ide div.view-line');
+    expect(file_contents2).not.toBe(file_contents);
+    expect(file_contents).toContainText(rand3 + rand1 + rand3 + rand2);
+  });
+
+  // Paste Overwrite - Check that pasted text overwrites selected text.
+  test('Paste Overwrite', async () =>
+  {
+    // Generate three random strings.
+    // Type the first two and save the third to the clipboard.
+    const rand1 = makeString(testStringSize);
+    const rand2 = makeString(testStringSize);
+    const rand3 = makeString(testStringSize);
+    await window.type('#ide div.view-line', rand1 + " " + rand2);
+    await window.evaluate(str => navigator.clipboard.writeText(str), rand3);
+
+    // Select the first string.
+    await window.keyboard.press('Control+A');
+    await window.keyboard.press('ArrowLeft');
+    await window.keyboard.press('Control+D');
+
+    // Press Ctrl + V.
+    await window.keyboard.press('Control+V');
+
+    // Check that the text area contains only the third and second string.
+    const file_contents = await window.locator('#ide div.view-line');
+    expect(file_contents).toContainText(rand3 + " " + rand2);
+  });
+
   // After Each - Clear the text area and clipboard.
   test.afterEach(async () =>
   {
