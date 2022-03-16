@@ -18,8 +18,8 @@ function makeString(length) {
 // Clipboard - The list of tests begins below.
 test.describe("Clipboard", async () =>
 {
-  // Before Each - Launch the app and get the first window.
-  test.beforeEach(async () =>
+  // Before All - Launch the app and get the first window.
+  test.beforeAll(async () =>
   {
     // Launch Electron app.
     electronApp = await electron.launch({ args: ['.'] , executablePath: "./out/vizcon-win32-x64/vizcon.exe" });
@@ -49,7 +49,7 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+X');
 
     // Check the clipboard and compare it to the random string.
-    const clipboardText = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand);
 
     // Check that the string is not in the text area.
@@ -58,7 +58,20 @@ test.describe("Clipboard", async () =>
   });
 
   // After Each - Exit app.
+  // After Each - Clear the text area and clipboard.
   test.afterEach(async () =>
+  {
+    // Clear the text area.
+    await window.locator('#ide div.view-line').click();
+    await window.keyboard.press('Control+A');
+    await window.keyboard.press('Delete');
+
+    // Clear the clipboard.
+    await window.evaluate(() => navigator.clipboard.writeText(''));
+  });
+  
+  // After All - Exit app.
+  test.afterAll(async () =>
   {
     window = null;
     await electronApp.close();
