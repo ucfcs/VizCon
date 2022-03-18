@@ -12,6 +12,8 @@ def start(exe, visualizerMode):
         _start(base64.b64decode(exe).decode(), visualizerMode)
     except SystemExit as e:
         # Exit immediately to bypass LLDB catching the SystemExit
+        sys.stdout.flush()
+        sys.stderr.flush()
         os._exit(e.code)
     except Exception as e:
         traceback.print_exc()
@@ -105,7 +107,7 @@ def _start(exe, visualizerMode):
     debug_print("Error", error.Success(), error, error.GetCString())
 
     for t in process:
-        if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == main_bp.GetID():
+        if isStoppedForBreakpoint(t, main_bp):
             debug_print("Main thread:", t)
             # TODO: probably get an ID for the thread
             main_thread = t
@@ -181,7 +183,7 @@ def _start(exe, visualizerMode):
         while handlingBreakpoints:
             handledBreakpoint = False
             for t in process:
-                if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vc_internal_registerSem_bp.GetID():
+                if isStoppedForBreakpoint(t, vc_internal_registerSem_bp):
                     new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
                     new_sem_name_ptr = t.GetFrameAtIndex(0).FindVariable("name")
                     new_sem_name = process.ReadCStringFromMemory(new_sem_name_ptr.GetValueAsUnsigned(), 1024, lldb.SBError())
@@ -192,20 +194,20 @@ def _start(exe, visualizerMode):
                     process.Continue()
                     handledBreakpoint = True
                     continue
-                if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcWait_bp.GetID():
+                if isStoppedForBreakpoint(t, vcWait_bp):
                     new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
                     thread_man.onWaitSem(t, str(new_sem))
                     # TODO: Add a better resume to replace this
                     process.Continue()
                     handledBreakpoint = True
                     continue
-                if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcSignal_bp.GetID():
+                if isStoppedForBreakpoint(t, vcSignal_bp):
                     new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
                     thread_man.onSignalSem(t, str(new_sem))
                     process.Continue()
                     handledBreakpoint = True
                     continue
-                if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == vcJoin_bp.GetID():
+                if isStoppedForBreakpoint(t, vcJoin_bp):
                     if t.GetThreadID() in ignore_set:
                         if verbose:
                             debug_print("Ignoring a thread")
@@ -213,7 +215,7 @@ def _start(exe, visualizerMode):
                     thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
                     ignore_set.add(t.GetThreadID())
                     thread_man.onJoin(t, thread_val)
-                if t.stop_reason == lldb.eStopReasonBreakpoint and t.GetStopReasonDataAtIndex(0) == hook_createThread_bp.GetID():
+                if isStoppedForBreakpoint(t, hook_createThread_bp):
                     new_thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
                     new_thread_name_ptr = t.GetFrameAtIndex(0).FindVariable("name")
                     new_thread_name = process.ReadCStringFromMemory(new_thread_name_ptr.GetValueAsUnsigned(), 1024, lldb.SBError())
@@ -222,7 +224,7 @@ def _start(exe, visualizerMode):
                     process.Continue()
                     new_thread_lldb = None
                     for t2 in process:
-                        if t2.stop_reason == lldb.eStopReasonBreakpoint and t2.GetStopReasonDataAtIndex(0) == thread_bp.GetID():
+                        if isStoppedForBreakpoint(t2, thread_bp):
                             if t.GetThreadID() in ignore_set:
                                 #debug_print("Ignoring a thread that already hit thread_bp (this should never happen)")
                                 continue
@@ -277,4 +279,7 @@ def _start(exe, visualizerMode):
             globals_list = []
             for frame_var in globals:
                 globals_list.append(serializeVariable(thread_man, frame_var))
-            respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list}) 
+            respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list})
+
+def isStoppedForBreakpoint(thread, bp):
+    return thread.stop_reason == lldb.eStopReasonBreakpoint and thread.GetStopReasonDataAtIndex(0) == bp.GetID()
