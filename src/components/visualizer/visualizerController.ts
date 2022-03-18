@@ -33,9 +33,9 @@ export default class VisualizerController {
     // TODO: improve cancellation
     this.running = false;
     console.log('Stopping visualizer...');
-    this.onRunStateChange('Stopping...');
+    this.onRunStateChange('stopping');
     this.debuggerHandle.stop().then(res => {
-      this.onRunStateChange('Stopped');
+      this.onRunStateChange('stopped');
       console.log('Visualizer stopped', res);
     });
   }
@@ -49,14 +49,14 @@ export default class VisualizerController {
       //console.log("Console stdout output", data);
       this.onConsoleOutput([data]);
     });
-    this.onRunStateChange('Running');
+    this.onRunStateChange('running');
     this.running = true;
     while (this.running) {
       const msg = await this.debuggerHandle.doStep();
       //console.log('received visualizer state', msg);
       if (msg.type === 'process_end') {
         this.running = false;
-        this.onRunStateChange('Finished');
+        this.onRunStateChange('finished');
         return;
       }
       if (msg.type === 'process_killed') {

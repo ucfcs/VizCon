@@ -8,7 +8,7 @@ interface ControlsProps {
   restart: () => void;
   stop: () => void;
   goBack: () => void;
-  status: string;
+  status: VisualizerRunState;
   simulationSpeed: number;
   setSimulationSpeed: (speed: number) => void;
 }
@@ -74,7 +74,7 @@ export default function Controls({
       <Control label="Stop Simulation" action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }} />
       {/*Temporary style hack. The status is not a control and not a label.*/}
       <div className="control">
-        <div className="padding-container label">Status: {status}</div>
+        <div className="padding-container label">Status: {getStatusDisplayName(status)}</div>
       </div>
       {/*This input is for testing only and should probably be removed*/}
       <input
@@ -94,4 +94,16 @@ export default function Controls({
       />
     </div>
   );
+}
+
+function getStatusDisplayName(state: VisualizerRunState): string {
+  const mapping: { [k in VisualizerRunState]: string } = {
+    not_started: 'Not started',
+    starting: 'Starting...',
+    stopping: 'Stopping...',
+    stopped: 'Stopped',
+    running: 'Running',
+    finished: 'Finished',
+  };
+  return mapping[state];
 }
