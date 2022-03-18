@@ -1,4 +1,3 @@
-// VizCon libraries.
 #include "vcuserlibrary.h"
 
 // Standard libraries.

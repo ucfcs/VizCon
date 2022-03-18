@@ -1,40 +1,23 @@
-int BigInSmall = 20000, SmallInBig = -20000;
-vcSem *freeBinS, *freeSinB, *readyBinS, *readySinB, *display;
+#include "vcuserlibrary.h"
 
-char* printArray(int setInt, int stateInt, int* list, int len)
+int len = 5;
+int BigInSmall = 20000, SmallInBig = -20000;
+vcSem freeBinS, *freeSinB, *readyBinS, *readySinB;
+
+void printArray(char* state, int* list1, int* list2)
 {
     int i;
-    char *set, *state;
-    if(setInt == 0)
-    {
-        set = "Small";
-        vcSemWait(display);
-        vcSemSignal(display);
-    }
-    else
-    {
-        set = "Big";
-        vcSemWaitMult(display, 2);
-    }
-    if(stateInt == 0)
-    {
-        state = "before";
-    }
-    else
-    {
-        state = "after";
-    }
-    printf("%s set (%s):", set, state);
+    printf("\nsmall set (%s):", state);
     for(i=0; i<len; i++)
     {
-        printf(" %d", list[i]);
+        printf(" %d", list1[i]);
+    }
+    printf("\nbig set   (%s):", state);
+    for(i=0; i<len; i++)
+    {
+        printf(" %d", list2[i]);
     }
     printf("\n");
-    if(setInt == 1 && stateInt == 0)
-    {
-        printf("\n");
-    }
-    vcSemSignal(display);
 }
 
 int GetMax(int* list, int len)
@@ -63,11 +46,10 @@ int GetMin(int* list, int len)
     return min;
 }
 
-THREAD_RET SmallSet(THREAD_PARAM param)
+void* SmallSet(void* param)
 {
-    int len = 5, index;
-    int list[5] = {4, 1, 7, 5, 0};
-    printArray(0, 0, list, len);
+    int index;
+    int* list = (int*)param;
     while(BigInSmall > SmallInBig)
     {
         index = GetMax(list, len);
@@ -82,15 +64,13 @@ THREAD_RET SmallSet(THREAD_PARAM param)
         vcSemSignal(freeSinB);
     }
     vcSemSignal(readyBinS);
-    printArray(0, 1, list, len);
-    return (THREAD_RET)1;
+    return (void*)1;
 }
 
-THREAD_RET BigSet(THREAD_PARAM param)
+void* BigSet(void* param)
 {
-    int len = 4, index;
-    int list[4] = {1, 3, 2, 8};
-    printArray(1, 0, list, len);
+    int index;
+    int* list = (int*)param;
     while(BigInSmall > SmallInBig)
     {
         index = GetMin(list, len);
@@ -105,19 +85,27 @@ THREAD_RET BigSet(THREAD_PARAM param)
         vcSemSignal(freeBinS);
     }
     vcSemSignal(readySinB);
-    printArray(1, 1, list, len);
-    return (THREAD_RET)1;
+    return (void*)1;
 }
 
-int main(void) 
+int real_main(void) 
 {
-    display = vcSemCreateInitial(1, 2);
     freeBinS = vcSemCreate(1);
     freeSinB = vcSemCreate(1);
     readyBinS = vcSemCreateInitial(0, 1);
     readySinB = vcSemCreateInitial(0, 1);
-    vcThreadQueue(SmallSet, NULL);
-    vcThreadQueue(BigSet, NULL);
+    srand(vcThreadId());
+    int i;
+    int array1[len], array2[len];
+    for(i=0; i<len; i++)
+    {
+        array1[i] = rand() % 100;
+        array2[i] = rand() % 100;
+    }
+    printArray("before", array1, array2);
+    vcThreadQueue(SmallSet, array1);
+    vcThreadQueue(BigSet, array2);
     vcThreadStart();
+    printArray("after", array1, array2);
     return 1;
 }

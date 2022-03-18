@@ -19,14 +19,12 @@
 typedef struct CSSem
 {
     SEM_TYPE sem;       // Semaphore object.
-    char* name;         // Internal name.
-    int num;            // Internal identifier.
     SEM_VALUE count;    // The semaphore's current value.
     struct CSSem* next; // The next semaphore in the global list.
 } CSSem;
 
 // Function prototypes
-CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue); // Creates a semaphore.
+CSSem* semCreate(SEM_VALUE maxValue);                // Creates a semaphore.
 void semWait(CSSem* sem);                            // Waits for a permit.
 int semTryWait(CSSem* sem);                          // Tries to get a permit without waiting.
 void semSignal(CSSem* sem);                          // Signals the semaphore.
