@@ -31,7 +31,7 @@ CSSem* semCreate(SEM_VALUE maxValue)
     
     // Set non-semaphore properties.
     sem->next = NULL;
-    if (isLldbActive && maxValue != -1)
+    if (isLldbActive && vizconSem != (void*)-1)
     {
         sem->sem = NULL;
         vc_internal_registerSem(sem, sem->count, maxValue);
