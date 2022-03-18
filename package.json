@@ -10,7 +10,8 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "npx playwright test"
   },
   "keywords": [],
   "author": {
@@ -78,6 +79,7 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.61",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.61",
     "@electron-forge/plugin-webpack": "^6.0.0-beta.61",
+    "@playwright/test": "^1.19.2",
     "@svgr/webpack": "^6.2.1",
     "@types/react": "^17.0.37",
     "@types/react-dom": "^17.0.11",
@@ -94,6 +96,7 @@
     "monaco-editor": "^0.31.1",
     "monaco-editor-webpack-plugin": "^7.0.1",
     "node-loader": "^2.0.0",
+    "playwright": "^1.19.2",
     "prettier": "^2.5.1",
     "style-loader": "^3.3.1",
     "ts-loader": "^9.2.6",
