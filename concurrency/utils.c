@@ -9,7 +9,6 @@ void vizconError(char* func, int err)
 {
     // Start building the message string.
     char message[MAX_ERROR_MESSAGE_LENGTH];
-    sprintf(message, "\nError from %s.\n", func);
 
     // Platform-dependent error decoding.
     // If the error is less than 500, it's not from our library.
@@ -20,7 +19,7 @@ void vizconError(char* func, int err)
         if(err < 500)
         {
             FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD) err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR) &errorMessage, 0, NULL);
-            sprintf(message + strlen(message), "system error %d: %s", err, errorMessage);
+            sprintf(message, "\nError from %s.\nsystem error %d: %s", func, err, errorMessage);
             message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
             printf("%s", message);
             vcHalt(err);
@@ -29,11 +28,9 @@ void vizconError(char* func, int err)
         char* errorMessage;
         if(err < 500)
         {
+            sprintf(message, "\nError from %s.\nerrno code %d", func, err);
             errno = err;
-            errorMessage = strerror(err);
-            sprintf(message + strlen(message), "errno code %d: %s", err, errorMessage);
-            message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
-            printf("%s\n", message);
+            perror(message);
             vcHalt(err);
         }
     #endif
@@ -90,7 +87,7 @@ void vizconError(char* func, int err)
     }
 
     // Print the message and leave.
-    sprintf(message + strlen(message), "vizcon error code %d: %s\n", err, errorMessage);
+    sprintf(message, "\nError from %s.\nvizcon error code %d: %s\n", func, err, errorMessage);
     message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
     printf("%s\n", message);
     vcHalt(err);

@@ -7,6 +7,7 @@
     #define THREAD_TYPE HANDLE
 #elif __linux__ || __APPLE__
     #define THREAD_TYPE pthread_t
+    #include <unistd.h>
 #endif
 
 // Thread function definition
