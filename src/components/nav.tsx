@@ -51,58 +51,53 @@ export default function Nav({
   return (
     <div className="titlebar">
       <div className="titlebar-drag-region"></div>
-      {showMenu && (
-        <>
-          <a className="appicon"></a>
-          <div className="menubar" role="menubar">
-            <MenuItem
-              title="File"
-              options={[
-                { name: 'Open File', action: openFile },
-                { name: 'New File', action: openBlankFile },
-                { name: 'Save File', action: saveFile },
-                { name: 'Save All', action: saveAll },
-                { name: 'Save As', action: saveAs },
-              ]}
-            />
-            <MenuItem
-              title="View"
-              options={[
-                {
-                  name: 'Zoom In',
-                  action: () => {
-                    console.log('zoom in');
-                  },
-                },
-                {
-                  name: 'Zoom Out',
-                  action: () => {
-                    console.log('zoom out');
-                  },
-                },
-                {
-                  name: 'Show Compile Output',
-                  action: showCompileOutput,
-                },
-                {
-                  name: 'Show Visualizer',
-                  action: showVisualizer,
-                },
-              ]}
-            />
-            <MenuItem
-              title="Testing"
-              options={[
-                {
-                  name: 'Compile',
-                  action: compile,
-                },
-              ]}
-            />
-          </div>
-        </>
-      )}
-      {/* TODO: have this track if the Editor or Visualizer is open, append it to the end ot title */}
+      <a className="appicon"></a>
+      <div className="menubar" role="menubar">
+        <MenuItem
+          title="File"
+          options={[
+            { name: 'Open File', action: openFile },
+            { name: 'New File', action: openBlankFile },
+            { name: 'Save File', action: saveFile },
+            { name: 'Save All', action: saveAll },
+            { name: 'Save As', action: saveAs },
+          ]}
+        />
+        <MenuItem
+          title="View"
+          options={[
+            {
+              name: 'Zoom In',
+              action: () => {
+                console.log('zoom in');
+              },
+            },
+            {
+              name: 'Zoom Out',
+              action: () => {
+                console.log('zoom out');
+              },
+            },
+            {
+              name: 'Show Compile Output',
+              action: showCompileOutput,
+            },
+            {
+              name: 'Show Visualizer',
+              action: showVisualizer,
+            },
+          ]}
+        />
+        <MenuItem
+          title="Testing"
+          options={[
+            {
+              name: 'Compile',
+              action: compile,
+            },
+          ]}
+        />
+      </div>
       <div className="window-title">{title}VizCon</div>
       {showMenu && (
         <>
