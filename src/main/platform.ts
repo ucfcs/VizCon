@@ -113,11 +113,25 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
   const controllerDir = resourcesPrefix + pathSep + 'concurrency' + pathSep + 'controller';
   console.log(`Current directory: ${cwd()}`);
-  const lldb = resourcesPrefix + pathSep + 'platform' + pathSep + 'lldb' + pathSep + 'bin' + pathSep + 'lldb' + (process.platform === 'win32' ? '.exe' : '');
+  const lldb =
+    resourcesPrefix +
+    pathSep +
+    'platform' +
+    pathSep +
+    'lldb' +
+    pathSep +
+    'bin' +
+    pathSep +
+    'lldb' +
+    (process.platform === 'win32' ? '.exe' : '');
   let child = child_process.spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
   });
-  child.stdin.write(`script import sys; import base64; sys.path.append(base64.b64decode('${btoa(controllerDir)}').decode()); import script; script.start('${btoa(exeFile)}', True)\n`)
+  child.stdin.write(
+    `script import sys; import base64; sys.path.append(base64.b64decode('${btoa(
+      controllerDir
+    )}').decode()); import script; script.start('${btoa(exeFile)}', True)\n`
+  );
   child.on('close', code => {
     console.log(`child process exited with code ${code}`);
   });
@@ -126,7 +140,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
     if (evt.data.type === 'stop') {
       console.log('Stopping child');
       const res = child.kill();
-      port.postMessage({ result: res });
+      port.postMessage({ type: 'kill_result', result: res });
       return;
     }
     if (evt.data.type !== 'request') {
@@ -140,7 +154,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
     //console.log(`child process data: "${data}"`);
     const msg = JSON.parse(data);
     if (msg.type === 'process_end') {
-      console.log("Terminating the lldb process.\n");
+      console.log('Terminating the lldb process.\n');
       child.kill();
     }
     port.postMessage(msg);
@@ -149,8 +163,8 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   let haveSeenLldbMessage = false;
   child.stdout.on('data', (data: string) => {
     console.log(`child process stdout: "${data}"`);
-    const str = data + "";
-    if (!haveSeenLldbMessage && str.startsWith("(lldb) script import sys;")) {
+    const str = data + '';
+    if (!haveSeenLldbMessage && str.startsWith('(lldb) script import sys;')) {
       haveSeenLldbMessage = true;
       return;
     }

@@ -171,7 +171,7 @@ def _start(exe, visualizerMode):
             for t in process:
                 t.Resume()
             process.Continue()
-            respondToVisualizer({'type': 'process_end'})
+            respondToVisualizer({'type': 'process_end', 'code': process.GetExitStatus()})
             sys.exit(0)
         else:
             if not isUserCode(running_thread):

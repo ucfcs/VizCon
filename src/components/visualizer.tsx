@@ -49,8 +49,8 @@ const testingGlobalVars = [
 export default function Visualizer({ inVisualizer, current, goBack }: VisualizerProps): React.ReactElement {
   const [className, setClassName] = useState('');
   const [visualizerState, setVisualizerState] = useState<VisualizerState | null>(null);
-  const [runState, setRunState] = useState('not started');
-  const visualizerController = useRef(null);
+  const [runState, setRunState] = useState<VisualizerRunState>('not started');
+  const visualizerController = useRef<VisualizerController>(null);
   const [consoleOutput, setConsoleOutput] = useState('');
   const [simulationSpeed, setSimulationSpeed] = useState(100);
 
@@ -63,13 +63,11 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     setClassName(!inVisualizer ? 'hidden' : '');
   }, [inVisualizer]);
 
-  // TODO: actual functions
   function start() {
     console.log('test start');
-
+    setConsoleOutput('');
     setRunState('Starting...');
     visualizerController.current = new VisualizerController({
-      // TODO: pass the path to the executable file
       exeFile: current.path,
       speed: simulationSpeed,
       onStateChange: newState => {
@@ -94,6 +92,7 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
 
   function restart() {
     console.log('test restart');
+    setConsoleOutput('');
   }
 
   function stop() {
