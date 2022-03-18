@@ -152,6 +152,7 @@ void** vcThreadReturn()
     return arr;
 }
 
+//vcThreadSleep - Put the calling thread to sleep
 void vcThreadSleep(int milliseconds)
 {
     #ifdef _WIN32
@@ -161,6 +162,7 @@ void vcThreadSleep(int milliseconds)
     #endif
 }
 
+//vcThreadId - return the calling threads id
 int vcThreadId()
 {
     #ifdef _WIN32

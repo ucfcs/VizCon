@@ -24,7 +24,7 @@ typedef struct CSSem
 } CSSem;
 
 // Function prototypes
-CSSem* semCreate(SEM_VALUE maxValue); // Creates a semaphore.
+CSSem* semCreate(SEM_VALUE maxValue);                // Creates a semaphore.
 void semWait(CSSem* sem);                            // Waits for a permit.
 int semTryWait(CSSem* sem);                          // Tries to get a permit without waiting.
 void semSignal(CSSem* sem);                          // Signals the semaphore.

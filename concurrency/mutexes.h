@@ -20,7 +20,7 @@ typedef struct CSMutex
 } CSMutex;
 
 // Function prototypes.
-CSMutex* mutexCreate(); // Creates a mutex with the given name.
+CSMutex* mutexCreate(); // Creates a mutex.
 void mutexLock(CSMutex* mutex);   // Waits for mutex availability, then locks.
 int mutexTryLock(CSMutex* mutex); // Attempts to lock without waiting.
 void mutexUnlock(CSMutex* mutex); // Unlocks the mutex.

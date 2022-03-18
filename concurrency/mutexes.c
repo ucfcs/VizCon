@@ -1,6 +1,6 @@
 #include "mutexes.h"
 
-// mutexCreate - Create a mutex struct with the given name.
+// mutexCreate - Create a mutex struct.
 //               Returns: a pointer to the mutex struct.
 CSMutex* mutexCreate()
 {
@@ -11,8 +11,6 @@ CSMutex* mutexCreate()
         vizconError("vcMutexCreate/vcMutexCreateNamed", VC_ERROR_MEMORY);
         return 0;
     }
-
-    // Set the mutex name.
 
     // Set other non-mutex properties to default values.
     mutex->available = 1;

@@ -1,5 +1,3 @@
-#include "../concurrency/vcuserlibrary.h"
-
 vcSem s;
 
 void* P1(void* param)

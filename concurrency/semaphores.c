@@ -3,7 +3,7 @@
 
 extern int isLldbActive;
 
-//UserLibrary semaphore used to keep semaphore count values accurate
+//Semaphore used to keep semaphore count values accurate
 CSSem *vizconSem;
 
 void vizconSemCheck()
@@ -14,7 +14,7 @@ void vizconSemCheck()
     vizconSem = semCreate(1);
 }
 
-// semCreate - Create a semaphore with the given name and max value.
+// semCreate - Create a semaphore with a given max value.
 //             Returns: a pointer to the semaphore struct.
 CSSem* semCreate(SEM_VALUE maxValue)
 {
