@@ -1,7 +1,9 @@
 import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
-import { exec } from 'child_process';
+import child_process, { exec } from 'child_process';
+import { cwd } from 'process';
 import { sep as pathSep } from 'path';
+import split2 from 'split2';
 import { filePathToFileName } from '../util/utils';
 
 // determine where the concurrency folder is
@@ -13,8 +15,7 @@ if (app.isPackaged) {
 
 const concurrencyFolder = resourcesPrefix + pathSep + 'concurrency' + pathSep;
 
-// TODO: add vcuserlibrary.c
-const library = ['utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
+const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
   return concurrencyFolder + file;
 });
@@ -92,12 +93,11 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [path, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
-  const commandString = `gcc -g ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
-  console.log(outputFile, commandString);
+  const commandString = `clang -g ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
+  console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
     exec(commandString, (err, stdout, stderr) => {
-      console.log('err:', err, 'out:', stdout, 'err:', stderr);
       if (err && err.code !== 0) {
         resolve(stderr);
         return;
@@ -107,4 +107,51 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   });
 
   return await prom;
+});
+
+function launchProgram(path: string, port: Electron.MessagePortMain): void {
+  const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
+
+  console.log(`Current directory: ${cwd()}`);
+  const child = child_process.spawn('python', [concurrencyFolder + 'controller' + pathSep + 'script.py', exeFile], {
+    stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
+  });
+  child.on('close', code => {
+    console.log(`child process exited with code ${code}`);
+  });
+
+  port.on('message', evt => {
+    if (evt.data.type === 'stop') {
+      console.log('Stopping child');
+      const res = child.kill();
+      port.postMessage({ result: res });
+      return;
+    }
+    if (evt.data.type !== 'request') {
+      throw new Error('Invalid message type');
+    }
+    console.log('Writing');
+    child.stdin.write(JSON.stringify({ type: 'request' }) + '\n');
+  });
+
+  child.stdio[3].pipe(split2()).on('data', (data: string) => {
+    console.log(`child process data: "${data}"`);
+    const msg = JSON.parse(data);
+    port.postMessage(msg);
+  });
+
+  child.stdout.on('data', (data: string) => {
+    console.log(`child process stdout: "${data}"`);
+    port.postMessage({ type: 'stdout', data: data + '' });
+  });
+
+  child.stderr.on('data', data => {
+    console.log(`child process error: "${data}"`);
+  });
+}
+
+ipcMain.on('launchProgram', (event, msg) => {
+  const port = event.ports[0];
+  port.start();
+  launchProgram(msg.path, port);
 });

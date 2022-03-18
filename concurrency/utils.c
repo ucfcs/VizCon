@@ -3,69 +3,12 @@
 // Reference to external function vcHalt (in vcuserlibrary.c)
 extern void vcHalt(int exitCode);
 
-// vizconCreateName - Creates a string that can be used to name a struct.
-//                    Returns: a pointer to the created string.
-char* vizconCreateName(int type, int value)
-{
-    // Determine the number of characters in value.
-    int i = 1, temp = value / 10;
-    while(temp != 0)
-    {
-        i++;
-        temp = temp / 10;
-    }
-
-    // Allocate the string. Error out if necessary.
-    char* ret = (char*) malloc(sizeof(char) * (11 + i));
-    if(ret == NULL)
-        vizconError("create function", VC_ERROR_MEMORY);
-    
-    // Add the value to a string based on the type and return.
-    switch(type)
-    {
-        // VC_TYPE_THREAD - Thread.
-        case VC_TYPE_THREAD:
-        {
-            sprintf(ret, "Thread %d", value);
-            return ret;
-        }
-
-        // VC_TYPE_SEM - Semaphore.
-        case VC_TYPE_SEM:
-        {
-            sprintf(ret, "Semaphore %d", value);
-            return ret;
-        }
-
-        // VC_TYPE_MUTEX - Mutex lock.
-        case VC_TYPE_MUTEX:
-        {
-            sprintf(ret, "Mutex %d", value);
-            return ret;
-        }
-
-        // Default - If anything else, return nothing.
-        default:
-            return NULL;
-    }
-}
-
-// vizconStringLength - Calculate the length of the name string.
-//                      Returns: the length.
-int vizconStringLength(char* name)
-{
-    int i;
-    for(i = 0; name[i] != '\0'; i++);
-    return i;
-}
-
 // vizconError - Prints errors encountered by the user library.
 //               The program closes after this method finishes.
 void vizconError(char* func, int err)
 {
     // Start building the message string.
     char message[MAX_ERROR_MESSAGE_LENGTH];
-    sprintf(message, "\nError from %s.\n", func);
 
     // Platform-dependent error decoding.
     // If the error is less than 500, it's not from our library.
@@ -76,7 +19,7 @@ void vizconError(char* func, int err)
         if(err < 500)
         {
             FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD) err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR) &errorMessage, 0, NULL);
-            sprintf(message + strlen(message), "system error %d: %s", err, errorMessage);
+            sprintf(message, "\nError from %s.\nsystem error %d: %s", func, err, errorMessage);
             message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
             printf("%s", message);
             vcHalt(err);
@@ -85,11 +28,9 @@ void vizconError(char* func, int err)
         char* errorMessage;
         if(err < 500)
         {
+            sprintf(message, "\nError from %s.\nerrno code %d", func, err);
             errno = err;
-            errorMessage = strerror(err);
-            sprintf(message + strlen(message), "errno code %d: %s", err, errorMessage);
-            message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
-            printf("%s\n", message);
+            perror(message);
             vcHalt(err);
         }
     #endif
@@ -146,7 +87,7 @@ void vizconError(char* func, int err)
     }
 
     // Print the message and leave.
-    sprintf(message + strlen(message), "vizcon error code %d: %s\n", err, errorMessage);
+    sprintf(message, "\nError from %s.\nvizcon error code %d: %s\n", func, err, errorMessage);
     message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
     printf("%s\n", message);
     vcHalt(err);

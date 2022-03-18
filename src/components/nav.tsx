@@ -11,8 +11,10 @@ interface NavProps {
   saveAll: () => void;
   saveAs: () => void;
   current: OpenFileData;
+  visualizerActive: boolean;
   compile: () => void;
   showCompileOutput: () => void;
+  showVisualizer: () => void;
 }
 
 export default function Nav({
@@ -22,8 +24,10 @@ export default function Nav({
   saveAll,
   saveAs,
   current,
+  visualizerActive,
   compile,
   showCompileOutput,
+  showVisualizer
 }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
@@ -37,10 +41,12 @@ export default function Nav({
       const titlePrefix = current.dirty ? '• ' : '';
       reactTitle = titlePrefix + shortName + ' - ';
     }
+    const titleSuffix = visualizerActive ? 'Visualier - ' : 'Editor - ';
+    reactTitle += titleSuffix;
 
     setTitle(reactTitle);
     document.title = reactTitle + 'VizCon';
-  }, [current, current.dirty]);
+  }, [current, current.dirty, visualizerActive]);
 
   return (
     <div className="titlebar">
@@ -78,6 +84,10 @@ export default function Nav({
                   name: 'Show Compile Output',
                   action: showCompileOutput,
                 },
+                {
+                  name: 'Show Visualizer',
+                  action: showVisualizer
+                }
               ]}
             />
             <MenuItem

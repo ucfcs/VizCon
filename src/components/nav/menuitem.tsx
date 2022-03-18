@@ -9,7 +9,7 @@ interface MenuItemProps {
   }[];
 }
 
-// TODO: deal with having only one tab open and mouse out instead of blur and etc
+// TODO: mouse out instead of blur
 export default function MenuItem({ title, options }: MenuItemProps): React.ReactElement {
   const actionRef = useRef<HTMLDivElement>();
   const [expanded, setExpanded] = useState(false);
@@ -36,6 +36,19 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
     setExpanded(false);
   }
 
+  function globalClickReset(e: MouseEvent) {
+    const element = e.target as HTMLElement;
+
+    document.body.removeEventListener('click', globalClickReset);
+
+    // dont run this code if it inside a menu
+    if ((element.classList.contains("menu-item") || actionRef.current.contains(element)) && element.dataset.title === title) {
+      return;
+    }
+
+    reset();
+  }
+
   function onItemClick(e: React.MouseEvent) {
     if (e.button !== 0) {
       // ignore non left click
@@ -56,10 +69,12 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
     actionRef.current.style.left = box.left.toString() + 'px';
     actionRef.current.classList.add('visible');
     actionRef.current.focus();
+
+    document.getElementById('vizcon').addEventListener('click', globalClickReset);
   }
 
   return (
-    <div className={className} onClick={onItemClick}>
+    <div className={className} onClick={onItemClick} data-title={title}>
       {title}
       <div className="menu-actions" ref={actionRef} onBlur={reset}>
         <div className="menu-container">{optionElements}</div>

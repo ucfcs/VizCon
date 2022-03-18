@@ -32,23 +32,22 @@ void vcThreadQueue(threadFunc func, void *arg);                  // Queues a thr
 void vcThreadQueueNamed(threadFunc func, void *arg, char *name); // Queues a thread with the name.
 void vcThreadStart();                                            // Starts all threads.
 void** vcThreadReturn();                                         // Starts all threads and returns their values.
+void vcThreadSleep(int milliseconds);                            //Puts the calling thread to sleep for specified amount of time in milliseconds.
+int vcThreadId();                                                //returns the id of the calling thread.
 
 // User semaphore functions
-CSSem vcSemCreate(int count);                  // Creates a semaphore.
-CSSem* vcSemCreateInitial(int initialCount, int maxCount); //Creates a semaphore with a user-specified initial value and max value
-CSSem vcSemCreateNamed(int count, char* name); // Creates a semaphore with the name.
-CSSem* vcSemCreateInitialNamed(int initialCount, int maxCount, char* name);  //Creates a semaphore with a user-specified name, intiial value and max value
-void vcSemWait(vcSem sem);                     // Waits for availability, then takes one permit.
-void vcSemWaitMult(vcSem sem, int num);        // Waits for availability, then takes multiple permits.
-int vcSemTryWait(vcSem sem);                   // Attempts to take one permit without waiting.
-int vcSemTryWaitMult(vcSem sem, int num);      // Attempts to take multiple permits without waiting.
-void vcSemSignal(vcSem sem);                   // Returns one permit.
-void vcSemSignalMult(vcSem sem, int num);      // Returns multiple permits.
-int vcSemValue(vcSem sem);                     // Returns the number of available permits.
+vcSem vcSemCreate(int maxCount);                                              // Creates a semaphore with a user-specified max value.
+vcSem vcSemCreateInitial(int initialCount, int maxCount);                  // Creates a semaphore with a user-specified initial and max value.
+void vcSemWait(vcSem sem);                                                 // Waits for availability, then takes one permit.
+void vcSemWaitMult(vcSem sem, int num);                                    // Waits for availability, then takes multiple permits.
+int vcSemTryWait(vcSem sem);                                               // Attempts to take one permit without waiting.
+int vcSemTryWaitMult(vcSem sem, int num);                                  // Attempts to take multiple permits without waiting.
+void vcSemSignal(vcSem sem);                                               // Returns one permit.
+void vcSemSignalMult(vcSem sem, int num);                                  // Returns multiple permits.
+int vcSemValue(vcSem sem);                                                 // Returns the number of available permits.
 
 // User mutex functions
 vcMutex vcMutexCreate();                // Creates a mutex.
-vcMutex vcMutexCreateNamed(char* name); // Creates a mutex with the name.
 void vcMutexLock(vcMutex mutex);        // Waits for availability, then locks.
 int vcMutexTrylock(vcMutex mutex);      // Attempts to lock without waiting.
 void vcMutexUnlock(vcMutex mutex);      // Unlocks the mutex.

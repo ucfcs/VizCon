@@ -1,17 +1,29 @@
 #include "semaphores.h"
+#include "lldb_lib.h"
 
-// semCreate - Create a semaphore with the given name and max value.
-//             Returns: a pointer to the semaphore struct.
-CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
+extern int isLldbActive;
+
+//Semaphore used to keep semaphore count values accurate
+CSSem *vizconSem;
+
+void vizconSemCheck()
 {
-    // vcSemCreate and vcSemCreateNamed should ensure the mutex is named.
-    // If it somehow isn't, error out.
-    if (name == NULL)
-    {
-        vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_NAMEERROR);
-        return NULL;
-    }
+    if(vizconSem != NULL)
+        return;
+    vizconSem = (void*)-1;
+    vizconSem = semCreate(1);
+}
 
+// semCreate - Create a semaphore with a given max value.
+//             Returns: a pointer to the semaphore struct.
+CSSem* semCreate(SEM_VALUE maxValue)
+{
+    //Ensure the semaphore checker has been created
+    if(vizconSem == NULL)
+    {
+        vizconSemCheck();
+    }
+    
     // Attempt to allocate the struct. Error out on failure.
     CSSem* sem = (CSSem*) malloc(sizeof(CSSem));
     if (sem == NULL) 
@@ -19,35 +31,36 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
     
     // Set non-semaphore properties.
     sem->next = NULL;
-    sem->name = (char*) name;
-    sem->num = -1;
-    
+    if (isLldbActive && vizconSem != (void*)-1)
+    {
+        sem->sem = NULL;
+        vc_internal_registerSem(sem, sem->count, maxValue);
+        return sem;
+    }
     // Platform-dependent semaphore creation.
     // Create a mutex with default settings. Error out where needed.
     #ifdef _WIN32 // Windows version
-        sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, name);
+        sem->sem = CreateSemaphoreA(NULL, maxValue, maxValue, NULL);
         if(sem->sem == NULL)
         {
             int err = (int) GetLastError();
             free(sem);
             vizconError("vcSemCreate/vcSemCreateNamed", err);
             return NULL;
-        }
-        sem->count = maxValue;
+        } 
     #elif __linux__ || __APPLE__ // POSIX version
         // Use sem_open to create a named semaphore, which macOS requires.
-        sem->sem = sem_open(name, O_CREAT | O_EXCL, 0644, maxValue);
+        sem->sem = sem_open("/VizconTempName", O_CREAT | O_EXCL, 0644, maxValue);
         if(sem->sem == SEM_FAILED)
         {
             free(sem);
             vizconError("vcSemCreate/vcSemCreateNamed", errno);
         }
-        if(sem_unlink(name))
+        if(sem_unlink("/VizconTempName"))
         {
             free(sem);
             vizconError("vcSemCreate/vcSemCreateNamed", errno);
         }
-        sem->count = maxValue;
     #endif
     
     return sem;
@@ -56,6 +69,19 @@ CSSem* semCreate(SEM_NAME name, SEM_VALUE maxValue)
 // semWait - Wait for sem to become available.
 //           When it is, attain 1 permit and decrement its count
 void semWait(CSSem* sem)
+{
+    if (isLldbActive)
+    {
+        vcWait(sem);
+        // The simulation controller should ensure this executes uninterrupted
+        // but the other usages might need attention
+        sem->count = sem->count - 1;
+        return;
+    }
+    platform_semWait(sem);
+}
+
+void platform_semWait(CSSem* sem)
 {
     // Platform-dependent waiting.
     #ifdef _WIN32 // Windows version
@@ -72,7 +98,13 @@ void semWait(CSSem* sem)
             // WAIT_OBJECT_0: Success. Decrement the count.
             case WAIT_OBJECT_0:
             {
+                if(sem == vizconSem)
+                {
+                    break;
+                }
+                platform_semWait(vizconSem);
                 sem->count = sem->count - 1;
+                platform_semSignal(vizconSem);
                 break;
             }
 
@@ -96,7 +128,13 @@ void semWait(CSSem* sem)
     #elif __linux__ || __APPLE__ // POSIX version
         if(sem_wait(sem->sem))
             vizconError("vcSemWait/vcSemWaitMult", errno);
+        if(sem == vizconSem)
+        {
+            return;
+        }
+        platform_semWait(vizconSem);
         sem->count = sem->count - 1;
+        platform_semSignal(vizconSem);
     #endif
 }
 
@@ -105,6 +143,11 @@ void semWait(CSSem* sem)
 //              Returns: 1 if permit was available, 0 otherwise.
 int semTryWait(CSSem* sem)
 {
+    if (isLldbActive)
+    {
+        fprintf(stderr, "Warning: semTryWait is unimplemented!\n"); 
+        return 0;
+    }
     // Platform-dependent trywaiting.
     #if defined(_WIN32) // Windows version
         DWORD ret = WaitForSingleObject(sem->sem, 0);
@@ -113,7 +156,13 @@ int semTryWait(CSSem* sem)
             // WAIT_OBJECT_0 - No error. Decrement the counter.
             case WAIT_OBJECT_0:
             {
+                if(sem == vizconSem)
+                {
+                    break;
+                }
+                platform_semWait(vizconSem);
                 sem->count = sem->count - 1;
+                platform_semSignal(vizconSem);
                 return 1;
             }
 
@@ -143,7 +192,9 @@ int semTryWait(CSSem* sem)
         // 0 - Success. Mark mutex as unavailable.
         if(!ret)
         {
+            platform_semWait(vizconSem);
             sem->count = sem->count - 1;
+            platform_semSignal(vizconSem);
             return 1;
         }
         else switch(errno)
@@ -167,35 +218,59 @@ int semTryWait(CSSem* sem)
 // semSignal - Release 1 permit from sem and increment its count.
 void semSignal(CSSem* sem)
 {
+    if (isLldbActive)
+    {
+        vcSignal(sem);
+        // The simulation controller should ensure this executes uninterrupted
+        // but the other usages might need attention
+        sem->count = sem->count + 1;
+        return;
+    }
+    platform_semSignal(sem);
+}
+
+void platform_semSignal(CSSem* sem)
+{
     // Platform-dependent senaphore release.
     #ifdef _WIN32 // Windows version
         if(!ReleaseSemaphore(sem->sem, 1, NULL))
             vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
+        if(sem == vizconSem)
+        {
+            return;
+        }
+        platform_semWait(vizconSem);
         sem->count = sem->count + 1;
+        platform_semSignal(vizconSem);
     #elif __linux__ || __APPLE__ // POSIX version
         if(sem_post(sem->sem))
             vizconError("vcSemSignal/vcSemSignalMult", errno);
+        if(sem == vizconSem)
+        {
+            return;
+        }
+        platform_semWait(vizconSem);
         sem->count = sem->count + 1;
+        platform_semSignal(vizconSem);
     #endif
 }
 
 // semClose - Close the semaphore and free the associated struct.
 void semClose(CSSem* sem)
 {
+    if (isLldbActive)
+    {
+        fprintf(stderr, "Warning: semClose is unimplemented!\n"); 
+        return;
+    }
     // Platform-dependent closure and memory management.
     #ifdef _WIN32 // Windows version.
         if(!CloseHandle(sem->sem))
-        {
-            // FIXME: Change referenced function.
-            vizconError("vcSemClose", GetLastError());
-        }
+            vizconError("vcThreadStart/vcThreadReturn/vcThreadHalt", GetLastError());
         free(sem);
     #elif __linux__ || __APPLE__ // POSIX version.
         if(sem_close(sem->sem))
-        {
-            // FIXME: Change referenced function.
-            vizconError("vcSemClose", errno);
-        }
+            vizconError("vcThreadStart/vcThreadReturn/vcThreadHalt", errno);
         free(sem);
     #endif
 }
