@@ -1,3 +1,5 @@
+#include "vcuserlibrary.h"
+
 vcSem s;
 
 void* P1(void* param)

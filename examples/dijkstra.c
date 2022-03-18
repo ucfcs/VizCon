@@ -1,3 +1,5 @@
+#include "vcuserlibrary.h"
+
 int len = 5;
 int BigInSmall = 20000, SmallInBig = -20000;
 vcSem freeBinS, *freeSinB, *readyBinS, *readySinB;

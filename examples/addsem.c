@@ -1,3 +1,5 @@
+#include "vcuserlibrary.h"
+
 // Standard libraries.
 #include <stdio.h>
 #include <stdlib.h>

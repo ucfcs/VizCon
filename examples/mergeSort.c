@@ -1,3 +1,5 @@
+#include "vcuserlibrary.h"
+
 #define size 10
 
 int array[size];

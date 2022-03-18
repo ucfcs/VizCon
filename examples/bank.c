@@ -1,3 +1,5 @@
+#include "vcuserlibrary.h"
+
 #define accountCount 4
 
 vcSem *accountSemArray;

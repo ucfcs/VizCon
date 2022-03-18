@@ -1,3 +1,5 @@
+#include "vcuserlibrary.h"
+
 int b, n;
 
 void* P1(void* param)

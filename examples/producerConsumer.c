@@ -1,3 +1,5 @@
+#include "vcuserlibrary.h"
+
 int b1, b2, b3;
 vcSem empty1, *empty2, *empty3, *full1, *full2, *full3;
 
