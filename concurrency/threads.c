@@ -41,7 +41,7 @@ void startThread(CSThread* thread)
     }
     // Platform-dependent thread start.
     #ifdef _WIN32 // Windows version
-        thread->thread = CreateThread(NULL, 0, winThreadRunner, thread, CREATE_SUSPENDED, 0);
+        thread->thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)winThreadRunner, thread, CREATE_SUSPENDED, 0);
         // Attempt to resume the thread. If it fails, print an error.
         if (ResumeThread(thread->thread) == -1)
             vizconError("vcThreadStart/vcThreadReturn", GetLastError());

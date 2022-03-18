@@ -1,7 +1,9 @@
-vcSem fork1, fork2, fork3, fork4, fork5, room;
+#include "../concurrency/vcuserlibrary.h"
+
+vcSem fork1, *fork2, *fork3, *fork4, *fork5, *room;
 int m = 20;
 
-THREAD_RET Phil1(THREAD_PARAM param)
+void* Phil1(void* param)
 {
     int i;
     for(i=0; i<m; i++)
@@ -14,10 +16,10 @@ THREAD_RET Phil1(THREAD_PARAM param)
         vcSemSignal(fork1);
         vcSemSignal(room);
     }
-    return (THREAD_RET)1;
+    return (void*)1;
 }
 
-THREAD_RET Phil2(THREAD_PARAM param)
+void* Phil2(void* param)
 {
     int i;
     for(i=0; i<m; i++)
@@ -30,10 +32,10 @@ THREAD_RET Phil2(THREAD_PARAM param)
         vcSemSignal(fork2);
         vcSemSignal(room);
     }
-    return (THREAD_RET)1;
+    return (void*)1;
 }
 
-THREAD_RET Phil3(THREAD_PARAM param)
+void* Phil3(void* param)
 {
     int i;
     for(i=0; i<m; i++)
@@ -46,10 +48,10 @@ THREAD_RET Phil3(THREAD_PARAM param)
         vcSemSignal(fork3);
         vcSemSignal(room);
     }
-    return (THREAD_RET)1;
+    return (void*)1;
 }
 
-THREAD_RET Phil4(THREAD_PARAM param)
+void* Phil4(void* param)
 {
     int i;
     for(i=0; i<m; i++)
@@ -62,10 +64,10 @@ THREAD_RET Phil4(THREAD_PARAM param)
         vcSemSignal(fork4);
         vcSemSignal(room);
     }
-    return (THREAD_RET)1;
+    return (void*)1;
 }
 
-THREAD_RET Phil5(THREAD_PARAM param)
+void* Phil5(void* param)
 {
     int i;
     for(i=0; i<m; i++)
@@ -78,10 +80,10 @@ THREAD_RET Phil5(THREAD_PARAM param)
         vcSemSignal(fork5);
         vcSemSignal(room);
     }
-    return (THREAD_RET)1;
+    return (void*)1;
 }
 
-int main(void) 
+int real_main(void) 
 {
     fork1 = vcSemCreate(1);
     fork2 = vcSemCreate(1);
@@ -94,13 +96,6 @@ int main(void)
     vcThreadQueue(Phil3, (void*)"P3");
     vcThreadQueue(Phil4, (void*)"P4");
     vcThreadQueue(Phil5, (void*)"P5");
-    //vcThreadStart();
-    THREAD_RET* arr = vcThreadReturn();
-    int i; 
-    for(i = 0; i < 5; i++)
-    {
-        printf("Thread retrieved: %p\n", arr[i]);
-    }
-    free(arr);
+    vcThreadStart();
     return 0;
 }

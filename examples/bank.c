@@ -1,3 +1,5 @@
+#include "../concurrency/vcuserlibrary.h"
+
 #define accountCount 4
 
 vcSem *accountSemArray;
@@ -40,9 +42,10 @@ int Withdraw(int accountNum, int amount)
     return 0;
 }
 
-THREAD_RET Teller(THREAD_PARAM param)
+void* Teller(void* param)
 {
     int accountNum, amount, teller = (int)param;
+    srand(vcThreadId());
     while(TRUE)
     {
         vcSemWait(tellerSem);
@@ -65,12 +68,13 @@ THREAD_RET Teller(THREAD_PARAM param)
         }
         vcSemSignal(mainSem);
     }
-    return (THREAD_RET)1;
+    return 1;
 }
 
-THREAD_RET MainBranch(THREAD_PARAM param)
+void* MainBranch(void* param)
 {
     int accountNum, amount;
+    srand(vcThreadId());
     while(TRUE)
     {
         accountNum = rand() % accountCount;
@@ -79,13 +83,13 @@ THREAD_RET MainBranch(THREAD_PARAM param)
         vcSemSignal(tellerSem);
         vcSemWait(mainSem);
     }
-    return (THREAD_RET)1;
+    return 1;
 }
 
-int main(void) 
+int real_main()
 {
     int i;
-    srand(abs(vcThreadId()));
+    srand(vcThreadId());
     accountSemArray = (vcSem*)malloc(sizeof(vcSem)*accountCount);
     semPrint = vcSemCreate(1);
     tellerSem = vcSemCreateInitial(0, 1);
@@ -96,8 +100,8 @@ int main(void)
         accountArray[i] = rand() % 100;
     }
     vcThreadQueue(MainBranch, NULL);
-    vcThreadQueue(Teller, (THREAD_PARAM)1);
-    vcThreadQueue(Teller, (THREAD_PARAM)2);
+    vcThreadQueue(Teller, 1);
+    vcThreadQueue(Teller, 2);
     vcThreadStart();
     return 1;
 }

@@ -1,6 +1,8 @@
+#include "../concurrency/vcuserlibrary.h"
+
 int b, n;
 
-THREAD_RET P1(THREAD_PARAM param)
+void* P1(void* param)
 {
     while(b)
     {
@@ -9,13 +11,13 @@ THREAD_RET P1(THREAD_PARAM param)
     return 1;
 }
 
-THREAD_RET P2(THREAD_PARAM param)
+void* P2(void* param)
 {
     b = 0;
     return 1;
 }
 
-int main(void) 
+int real_main(void) 
 {
     int i, trials = 10;
     for(i=0; i<trials; i++)

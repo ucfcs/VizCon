@@ -1,33 +1,35 @@
+#include "../concurrency/vcuserlibrary.h"
+
 vcSem s;
 
-THREAD_RET P1(THREAD_PARAM param)
+void* P1(void* param)
 {
     vcSemWait(s);
-    printf("P1 is in critical section\n");
-    vcThreadSleep(1);
+    printf("P1 is in critical section for 3 seconds\n");
+    vcThreadSleep(3000);
     vcSemSignal(s);
     return 1;
 }
 
-THREAD_RET P2(THREAD_PARAM param)
+void* P2(void* param)
 {
     vcSemWait(s);
-    printf("P2 is in critical section\n");
-    vcThreadSleep(1);
+    printf("P2 is in critical section for 3 seconds\n");
+    vcThreadSleep(3000);
     vcSemSignal(s);
     return 1;
 }
 
-THREAD_RET P3(THREAD_PARAM param)
+void* P3(void* param)
 {
     vcSemWait(s);
-    printf("P3 is in critical section\n");
-    vcThreadSleep(1);
+    printf("P3 is in critical section 3 seconds\n");
+    vcThreadSleep(3000);
     vcSemSignal(s);
     return 1;
 }
 
-int main(void) 
+int real_main(void) 
 {
     s = vcSemCreate(1);
     vcThreadQueue(P1, NULL);

@@ -17,23 +17,27 @@ void vcThreadQueue(threadFunc func, void *arg)
 {
     // Attempt to create the thread.
     CSThread *thread = createThread(func, arg);
-    int numSize = 1, check = vizconThreadList->num / 10;
+    int numSize = 1, check = 0, threadNum = 1;
+    if(vizconThreadList != NULL)
+    {
+        check = vizconThreadList->num / 10;
+        threadNum = vizconThreadList->num + 1;
+    }
     while(check != 0)
     {
         numSize++;
         check = check / 10;
     }
-    char* name = (char*) malloc(sizeof(char) * (numSize + 8));
+    char* name = (char*) malloc(sizeof(char) * (numSize + 9));
     if(name == NULL)
         vizconError("create function", VC_ERROR_MEMORY);
-    
-    sprintf(name, "Thread %d", vizconThreadList->num);
+    sprintf(name, "Thread %d", threadNum);
 
     // If there are no threads in the list, make the new thread the initial one.
     if (vizconThreadList == NULL)
     {
         thread->name = name;
-        thread->num = 0;
+        thread->num = 1;
         vizconThreadListHead = thread;
         vizconThreadList = thread;
     }
@@ -146,6 +150,24 @@ void** vcThreadReturn()
     closeAllSemaphores();
     closeAllMutexes();
     return arr;
+}
+
+void vcThreadSleep(int milliseconds)
+{
+    #ifdef _WIN32
+    Sleep(milliseconds);
+    #else
+    usleep(milliseconds*1000);
+    #endif
+}
+
+int vcThreadId()
+{
+    #ifdef _WIN32
+    return GetCurrentThreadId();
+    #else
+    return pthread_self();
+    #endif
 }
 
 // closeAllThreads - Free every thread in the thread list.

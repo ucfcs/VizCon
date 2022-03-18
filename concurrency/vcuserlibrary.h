@@ -32,6 +32,8 @@ void vcThreadQueue(threadFunc func, void *arg);                  // Queues a thr
 void vcThreadQueueNamed(threadFunc func, void *arg, char *name); // Queues a thread with the name.
 void vcThreadStart();                                            // Starts all threads.
 void** vcThreadReturn();                                         // Starts all threads and returns their values.
+void vcThreadSleep(int milliseconds);                            //Puts the calling thread to sleep for specified amount of time in milliseconds.
+int vcThreadId();                                                //returns the id of the calling thread.
 
 // User semaphore functions
 vcSem vcSemCreate(int maxCount);                                              // Creates a semaphore with a user-specified max value.

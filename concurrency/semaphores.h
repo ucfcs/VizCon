@@ -19,8 +19,6 @@
 typedef struct CSSem
 {
     SEM_TYPE sem;       // Semaphore object.
-    char* name;         // Internal name.
-    int num;            // Internal identifier.
     SEM_VALUE count;    // The semaphore's current value.
     struct CSSem* next; // The next semaphore in the global list.
 } CSSem;

@@ -3,10 +3,27 @@
 
 extern int isLldbActive;
 
+//UserLibrary semaphore used to keep semaphore count values accurate
+CSSem *vizconSem;
+
+void vizconSemCheck()
+{
+    if(vizconSem != NULL)
+        return;
+    vizconSem = (void*)-1;
+    vizconSem = semCreate(1);
+}
+
 // semCreate - Create a semaphore with the given name and max value.
 //             Returns: a pointer to the semaphore struct.
 CSSem* semCreate(SEM_VALUE maxValue)
 {
+    //Ensure the semaphore checker has been created
+    if(vizconSem == NULL)
+    {
+        vizconSemCheck();
+    }
+    
     // Attempt to allocate the struct. Error out on failure.
     CSSem* sem = (CSSem*) malloc(sizeof(CSSem));
     if (sem == NULL) 
@@ -14,8 +31,7 @@ CSSem* semCreate(SEM_VALUE maxValue)
     
     // Set non-semaphore properties.
     sem->next = NULL;
-    sem->count = maxValue;
-    if (isLldbActive)
+    if (isLldbActive && maxValue != -1)
     {
         sem->sem = NULL;
         vc_internal_registerSem(sem, sem->count, maxValue);
@@ -82,7 +98,13 @@ void platform_semWait(CSSem* sem)
             // WAIT_OBJECT_0: Success. Decrement the count.
             case WAIT_OBJECT_0:
             {
+                if(sem == vizconSem)
+                {
+                    break;
+                }
+                platform_semWait(vizconSem);
                 sem->count = sem->count - 1;
+                platform_semSignal(vizconSem);
                 break;
             }
 
@@ -106,7 +128,13 @@ void platform_semWait(CSSem* sem)
     #elif __linux__ || __APPLE__ // POSIX version
         if(sem_wait(sem->sem))
             vizconError("vcSemWait/vcSemWaitMult", errno);
+        if(sem == vizconSem)
+        {
+            return;
+        }
+        platform_semWait(vizconSem);
         sem->count = sem->count - 1;
+        platform_semSignal(vizconSem);
     #endif
 }
 
@@ -128,7 +156,13 @@ int semTryWait(CSSem* sem)
             // WAIT_OBJECT_0 - No error. Decrement the counter.
             case WAIT_OBJECT_0:
             {
+                if(sem == vizconSem)
+                {
+                    break;
+                }
+                platform_semWait(vizconSem);
                 sem->count = sem->count - 1;
+                platform_semSignal(vizconSem);
                 return 1;
             }
 
@@ -158,7 +192,9 @@ int semTryWait(CSSem* sem)
         // 0 - Success. Mark mutex as unavailable.
         if(!ret)
         {
+            platform_semWait(vizconSem);
             sem->count = sem->count - 1;
+            platform_semSignal(vizconSem);
             return 1;
         }
         else switch(errno)
@@ -199,11 +235,23 @@ void platform_semSignal(CSSem* sem)
     #ifdef _WIN32 // Windows version
         if(!ReleaseSemaphore(sem->sem, 1, NULL))
             vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
+        if(sem == vizconSem)
+        {
+            return;
+        }
+        platform_semWait(vizconSem);
         sem->count = sem->count + 1;
+        platform_semSignal(vizconSem);
     #elif __linux__ || __APPLE__ // POSIX version
         if(sem_post(sem->sem))
             vizconError("vcSemSignal/vcSemSignalMult", errno);
+        if(sem == vizconSem)
+        {
+            return;
+        }
+        platform_semWait(vizconSem);
         sem->count = sem->count + 1;
+        platform_semSignal(vizconSem);
     #endif
 }
 
