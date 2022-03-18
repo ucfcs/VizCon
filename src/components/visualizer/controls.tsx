@@ -3,7 +3,6 @@ import { filePathToShortName } from '../../util/utils';
 
 interface ControlsProps {
   fileName: string;
-  simulationActive: boolean;
   start: () => void;
   restart: () => void;
   stop: () => void;
@@ -53,7 +52,6 @@ function Control({ label, action, className = '' }: ControlProps): React.ReactEl
 
 export default function Controls({
   fileName,
-  simulationActive,
   start,
   restart,
   stop,
@@ -65,13 +63,15 @@ export default function Controls({
   return (
     <div className="controls">
       <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r" />
-      {simulationActive && (
+      {status === 'finished' && (
         <Control label="Restart Simulation" action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }} />
       )}
-      {!simulationActive && (
+      {(status === 'not_started' || status === 'finished' || status === 'stopped') && (
         <Control label="Start Simulation" action={{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }} />
       )}
-      <Control label="Stop Simulation" action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }} />
+      {status === 'running' && (
+        <Control label="Stop Simulation" action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }} />
+      )}
       {/*Temporary style hack. The status is not a control and not a label.*/}
       <div className="control">
         <div className="padding-container label">Status: {getStatusDisplayName(status)}</div>

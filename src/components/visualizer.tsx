@@ -104,7 +104,6 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     <div id="visualizer" className={className}>
       <Controls
         fileName={current.path}
-        simulationActive={false}
         start={start}
         restart={restart}
         stop={stop}
