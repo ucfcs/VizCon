@@ -24,7 +24,8 @@
         "extraResource": [
           "./concurrency",
           "./platform"
-        ]
+        ],
+        "icon": "./icons/icon"
       },
       "makers": [
         {

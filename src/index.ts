@@ -39,6 +39,7 @@ const createWindow = (): void => {
     },
     frame: process.platform === 'darwin',
     titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default',
+    icon: 'icons/icon.png'
   });
 
   // and load the index.html of the app.
