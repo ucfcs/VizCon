@@ -15,6 +15,7 @@ interface NavProps {
   compile: () => void;
   showCompileOutput: () => void;
   showVisualizer: () => void;
+  showEditor: () => void;
 }
 
 export default function Nav({
@@ -28,6 +29,7 @@ export default function Nav({
   compile,
   showCompileOutput,
   showVisualizer,
+  showEditor,
 }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
@@ -48,6 +50,7 @@ export default function Nav({
     document.title = reactTitle + 'VizCon';
   }, [current, current.dirty, visualizerActive]);
 
+  // TODO: Update this menu to match the options found in main/macMenu.ts
   return (
     <div className="titlebar">
       <div className="titlebar-drag-region"></div>
@@ -56,11 +59,20 @@ export default function Nav({
         <MenuItem
           title="File"
           options={[
-            { name: 'Open File', action: openFile },
             { name: 'New File', action: openBlankFile },
+            { name: 'Open File', action: openFile },
             { name: 'Save File', action: saveFile },
-            { name: 'Save All', action: saveAll },
             { name: 'Save As', action: saveAs },
+            { name: 'Save All', action: saveAll },
+          ]}
+        />
+        <MenuItem
+          title="Compile"
+          options={[
+            {
+              name: 'Compile File',
+              action: compile,
+            },
           ]}
         />
         <MenuItem
@@ -86,14 +98,9 @@ export default function Nav({
               name: 'Show Visualizer',
               action: showVisualizer,
             },
-          ]}
-        />
-        <MenuItem
-          title="Testing"
-          options={[
             {
-              name: 'Compile',
-              action: compile,
+              name: 'Show Editor',
+              action: showEditor,
             },
           ]}
         />

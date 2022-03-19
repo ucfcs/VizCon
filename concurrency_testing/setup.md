@@ -2,7 +2,7 @@ Tests for this program can be broadly divided into two categories: unit tests an
 
 # Unit Tests
 
-Unit tests are in C files not located in the main folder. 
+Unit tests are in C files not located in the main folder.
 
 ## Installing CGreen
 
