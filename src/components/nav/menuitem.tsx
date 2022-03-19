@@ -9,6 +9,8 @@ interface MenuItemProps {
   }[];
 }
 
+const callbackCache: { [key: string]: (e: Event) => void } = {};
+
 // TODO: mouse out instead of blur
 export default function MenuItem({ title, options }: MenuItemProps): React.ReactElement {
   const actionRef = useRef<HTMLDivElement>();
@@ -21,6 +23,15 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
       if (opt.break) {
         return <li key={title + '-' + i} className="menu-action disabled"></li>;
       }
+
+      window.removeEventListener(`Nav-${title}-${opt.name}`, callbackCache[opt.name]);
+
+      callbackCache[opt.name] = (e: Event) => {
+        opt.action();
+      };
+
+      window.addEventListener(`Nav-${title}-${opt.name}`, callbackCache[opt.name]);
+
       return (
         <li key={title + '-' + i} className="menu-action" onClick={opt.action}>
           <span className="action-label">{opt.name}</span>
@@ -42,7 +53,7 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
     document.body.removeEventListener('click', globalClickReset);
 
     // dont run this code if it inside a menu
-    if ((element.classList.contains("menu-item") || actionRef.current.contains(element)) && element.dataset.title === title) {
+    if ((element.classList.contains('menu-item') || actionRef.current.contains(element)) && element.dataset.title === title) {
       return;
     }
 

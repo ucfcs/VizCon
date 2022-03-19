@@ -163,6 +163,7 @@ function App(): React.ReactElement {
         compile={compile}
         showCompileOutput={() => setOutputVisible(true)}
         showVisualizer={() => setInVisualizer(true)}
+        showEditor={() => setInVisualizer(false)}
       />
       <IDE
         files={files}
