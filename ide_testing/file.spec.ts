@@ -1,13 +1,13 @@
-import { _electron as electron } from "playwright";
+import { ElectronApplication, _electron as electron } from "playwright";
 import { test, expect, Page } from "@playwright/test";
-var electronApp;
+let electronApp: ElectronApplication;
 let window: Page;
 
 // File Menu - The list of tests begins below.
 test.describe("File Menu", async () =>
 {
-  // Before Each - Launch the app and get the first window.
-  test.beforeEach(async () =>
+  // Before All - Launch the app and get the first window.
+  test.beforeAll(async () =>
   {
     // Launch Electron app.
     electronApp = await electron.launch({ args: ['.'] , executablePath: "./out/vizcon-win32-x64/vizcon.exe" });
@@ -64,9 +64,22 @@ test.describe("File Menu", async () =>
     await expect(tab_title).toHaveText("dummy.c");
     await expect(file_contents).toHaveText("// This is a dummy file for the purposes of checking the IDE.");
   });
-  
-  // After Each - Exit app.
+
+  // After Each - Close all open files.
   test.afterEach(async () =>
+  {
+    //await window.pause();
+    while(true)
+    {
+      if(await window.isVisible('#ide a.action-label.codicon.codicon-close'))
+        await window.locator('#ide a.action-label.codicon.codicon-close').first().click();
+      else
+        break;
+    }
+  });
+  
+  // After All - Exit app.
+  test.afterAll(async () =>
   {
     window = null;
     await electronApp.close();
