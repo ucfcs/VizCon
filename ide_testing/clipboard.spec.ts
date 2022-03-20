@@ -27,8 +27,9 @@ test.describe("Clipboard", async () =>
     // Get the first window that the app opens.
     window = await electronApp.firstWindow();
 
-    // Select "Return to Editor" to open the editor.
-    await window.locator('[title="Return to Editor"]').click();
+    // If the visualizer is open, select "Return to Editor" to open the editor.
+    if(await window.isVisible('[title="Return to Editor"]'))
+      await window.locator('[title="Return to Editor"]').click();
 
     // Select "New File" so there is a canvas to work on.
     // Wait for the text window to open and move the cursor there.

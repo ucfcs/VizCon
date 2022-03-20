@@ -15,8 +15,9 @@ test.describe("File Menu", async () =>
     // Get the first window that the app opens.
     window = await electronApp.firstWindow();
 
-    // Select "Return to Editor" to open the editor.
-    await window.locator('[title="Return to Editor"]').click();
+    // If the visualizer is open, select "Return to Editor" to open the editor.
+    if(await window.isVisible('[title="Return to Editor"]'))
+      await window.locator('[title="Return to Editor"]').click();
   });
 
   // New File - Check that a new file is opened.
