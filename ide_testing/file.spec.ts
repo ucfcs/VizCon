@@ -1,7 +1,21 @@
 import { ElectronApplication, Locator, _electron as electron } from "playwright";
 import { test, expect, Page } from "@playwright/test";
+import { readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+const testStringSize: number = 5;
 let electronApp: ElectronApplication;
 let window: Page;
+
+// makeString - Generates a random string of the given length for use by the tests
+function makeString(length: number): string
+{
+  let result: string = '';
+  const characters: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength: number = characters.length;
+  for (let i: number = 0; i < length; i++)
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  return result;
+}
 
 // File Menu - The list of tests begins below.
 test.describe("File Menu", async () =>
@@ -64,13 +78,42 @@ test.describe("File Menu", async () =>
     await expect(file_contents).toHaveText("// This is a dummy file for the purposes of checking the IDE.");
   });
 
+  // Save Existing File - Check that an existing file is saved.
+  test('Save Existing File', async () =>
+  {
+    // Open a file.
+    console.log("Please select \"editable.c\".")
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Open File")').click();
+
+    // File is loaded by tester here...
+
+    // Save the file contents for later use.
+    // Remove any spaces to avoid issues with encoding.
+    const original_contents: string = (await window.locator('#ide div.view-line').textContent()).replace(/\s/g, "");
+
+    // Append random string.
+    const rand: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.press('#ide div.view-line', 'Control+A');
+    await window.press('#ide div.view-line', 'ArrowRight');
+    await window.type('#ide div.view-line', rand);
+    
+    // Select "Save File".
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Save File")').click();
+
+    // Load the file externally and check that the appended string appears.
+    // Remove any spaces to avoid issues with encoding.
+    const file_contents: string = readFileSync(join(__dirname, 'editable.c')).toString().replace(/\s/g, "");
+    expect(file_contents).toBe(original_contents + rand);
+  });
+
   // Close Unedited File - Close a file.
   test('Close Unedited File', async () =>
   {
     // Open a file.
     console.log("Please select \"dummy.c\".")
-
-    // Select "Open File".
     await window.locator('div.menu-item:has-text("File")').click();
     await window.locator('span.action-label:has-text("Open File")').click();
 
@@ -79,6 +122,7 @@ test.describe("File Menu", async () =>
     // Close the file. Check that the tab disappears immediately.
     await window.locator('#ide a.action-label.codicon.codicon-close').click();
     expect(await window.isVisible('#ide div.tab-label')).toBeFalsy();
+    expect(await window.isVisible('#ide div.view-line')).toBeFalsy();
   });
 
   // After Each - Close all open files.
@@ -94,9 +138,13 @@ test.describe("File Menu", async () =>
     }
   });
   
-  // After All - Exit app.
+  // After All - Reset test files and exit app.
   test.afterAll(async () =>
   {
+    // Reset edited test files.
+    writeFileSync(join(__dirname, 'editable.c'), "// Edit test");
+
+    // Exit app.
     window = null;
     await electronApp.close();
   });
