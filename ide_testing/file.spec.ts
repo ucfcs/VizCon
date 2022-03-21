@@ -64,6 +64,23 @@ test.describe("File Menu", async () =>
     await expect(file_contents).toHaveText("// This is a dummy file for the purposes of checking the IDE.");
   });
 
+  // Close Unedited File - Close a file.
+  test('Close Unedited File', async () =>
+  {
+    // Open a file.
+    console.log("Please select \"dummy.c\".")
+
+    // Select "Open File".
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Open File")').click();
+
+    // File is loaded by tester here...
+
+    // Close the file. Check that the tab disappears immediately.
+    await window.locator('#ide a.action-label.codicon.codicon-close').click();
+    expect(await window.isVisible('#ide div.tab-label')).toBeFalsy();
+  });
+
   // After Each - Close all open files.
   test.afterEach(async () =>
   {
