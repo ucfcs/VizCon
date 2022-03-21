@@ -1,4 +1,4 @@
-import { ElectronApplication, _electron as electron } from "playwright";
+import { ElectronApplication, Locator, _electron as electron } from "playwright";
 import { test, expect, Page } from "@playwright/test";
 let electronApp: ElectronApplication;
 let window: Page;
@@ -29,9 +29,9 @@ test.describe("File Menu", async () =>
 
     // Check that a blank file was opened.
     // Use '#ide' to specify root since the locator also checks #visualizer.
-    const tab_title = await window.locator('#ide div.tab-label').textContent();
+    const tab_title: string = await window.locator('#ide div.tab-label').textContent();
     expect(tab_title).toBe("Untitled-1");
-    const file_contents = await window.locator('#ide div.view-line').textContent();
+    const file_contents: string = await window.locator('#ide div.view-line').textContent();
     expect(file_contents).toBe("");
   });
 
@@ -48,16 +48,15 @@ test.describe("File Menu", async () =>
     console.log("Please select \"dummy.c\".")
 
     // Select "Open File".
-    window.on('console', msg => {console.log(msg)})
     await window.locator('div.menu-item:has-text("File")').click();
     await window.locator('span.action-label:has-text("Open File")').click();
 
     // Ensure that a file is loaded (i.e. that it didn't just open a blank file)
     // Use '#ide' to specify root since the locator also checks #visualizer.
     // The awaits on the expects are needed since toHaveText pulls the contents at runtime.
-    const tab_title = await window.locator('#ide div.tab-label');
+    const tab_title: Locator = window.locator('#ide div.tab-label');
     await expect(tab_title).not.toHaveText("Untitled-1");
-    const file_contents = await window.locator('#ide div.view-line');
+    const file_contents: Locator = window.locator('#ide div.view-line');
     expect(await file_contents.textContent()).not.toBe("");
 
     // Ensure the tab name and contents are correct.

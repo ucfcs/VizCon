@@ -1,16 +1,16 @@
-import { _electron as electron } from "playwright";
+import { ElectronApplication, Locator, _electron as electron } from "playwright";
 import { test, expect, Page } from "@playwright/test";
-import { clipboard } from "electron";
-const testStringSize = 5;
-var electronApp;
+const testStringSize: number = 5;
+let electronApp: ElectronApplication;
 let window: Page;
 
 // makeString - Generates a random string of the given length for use by the tests
-function makeString(length) {
-  var result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-  for (var i = 0; i < length; i++)
+function makeString(length: number): string
+{
+  let result: string = '';
+  const characters: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength: number = characters.length;
+  for (let i: number = 0; i < length; i++)
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   return result;
 }
@@ -42,7 +42,7 @@ test.describe("Clipboard", async () =>
   test('Cut', async () =>
   {
     // Generate a random string, type it, and select it.
-    const rand = makeString(testStringSize);
+    const rand: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand);
     await window.keyboard.press('Control+A');
 
@@ -50,11 +50,11 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+X');
 
     // Check the clipboard and compare it to the random string.
-    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand);
 
     // Check that the string is not in the text area.
-    const file_contents = await window.locator('#ide div.view-line').textContent();
+    const file_contents: string = await window.locator('#ide div.view-line').textContent();
     expect(file_contents).toBe("");
   });
 
@@ -62,7 +62,7 @@ test.describe("Clipboard", async () =>
   test('Cut Overwrite', async () =>
   {
     // Generate a random string, type it, and select it.
-    const rand = makeString(testStringSize);
+    const rand: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand);
     await window.keyboard.press('Control+A');
 
@@ -70,11 +70,11 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+X');
 
     // Check the clipboard and compare it to the random string.
-    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand);
 
     // Generate another random string, type it, and select it.
-    const rand2 = makeString(testStringSize);
+    const rand2: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand2);
     await window.keyboard.press('Control+A');
 
@@ -82,7 +82,7 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+X');
 
     // Check the clipboard and compare it to both the second string and previous contents.
-    const clipboardText2 = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText2: string = await window.evaluate(() => navigator.clipboard.readText())
     expect(clipboardText2).toBe(rand2);
     expect(clipboardText2).not.toBe(clipboardText);
   });
@@ -91,15 +91,15 @@ test.describe("Clipboard", async () =>
   test('Cut Portion', async () =>
   {
     // Generate three random strings and type all of them in order.
-    const rand1 = makeString(testStringSize);
-    const rand2 = makeString(testStringSize);
-    const rand3 = makeString(testStringSize);
+    const rand1: string = makeString(testStringSize);
+    const rand2: string = makeString(testStringSize);
+    const rand3: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand1 + " " + rand2 + " " + rand3);
 
     // Select the second string.
     // Move the cursor to the word and double-click.
     await window.keyboard.press('ArrowRight');
-    for(var i = 0; i < testStringSize + 1; i++)
+    for(let i: number = 0; i < testStringSize + 1; i++)
       await window.keyboard.press('ArrowLeft');
     await window.keyboard.press('Control+D');
 
@@ -107,11 +107,11 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+X');
 
     // Check the clipboard and compare it to the second string.
-    const clipboardText = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText())
     expect(clipboardText).toBe(rand2);
 
     // Check that the text area still contains the first and third string but not the second.
-    const file_contents = await window.locator('#ide div.view-line');
+    const file_contents: Locator = window.locator('#ide div.view-line');
     await expect(file_contents).toHaveText(rand1 + "  " + rand3);
     await expect(file_contents).not.toHaveText(rand2);
   });
@@ -120,7 +120,7 @@ test.describe("Clipboard", async () =>
   test('Copy', async () =>
   {
     // Generate a random string, type it, and select it.
-    const rand = makeString(testStringSize);
+    const rand: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand);
     await window.keyboard.press('Control+A');
 
@@ -128,19 +128,19 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+C');
 
     // Check the clipboard and compare it to the random string.
-    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand);
 
     // Check that the string is in the text area.
-    const file_contents = await window.locator('#ide div.view-line');
-    expect(file_contents).toContainText(rand);
+    const file_contents: Locator = window.locator('#ide div.view-line');
+    await expect(file_contents).toContainText(rand);
   });
 
   // Copy Overwrite - Check that only the most-recently copied string is saved.
   test('Copy Overwrite', async () =>
   {
     // Generate a random string, type it, and select it.
-    const rand = makeString(testStringSize);
+    const rand: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand);
     await window.keyboard.press('Control+A');
 
@@ -148,12 +148,12 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+C');
 
     // Check the clipboard and compare it to the random string.
-    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand);
 
     // Generate another random string and type it.
     // Then select the full text, which should be rand and rand2 together.
-    const rand2 = makeString(testStringSize);
+    const rand2: string = makeString(testStringSize);
     await window.keyboard.press('ArrowRight');
     await window.type('#ide div.view-line', rand2);
     await window.keyboard.press('Control+A');
@@ -162,7 +162,7 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+C');
 
     // Check the clipboard and compare it to both the concatenated string and previous contents.
-    const clipboardText2 = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText2: string = await window.evaluate(() => navigator.clipboard.readText())
     expect(clipboardText2).toBe(rand + rand2);
     expect(clipboardText2).not.toBe(clipboardText);
   });
@@ -171,15 +171,15 @@ test.describe("Clipboard", async () =>
   test('Copy Portion', async () =>
   {
     // Generate three random strings and type all of them in order.
-    const rand1 = makeString(testStringSize);
-    const rand2 = makeString(testStringSize);
-    const rand3 = makeString(testStringSize);
+    const rand1: string = makeString(testStringSize);
+    const rand2: string = makeString(testStringSize);
+    const rand3: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand1 + " " + rand2 + " " + rand3);
 
     // Select the second string.
     // Move the cursor to the word and press Ctrl + D.
     await window.keyboard.press('ArrowRight');
-    for(var i = 0; i < testStringSize + 1; i++)
+    for(let i: number = 0; i < testStringSize + 1; i++)
       await window.keyboard.press('ArrowLeft');
     await window.keyboard.press('Control+D');
 
@@ -187,7 +187,7 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+C');
 
     // Check the clipboard and compare it to the second string.
-    const clipboardText = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText())
     expect(clipboardText).toBe(rand2);
   });
 
@@ -195,18 +195,18 @@ test.describe("Clipboard", async () =>
   test('Paste', async () =>
   {
     // Generate a random string and copy it to the clipboard.
-    const rand = makeString(testStringSize);
+    const rand: string = makeString(testStringSize);
     await window.evaluate(str => navigator.clipboard.writeText(str), rand);
 
     // Press Ctrl + V.
     await window.keyboard.press('Control+V');
 
     // Check the text and compare it to the random string.
-    const file_contents = await window.locator('#ide div.view-line');
+    const file_contents: Locator = window.locator('#ide div.view-line');
     expect(file_contents).toContainText(rand);
     
     // Check that the string is still in the clipboard.
-    const clipboardText = await window.evaluate(() => navigator.clipboard.readText());
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand);
   });
 
@@ -215,23 +215,23 @@ test.describe("Clipboard", async () =>
   {
     // Generate three random strings.
     // Type the first two and save the third to the clipboard.
-    const rand1 = makeString(testStringSize);
-    const rand2 = makeString(testStringSize);
-    const rand3 = makeString(testStringSize);
+    const rand1: string = makeString(testStringSize);
+    const rand2: string = makeString(testStringSize);
+    const rand3: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand1 + rand2);
     await window.evaluate(str => navigator.clipboard.writeText(str), rand3);
     
     // Move the cursor between the first and second string.
     await window.keyboard.press('ArrowRight');
-    for(var i = 0; i < testStringSize; i++)
+    for(let i: number = 0; i < testStringSize; i++)
       await window.keyboard.press('ArrowLeft');
 
     // Press Ctrl + V.
     await window.keyboard.press('Control+V');
 
     // Check that the text area contains the strings in the correct order (1, 3, 2).
-    const file_contents = await window.locator('#ide div.view-line');
-    expect(file_contents).toContainText(rand1 + rand3 + rand2);
+    const file_contents: Locator = window.locator('#ide div.view-line');
+    await expect(file_contents).toContainText(rand1 + rand3 + rand2);
 
     // Move to the front and paste again.
     await window.keyboard.press('Control+A');
@@ -239,9 +239,9 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+V');
 
     // Check that the text area contains the strings in the correct order (3, 1, 3, 2).
-    const file_contents2 = await window.locator('#ide div.view-line');
+    const file_contents2: Locator = window.locator('#ide div.view-line');
     expect(file_contents2).not.toBe(file_contents);
-    expect(file_contents).toContainText(rand3 + rand1 + rand3 + rand2);
+    await expect(file_contents).toContainText(rand3 + rand1 + rand3 + rand2);
   });
 
   // Paste Overwrite - Check that pasted text overwrites selected text.
@@ -249,9 +249,9 @@ test.describe("Clipboard", async () =>
   {
     // Generate three random strings.
     // Type the first two and save the third to the clipboard.
-    const rand1 = makeString(testStringSize);
-    const rand2 = makeString(testStringSize);
-    const rand3 = makeString(testStringSize);
+    const rand1: string = makeString(testStringSize);
+    const rand2: string = makeString(testStringSize);
+    const rand3: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand1 + " " + rand2);
     await window.evaluate(str => navigator.clipboard.writeText(str), rand3);
 
@@ -264,8 +264,8 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+V');
 
     // Check that the text area contains only the third and second string.
-    const file_contents = await window.locator('#ide div.view-line');
-    expect(file_contents).toContainText(rand3 + " " + rand2);
+    const file_contents: Locator = window.locator('#ide div.view-line');
+    await expect(file_contents).toContainText(rand3 + " " + rand2);
   });
 
   // After Each - Clear the text area and clipboard.
