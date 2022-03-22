@@ -78,11 +78,35 @@ test.describe("File Menu", async () =>
     await expect(file_contents).toHaveText("// This is a dummy file for the purposes of checking the IDE.");
   });
 
+  // Save New File - Check that an unsaved file is saved with the file picker.
+  test('Save New File', async () =>
+  {
+    // Create new file.
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("New File")').click();
+
+    // Generate random file contents.
+    const rand: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.type('#ide div.view-line', rand);
+
+    // Select "Save File".
+    console.log("Please save as \"brandnew.c\".");
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Save File")').click();
+    
+    // File is saved by tester here...
+
+    // Load the file externally and check that the contents are correct.
+    const file_contents: string = readFileSync(join(__dirname, 'brandnew.c')).toString();
+    expect(file_contents).toBe(rand);
+  });
+
   // Save Existing File - Check that an existing file is saved.
   test('Save Existing File', async () =>
   {
     // Open a file.
-    console.log("Please select \"editable.c\".")
+    console.log("Please select \"editable.c\".");
     await window.locator('div.menu-item:has-text("File")').click();
     await window.locator('span.action-label:has-text("Open File")').click();
 
@@ -143,6 +167,7 @@ test.describe("File Menu", async () =>
   {
     // Reset edited test files.
     writeFileSync(join(__dirname, 'editable.c'), "// Edit test");
+    writeFileSync(join(__dirname, 'brandnew.c'), "// This is a dummy file to be overwritten.");
 
     // Exit app.
     window = null;
