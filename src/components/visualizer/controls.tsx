@@ -5,7 +5,9 @@ interface ControlsProps {
   fileName: string;
   start: () => void;
   restart: () => void;
-  stop: () => void;
+  pause: () => void;
+  resume: () => void;
+  terminate: () => void;
   goBack: () => void;
   status: VisualizerRunState;
   simulationSpeed: number;
@@ -54,7 +56,9 @@ export default function Controls({
   fileName,
   start,
   restart,
-  stop,
+  pause,
+  resume,
+  terminate,
   goBack,
   status,
   setSimulationSpeed,
@@ -63,14 +67,26 @@ export default function Controls({
   return (
     <div className="controls">
       <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r" />
-      {status === 'finished' && (
+      {/*(status === 'running' || status === 'paused') && (
         <Control label="Restart Simulation" action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }} />
-      )}
-      {(status === 'not_started' || status === 'finished' || status === 'stopped') && (
+      )*/}
+      {(status === 'not_started' || status === 'finished' || status === 'terminated') && (
         <Control label="Start Simulation" action={{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }} />
       )}
       {status === 'running' && (
-        <Control label="Stop Simulation" action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }} />
+        <Control label="Pause Simulation" action={{ title: 'Pause Simulation', codiconClass: 'codicon-debug-pause', action: pause }} />
+      )}
+      {status === 'paused' && (
+        <Control
+          label="Resume Simulation"
+          action={{ title: 'Resume Simulation', codiconClass: 'codicon-debug-continue', action: resume }}
+        />
+      )}
+      {(status === 'running' || status === 'pausing' || status === 'paused') && (
+        <Control
+          label="Force Quit Simulation"
+          action={{ title: 'Force Quit Simulation', codiconClass: 'codicon-debug-stop', action: terminate }}
+        />
       )}
       {/*Temporary style hack. The status is not a control and not a label.*/}
       <div className="control">
@@ -100,9 +116,11 @@ function getStatusDisplayName(state: VisualizerRunState): string {
   const mapping: { [k in VisualizerRunState]: string } = {
     not_started: 'Not started',
     starting: 'Starting...',
-    stopping: 'Stopping...',
-    stopped: 'Stopped',
+    terminating: 'Terminating...',
+    terminated: 'Terminated',
     running: 'Running',
+    pausing: 'Pausing...',
+    paused: 'Paused',
     finished: 'Finished',
   };
   return mapping[state];

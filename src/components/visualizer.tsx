@@ -95,9 +95,15 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     setConsoleOutput('');
   }
 
-  function stop() {
+  function terminate() {
     console.log('test stop');
-    visualizerController.current.stop();
+    visualizerController.current.terminate();
+  }
+  function pause() {
+    visualizerController.current.pause();
+  }
+  function resume() {
+    visualizerController.current.resume();
   }
 
   return (
@@ -106,7 +112,9 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
         fileName={current.path}
         start={start}
         restart={restart}
-        stop={stop}
+        terminate={terminate}
+        pause={pause}
+        resume={resume}
         goBack={goBack}
         status={runState}
         setSimulationSpeed={simulationSpeed => {

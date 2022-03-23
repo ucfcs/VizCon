@@ -32,4 +32,4 @@ interface DebuggerHandle {
   stop: () => Promise<any>;
 }
 
-type VisualizerRunState = 'not_started' | 'starting' | 'stopping' | 'stopped' | 'running' | 'finished';
+type VisualizerRunState = 'not_started' | 'starting' | 'pausing' | 'paused' | 'terminating' | 'terminated' | 'running' | 'finished';

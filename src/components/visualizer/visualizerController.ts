@@ -9,7 +9,7 @@ interface VisualizerControllerOptions {
 }
 
 export default class VisualizerController {
-  private running = false;
+  private status: VisualizerRunState = 'not_started';
   private readonly exeFile: string;
   private delayMilliseconds: number;
   private readonly onConsoleOutput: (out: string[]) => void;
@@ -29,15 +29,28 @@ export default class VisualizerController {
     this.startAsync();
   }
 
-  stop(): void {
+  terminate(): void {
     // TODO: improve cancellation
-    this.running = false;
-    console.log('Stopping visualizer...');
-    this.onRunStateChange('stopping');
+    this.status = 'terminating';
+    console.log('Terminating visualizer...');
+    this.onRunStateChange('terminating');
     this.debuggerHandle.stop().then(res => {
-      this.onRunStateChange('stopped');
-      console.log('Visualizer stopped', res);
+      this.status = 'terminated';
+      this.onRunStateChange('terminated');
+      console.log('Visualizer terminated', res);
     });
+  }
+
+  pause(): void {
+    this.status = 'pausing';
+    this.onRunStateChange('pausing');
+  }
+  resume(): void {
+    if (this.status !== 'paused') {
+      console.error('The visualizer can only be resumed of it is in the paused state.');
+      return;
+    }
+    this.startLoop();
   }
 
   setSpeed(delayMilliseconds: number): void {
@@ -49,23 +62,29 @@ export default class VisualizerController {
       //console.log("Console stdout output", data);
       this.onConsoleOutput([data]);
     });
+    await this.startLoop();
+  }
+  private async startLoop() {
+    this.status = 'running';
     this.onRunStateChange('running');
-    this.running = true;
-    while (this.running) {
+    while (this.status === 'running') {
       const msg = await this.debuggerHandle.doStep();
       //console.log('received visualizer state', msg);
       if (msg.type === 'process_end') {
-        this.running = false;
+        this.status = 'finished';
         this.onRunStateChange('finished');
         return;
       }
       if (msg.type === 'process_killed') {
-        this.running = false;
         console.log('Process was killed.');
         return;
       }
       this.onStateChange(msg);
       await delay(this.delayMilliseconds);
+    }
+    if (this.status === 'pausing') {
+      this.status = 'paused';
+      this.onRunStateChange('paused');
     }
   }
 }
