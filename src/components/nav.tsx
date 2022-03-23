@@ -13,9 +13,12 @@ interface NavProps {
   current: OpenFileData;
   visualizerActive: boolean;
   compile: () => void;
+  compileAndRun: () => void;
   showCompileOutput: () => void;
   showVisualizer: () => void;
   showEditor: () => void;
+  closeFile: () => void;
+  closeWindow: () => void;
 }
 
 export default function Nav({
@@ -27,9 +30,12 @@ export default function Nav({
   current,
   visualizerActive,
   compile,
+  compileAndRun,
   showCompileOutput,
   showVisualizer,
   showEditor,
+  closeFile,
+  closeWindow,
 }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
@@ -60,10 +66,33 @@ export default function Nav({
           title="File"
           options={[
             { name: 'New File', action: openBlankFile },
+            {
+              name: 'b',
+              action: () => {
+                return;
+              },
+              seperator: true,
+            },
             { name: 'Open File', action: openFile },
+            {
+              name: 'b',
+              action: () => {
+                return;
+              },
+              seperator: true,
+            },
             { name: 'Save File', action: saveFile },
             { name: 'Save As', action: saveAs },
             { name: 'Save All', action: saveAll },
+            {
+              name: 'b',
+              action: () => {
+                return;
+              },
+              seperator: true,
+            },
+            { name: 'Close File', action: closeFile },
+            { name: 'Close Window', action: closeWindow },
           ]}
         />
         <MenuItem
@@ -73,11 +102,35 @@ export default function Nav({
               name: 'Compile File',
               action: compile,
             },
+            {
+              name: 'Compile And Run File',
+              action: compileAndRun,
+            },
           ]}
         />
         <MenuItem
           title="View"
           options={[
+            {
+              name: 'Show Compile Output',
+              action: showCompileOutput,
+            },
+            {
+              // TODO: disabling
+              name: 'Show Editor',
+              action: showEditor,
+            },
+            {
+              name: 'Show Visualizer',
+              action: showVisualizer,
+            },
+            {
+              name: 'b',
+              action: () => {
+                return;
+              },
+              seperator: true,
+            },
             {
               name: 'Zoom In',
               action: () => {
@@ -91,16 +144,10 @@ export default function Nav({
               },
             },
             {
-              name: 'Show Compile Output',
-              action: showCompileOutput,
-            },
-            {
-              name: 'Show Visualizer',
-              action: showVisualizer,
-            },
-            {
-              name: 'Show Editor',
-              action: showEditor,
+              name: 'Reset Zoom',
+              action: () => {
+                console.log('reset zoom');
+              },
             },
           ]}
         />

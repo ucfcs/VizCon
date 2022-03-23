@@ -131,7 +131,7 @@ function App(): React.ReactElement {
     }
   }
 
-  async function compile(): Promise<void> {
+  async function compile(run: boolean): Promise<void> {
     if (current.path === 'tracking://Landing') {
       return;
     }
@@ -147,7 +147,10 @@ function App(): React.ReactElement {
       return;
     }
 
-    setInVisualizer(true);
+    if (run) {
+      // TODO: hook up the run command
+      setInVisualizer(true);
+    }
   }
 
   return (
@@ -160,10 +163,14 @@ function App(): React.ReactElement {
         saveAs={saveAs}
         current={current}
         visualizerActive={inVisualizer}
-        compile={compile}
+        compile={() => compile(false)}
+        compileAndRun={() => compile(true)}
         showCompileOutput={() => setOutputVisible(true)}
         showVisualizer={() => setInVisualizer(true)}
         showEditor={() => setInVisualizer(false)}
+        closeFile={() => closeFile(current)}
+        // TODO: additional window close actions
+        closeWindow={() => window.close()}
       />
       <IDE
         files={files}
