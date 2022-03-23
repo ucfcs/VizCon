@@ -15,6 +15,7 @@ interface NavProps {
   compile: () => void;
   showCompileOutput: () => void;
   showVisualizer: () => void;
+  showEditor: () => void;
 }
 
 export default function Nav({
@@ -27,7 +28,8 @@ export default function Nav({
   visualizerActive,
   compile,
   showCompileOutput,
-  showVisualizer
+  showVisualizer,
+  showEditor,
 }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
   // const showMenu = true;
@@ -48,61 +50,61 @@ export default function Nav({
     document.title = reactTitle + 'VizCon';
   }, [current, current.dirty, visualizerActive]);
 
+  // TODO: Update this menu to match the options found in main/macMenu.ts
   return (
     <div className="titlebar">
       <div className="titlebar-drag-region"></div>
-      {showMenu && (
-        <>
-          <a className="appicon"></a>
-          <div className="menubar" role="menubar">
-            <MenuItem
-              title="File"
-              options={[
-                { name: 'Open File', action: openFile },
-                { name: 'New File', action: openBlankFile },
-                { name: 'Save File', action: saveFile },
-                { name: 'Save All', action: saveAll },
-                { name: 'Save As', action: saveAs },
-              ]}
-            />
-            <MenuItem
-              title="View"
-              options={[
-                {
-                  name: 'Zoom In',
-                  action: () => {
-                    console.log('zoom in');
-                  },
-                },
-                {
-                  name: 'Zoom Out',
-                  action: () => {
-                    console.log('zoom out');
-                  },
-                },
-                {
-                  name: 'Show Compile Output',
-                  action: showCompileOutput,
-                },
-                {
-                  name: 'Show Visualizer',
-                  action: showVisualizer
-                }
-              ]}
-            />
-            <MenuItem
-              title="Testing"
-              options={[
-                {
-                  name: 'Compile',
-                  action: compile,
-                },
-              ]}
-            />
-          </div>
-        </>
-      )}
-      {/* TODO: have this track if the Editor or Visualizer is open, append it to the end ot title */}
+      <a className="appicon"></a>
+      <div className="menubar" role="menubar">
+        <MenuItem
+          title="File"
+          options={[
+            { name: 'New File', action: openBlankFile },
+            { name: 'Open File', action: openFile },
+            { name: 'Save File', action: saveFile },
+            { name: 'Save As', action: saveAs },
+            { name: 'Save All', action: saveAll },
+          ]}
+        />
+        <MenuItem
+          title="Compile"
+          options={[
+            {
+              name: 'Compile File',
+              action: compile,
+            },
+          ]}
+        />
+        <MenuItem
+          title="View"
+          options={[
+            {
+              name: 'Zoom In',
+              action: () => {
+                console.log('zoom in');
+              },
+            },
+            {
+              name: 'Zoom Out',
+              action: () => {
+                console.log('zoom out');
+              },
+            },
+            {
+              name: 'Show Compile Output',
+              action: showCompileOutput,
+            },
+            {
+              name: 'Show Visualizer',
+              action: showVisualizer,
+            },
+            {
+              name: 'Show Editor',
+              action: showEditor,
+            },
+          ]}
+        />
+      </div>
       <div className="window-title">{title}VizCon</div>
       {showMenu && (
         <>

@@ -1,3 +1,5 @@
+#include "vcuserlibrary.h"
+
 #define size 10
 
 int array[size];
@@ -54,7 +56,7 @@ void Merge(int begin, int mid, int end)
     return;
 }
 
-THREAD_RET MergeSort(THREAD_PARAM param)
+void* MergeSort(void* param)
 {
     int *thisParam = (int*)param;
     int begin = thisParam[0];
@@ -87,7 +89,7 @@ void printArray(char* state)
     printf("%s\n", state);
 }
 
-int main(void) 
+int real_main(void) 
 {
     int i;
     int begin = 0;
@@ -95,7 +97,7 @@ int main(void)
     int end = size;
     int param1[2] = {begin, mid};
     int param2[2] = {mid, end};
-    srand(abs(vcThreadId()));
+    srand(vcThreadId());
     for(i=0; i<size; i++)
     {
         array[i] = rand() % 100;

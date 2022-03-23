@@ -1,7 +1,9 @@
-int b1, b2, b3;
-vcSem *empty1, *empty2, *empty3, *full1, *full2, *full3;
+#include "vcuserlibrary.h"
 
-THREAD_RET Producer(THREAD_PARAM param)
+int b1, b2, b3;
+vcSem empty1, *empty2, *empty3, *full1, *full2, *full3;
+
+void* Producer(void* param)
 {
     int r, i;
     srand(vcThreadId());
@@ -15,7 +17,7 @@ THREAD_RET Producer(THREAD_PARAM param)
     return 1;
 }
 
-THREAD_RET CheckEven(THREAD_PARAM param)
+void* CheckEven(void* param)
 {
     int n;
     while(1)
@@ -36,7 +38,7 @@ THREAD_RET CheckEven(THREAD_PARAM param)
     return 1;
 }
 
-THREAD_RET CheckLine(THREAD_PARAM param)
+void* CheckLine(void* param)
 {
     int n, count = 1;
     while(1)
@@ -58,7 +60,7 @@ THREAD_RET CheckLine(THREAD_PARAM param)
     return 1;
 }
 
-THREAD_RET Consumer(THREAD_PARAM param)
+void* Consumer(void* param)
 {
     int k;
     while(1)
@@ -78,7 +80,7 @@ THREAD_RET Consumer(THREAD_PARAM param)
     return 1;
 }
 
-int main(void) 
+int real_main(void) 
 {
     empty1 = vcSemCreate(1);
     empty2 = vcSemCreate(1);
