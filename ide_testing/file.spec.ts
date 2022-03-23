@@ -91,14 +91,14 @@ test.describe("File Menu", async () =>
     await window.type('#ide div.view-line', rand);
 
     // Select "Save File".
-    console.log("Please save as \"brandnew.c\".");
+    console.log("Please save as \"overwrite.c\".");
     await window.locator('div.menu-item:has-text("File")').click();
     await window.locator('span.action-label:has-text("Save File")').click();
     
     // File is saved by tester here...
 
     // Load the file externally and check that the contents are correct.
-    const file_contents: string = readFileSync(join(__dirname, 'brandnew.c')).toString();
+    const file_contents: string = readFileSync(join(__dirname, 'file/overwrite.c')).toString();
     expect(file_contents).toBe(rand);
   });
 
@@ -106,7 +106,7 @@ test.describe("File Menu", async () =>
   test('Save Existing File', async () =>
   {
     // Open a file.
-    console.log("Please select \"editable.c\".");
+    console.log("Please select \"edit.c\".");
     await window.locator('div.menu-item:has-text("File")').click();
     await window.locator('span.action-label:has-text("Open File")').click();
 
@@ -129,7 +129,7 @@ test.describe("File Menu", async () =>
 
     // Load the file externally and check that the appended string appears.
     // Remove any spaces to avoid issues with encoding.
-    const file_contents: string = readFileSync(join(__dirname, 'editable.c')).toString().replace(/\s/g, "");
+    const file_contents: string = readFileSync(join(__dirname, 'file/edit.c')).toString().replace(/\s/g, "");
     expect(file_contents).toBe(original_contents + rand);
   });
 
@@ -166,8 +166,9 @@ test.describe("File Menu", async () =>
   test.afterAll(async () =>
   {
     // Reset edited test files.
-    writeFileSync(join(__dirname, 'editable.c'), "// Edit test");
-    writeFileSync(join(__dirname, 'brandnew.c'), "// This is a dummy file to be overwritten.");
+    // Some files are overwritten instead of deleted because unlinkFile is more likely to fail.
+    writeFileSync(join(__dirname, 'file/edit.c'), "// Edit test");
+    writeFileSync(join(__dirname, 'file/overwrite.c'), "// This is a dummy file to be overwritten.");
 
     // Exit app.
     window = null;
