@@ -145,7 +145,7 @@ test.describe("File Menu", async () =>
     await window.locator('#ide div.view-line').click();
     await window.type('#ide div.view-line', rand);
 
-    // Select "Save File".
+    // Select "Save As".
     console.log("Please save as \"overwrite-as.c\".");
     await window.locator('div.menu-item:has-text("File")').click();
     await window.locator('span.action-label:has-text("Save As")').click();
@@ -155,6 +155,40 @@ test.describe("File Menu", async () =>
     // Load the file externally and check that the contents are correct.
     const file_contents: string = readFileSync(join(__dirname, 'file/overwrite-as.c')).toString();
     expect(file_contents).toBe(rand);
+  });
+
+  // Save As Existing File - Check that an existing file is saved with the file picker.
+  test('Save As Existing File', async () =>
+  {
+    // Open a file.
+    console.log("Please select \"edit.c\".");
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Open File")').click();
+
+    // File is loaded by tester here...
+
+    // Save the file contents for later use.
+    // Remove any spaces to avoid issues with encoding.
+    const original_contents: string = (await window.locator('#ide div.view-line').textContent()).replace(/\s/g, "");
+
+    // Append random string.
+    const rand: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.press('#ide div.view-line', 'Control+A');
+    await window.press('#ide div.view-line', 'ArrowRight');
+    await window.type('#ide div.view-line', rand);
+    
+    // Select "Save As".
+    console.log("Please save as \"edit-as.c\".");
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Save As")').click();
+
+    // File is saved by tester here...
+
+    // Load the file externally and check that the appended string appears.
+    // Remove any spaces to avoid issues with encoding.
+    const file_contents: string = readFileSync(join(__dirname, 'file/edit-as.c')).toString().replace(/\s/g, "");
+    expect(file_contents).toBe(original_contents + rand);
   });
 
   // Close Unedited File - Close a file.
@@ -176,7 +210,6 @@ test.describe("File Menu", async () =>
   // After Each - Close all open files.
   test.afterEach(async () =>
   {
-    //await window.pause();
     while(true)
     {
       if(await window.isVisible('#ide a.action-label.codicon.codicon-close'))
@@ -192,6 +225,7 @@ test.describe("File Menu", async () =>
     // Reset edited test files.
     // Some files are overwritten instead of deleted because unlinkFile is more likely to fail.
     writeFileSync(join(__dirname, 'file/edit.c'), "// Edit test");
+    writeFileSync(join(__dirname, 'file/edit-as.c'), "// Edit test");
     writeFileSync(join(__dirname, 'file/overwrite.c'), "// This is a dummy file to be overwritten.");
     writeFileSync(join(__dirname, 'file/overwrite-as.c'), "// This is a dummy file to be overwritten.");
 
