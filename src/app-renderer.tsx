@@ -66,8 +66,8 @@ function App(): React.ReactElement {
     console.log(`saving file ${file.path}, status ${writtenPath}`);
 
     const newFiles = [...files];
-    for (let i = 0; i < files.length; i++) {
-      if (newFiles[i].path === current.path) {
+    for (let i = 0; i < newFiles.length; i++) {
+      if (newFiles[i].path === file.path) {
         newFiles[i].path = writtenPath;
         newFiles[i].dirty = false;
         newFiles[i].fileContent = newFiles[i].currentContent;
@@ -86,10 +86,42 @@ function App(): React.ReactElement {
     saveFileImpl(current, true);
   }
 
-  function saveAll(): void {
-    files.forEach(async file => {
-      saveFileImpl(file);
+  async function saveAll(): Promise<void> {
+    const newFiles = [...files];
+    let oldCurrentPath = current.path;
+    let newCurrent: OpenFileData;
+
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i];
+      if (!file.dirty) {
+        continue;
+      }
+
+      const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, false);
+      console.log(`saving file ${file.path}, status ${writtenPath}`);
+
+      if (oldCurrentPath === file.path) {
+        oldCurrentPath = writtenPath;
+      }
+
+      for (let j = 0; j < newFiles.length; j++) {
+        if (newFiles[j].path === file.path) {
+          newFiles[j].path = writtenPath;
+          newFiles[j].dirty = false;
+          newFiles[j].fileContent = newFiles[j].currentContent;
+          break;
+        }
+      }
+    }
+
+    files.forEach(file => {
+      if (file.path === oldCurrentPath) {
+        newCurrent = file;
+      }
     });
+
+    setFiles(newFiles);
+    setCurrent(newCurrent || current);
   }
 
   function closeFile(file: OpenFileData): void {
