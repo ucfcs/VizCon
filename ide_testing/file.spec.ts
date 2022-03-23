@@ -133,6 +133,30 @@ test.describe("File Menu", async () =>
     expect(file_contents).toBe(original_contents + rand);
   });
 
+  // Save As New File - Check that an unsaved file is saved with the file picker.
+  test('Save As New File', async () =>
+  {
+    // Create new file.
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("New File")').click();
+
+    // Generate random file contents.
+    const rand: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.type('#ide div.view-line', rand);
+
+    // Select "Save File".
+    console.log("Please save as \"overwrite-as.c\".");
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Save As")').click();
+    
+    // File is saved by tester here...
+
+    // Load the file externally and check that the contents are correct.
+    const file_contents: string = readFileSync(join(__dirname, 'file/overwrite-as.c')).toString();
+    expect(file_contents).toBe(rand);
+  });
+
   // Close Unedited File - Close a file.
   test('Close Unedited File', async () =>
   {
@@ -169,6 +193,7 @@ test.describe("File Menu", async () =>
     // Some files are overwritten instead of deleted because unlinkFile is more likely to fail.
     writeFileSync(join(__dirname, 'file/edit.c'), "// Edit test");
     writeFileSync(join(__dirname, 'file/overwrite.c'), "// This is a dummy file to be overwritten.");
+    writeFileSync(join(__dirname, 'file/overwrite-as.c'), "// This is a dummy file to be overwritten.");
 
     // Exit app.
     window = null;
