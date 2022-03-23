@@ -4,6 +4,7 @@ import sys
 def debug_print(*args, **kwargs):
     return
     #print(*args, file=sys.stderr, **kwargs)
+    #sys.stderr.flush()
 
 seed = randint(0, 10000)
 debug_print("Using RNG seed", seed)
@@ -14,7 +15,6 @@ class ThreadManager:
     managed_threads = []
     exited_threads = set()
     semaphoreMap = {}
-    semaphoreMapByName = {}
     semWaitLists = {}
     nextThreadID = 2
     def __init__(self, main_lldb_thread):
@@ -117,13 +117,8 @@ class ThreadManager:
         else:
             debug_print("\tNo thread is waiting on it")
         #self.managed_threads.remove(t)
-    def registerSem(self, sem, new_sem_name, new_sem_initial_value, new_sem_max_value):
-        # sem is a string for now
-        if new_sem_name in self.semaphoreMapByName:
-            debug_print("Unimplemented error handling: duplicate semaphore name")
-            sys.exit(1)
-        self.semaphoreMap[sem] = {'value': new_sem_initial_value, 'name': new_sem_name, 'max_value': new_sem_max_value}
-        self.semaphoreMapByName[new_sem_name] = self.semaphoreMap[sem]
+    def registerSem(self, sem, new_sem_initial_value, new_sem_max_value):
+        self.semaphoreMap[sem] = {'value': new_sem_initial_value, 'max_value': new_sem_max_value}
     
     def getManagedThreads(self):
         return self.managed_threads

@@ -185,12 +185,10 @@ def _start(exe, visualizerMode):
             for t in process:
                 if isStoppedForBreakpoint(t, vc_internal_registerSem_bp):
                     new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                    new_sem_name_ptr = t.GetFrameAtIndex(0).FindVariable("name")
-                    new_sem_name = process.ReadCStringFromMemory(new_sem_name_ptr.GetValueAsUnsigned(), 1024, lldb.SBError())
                     new_sem_initial_value = t.GetFrameAtIndex(0).FindVariable("initialValue").GetValueAsSigned()
                     new_sem_max_value = t.GetFrameAtIndex(0).FindVariable("maxValue").GetValueAsSigned()
                     #debug_print("Registering new semaphore:", new_sem, new_sem_name, new_sem_initial_value, new_sem_max_value)
-                    thread_man.registerSem(str(new_sem), new_sem_name, new_sem_initial_value, new_sem_max_value)
+                    thread_man.registerSem(str(new_sem), new_sem_initial_value, new_sem_max_value)
                     process.Continue()
                     handledBreakpoint = True
                     continue
