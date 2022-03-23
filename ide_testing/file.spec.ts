@@ -191,6 +191,86 @@ test.describe("File Menu", async () =>
     expect(file_contents).toBe(original_contents + rand);
   });
 
+  // Save All New Files - Check that all new files are saved at once with file pickers.
+  test('Save All New Files', async () =>
+  {
+    // Create a new file and generate random contents.
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("New File")').click();
+    const rand1: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.type('#ide div.view-line', rand1);
+
+    // Create another new file and generate random contents.
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("New File")').click();
+    const rand2: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.type('#ide div.view-line', rand2);
+
+    // Select "Save All".
+    console.log("Please save as \"overwrite-all-1.c\" and \"overwrite-all-2.c\".");
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Save All")').click();
+    
+    // Files are saved by tester here...
+
+    // Load the files externally and check that the contents are correct.
+    const file_contents1: string = readFileSync(join(__dirname, 'file/overwrite-all-1.c')).toString();
+    expect(file_contents1).toBe(rand1);
+    const file_contents2: string = readFileSync(join(__dirname, 'file/overwrite-all-2.c')).toString();
+    expect(file_contents2).toBe(rand2);
+  });
+
+  // Save All Existing Files  - Check that all existing files are saved at once.
+  /*test('Save All Existing Files', async () =>
+  {
+    // Open the first file.
+    console.log("Please select \"edit-all-1.c\", then \"edit-all-2.c\".");
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Open File")').click();
+
+    // File 1 is opened by tester here...
+
+    // Save the file contents for later use, then append a random string.
+    // Remove any spaces to avoid issues with encoding.
+    const original_contents1: string = (await window.locator('#ide div.view-line').textContent()).replace(/\s/g, "");
+    const rand1: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.press('#ide div.view-line', 'Control+A');
+    await window.press('#ide div.view-line', 'ArrowRight');
+    await window.type('#ide div.view-line', rand1);
+    await window.pause();
+
+    // Open the second file.
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Open File")').click();
+
+    // File 2 is opened by tester here...
+
+    // Save the file contents for later use, then append a random string.
+    // Remove any spaces to avoid issues with encoding.
+    const original_contents2: string = (await window.locator('#ide div.view-line').textContent()).replace(/\s/g, "");
+    const rand2: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.press('#ide div.view-line', 'Control+A');
+    await window.press('#ide div.view-line', 'ArrowRight');
+    await window.type('#ide div.view-line', rand2);
+    await window.pause();
+
+    // Select "Save All".
+    await window.locator('div.menu-item:has-text("File")').click();
+    await window.locator('span.action-label:has-text("Save All")').click();
+
+    // Load the files externally and check that the appended string appears.
+    // Remove any spaces to avoid issues with encoding.
+    const file_contents1: string = readFileSync(join(__dirname, 'file/edit-all-1.c')).toString().replace(/\s/g, "");
+    expect(file_contents1).toBe(original_contents1 + rand1);
+    const file_contents2: string = readFileSync(join(__dirname, 'file/edit-all-2.c')).toString().replace(/\s/g, "");
+    expect(file_contents2).toBe(original_contents2 + rand2);
+    await window.pause();
+  });*/
+
   // Close Unedited File - Close a file.
   test('Close Unedited File', async () =>
   {
@@ -226,8 +306,12 @@ test.describe("File Menu", async () =>
     // Some files are overwritten instead of deleted because unlinkFile is more likely to fail.
     writeFileSync(join(__dirname, 'file/edit.c'), "// Edit test");
     writeFileSync(join(__dirname, 'file/edit-as.c'), "// Edit test");
+    writeFileSync(join(__dirname, 'file/edit-all-1.c'), "// Edit test");
+    writeFileSync(join(__dirname, 'file/edit-all-2.c'), "// Edit test");
     writeFileSync(join(__dirname, 'file/overwrite.c'), "// This is a dummy file to be overwritten.");
     writeFileSync(join(__dirname, 'file/overwrite-as.c'), "// This is a dummy file to be overwritten.");
+    writeFileSync(join(__dirname, 'file/overwrite-all-1.c'), "// This is a dummy file to be overwritten.");
+    writeFileSync(join(__dirname, 'file/overwrite-all-2.c'), "// This is a dummy file to be overwritten.");
 
     // Exit app.
     window = null;
