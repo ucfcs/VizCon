@@ -9,6 +9,7 @@ interface IDEProps {
   files: OpenFileData[];
   current: OpenFileData;
   setCurrent: (_: OpenFileData) => void;
+  setDirty: (_: boolean) => void;
   closeFile: (_: OpenFileData) => void;
   showOutput: boolean;
   closeOutput: () => void;
@@ -20,6 +21,7 @@ export default function IDE({
   files,
   current,
   setCurrent,
+  setDirty,
   closeFile,
   compileResults,
   showOutput,
@@ -49,10 +51,11 @@ export default function IDE({
 
   useEffect(() => {
     regenTabination();
-  }, [current, current.dirty, files]);
+    setDirty(current.dirty);
+  }, [current, files]);
 
   useEffect(() => {
-    setClassName((showOutput ? 'output-visible' : '') + (inVisualizer ? 'hidden' : ''));
+    setClassName((showOutput ? 'output-visible' : '') + ' ' + (inVisualizer ? 'hidden' : ''));
   }, [showOutput, inVisualizer]);
 
   return (
@@ -60,7 +63,7 @@ export default function IDE({
       {tabination}
       <div className="active-editor">
         {files.length == 0 && <Landing />}
-        {files.length >= 1 && <Editor current={current} regenTabination={regenTabination} />}
+        {files.length >= 1 && <Editor current={current} regenTabination={regenTabination} setDirty={setDirty} />}
       </div>
       {showOutput && <Output current={current} text={compileResults} closePanel={closeOutput} />}
     </div>

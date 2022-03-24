@@ -13,6 +13,7 @@ let untitledCount = 1;
 
 function App(): React.ReactElement {
   const [files, setFiles] = useState<Array<OpenFileData>>([]);
+  const [dirty, setDirty] = useState(false);
   const [current, setCurrent] = useState(defaultCurrent);
   const [outputVisible, setOutputVisible] = useState(false);
   const [compileResult, setCompileResult] = useState('');
@@ -188,13 +189,14 @@ function App(): React.ReactElement {
   return (
     <>
       <Nav
+        current={current}
+        dirty={dirty}
+        visualizerActive={inVisualizer}
         openFile={openFile}
         openBlankFile={openBlankFile}
         saveFile={saveFile}
         saveAll={saveAll}
         saveAs={saveAs}
-        current={current}
-        visualizerActive={inVisualizer}
         compile={() => compile(false)}
         compileAndRun={() => compile(true)}
         showCompileOutput={() => setOutputVisible(true)}
@@ -208,6 +210,7 @@ function App(): React.ReactElement {
         files={files}
         current={current}
         setCurrent={setCurrent}
+        setDirty={setDirty}
         closeFile={closeFile}
         compileResults={compileResult}
         showOutput={outputVisible}

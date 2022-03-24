@@ -51,7 +51,6 @@ function VarTable({ vars, title }: VarTableProps): React.ReactElement {
   );
 }
 
-// TODO: display locals, and titles
 export default function Variables({ globals, threads }: VariablesProps): React.ReactElement {
   const [localTabs, setLocalTabs] = useState(<></>);
 

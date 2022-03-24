@@ -5,13 +5,14 @@ import MenuItem from './nav/menuitem';
 import '../styles/nav.scss';
 
 interface NavProps {
+  current: OpenFileData;
+  dirty: boolean;
+  visualizerActive: boolean;
   openFile: () => void;
   openBlankFile: () => void;
   saveFile: () => void;
   saveAll: () => void;
   saveAs: () => void;
-  current: OpenFileData;
-  visualizerActive: boolean;
   compile: () => void;
   compileAndRun: () => void;
   showCompileOutput: () => void;
@@ -22,13 +23,14 @@ interface NavProps {
 }
 
 export default function Nav({
+  current,
+  dirty,
+  visualizerActive,
   openFile,
   openBlankFile,
   saveFile,
   saveAll,
   saveAs,
-  current,
-  visualizerActive,
   compile,
   compileAndRun,
   showCompileOutput,
@@ -54,7 +56,7 @@ export default function Nav({
 
     setTitle(reactTitle);
     document.title = reactTitle + 'VizCon';
-  }, [current, current.dirty, visualizerActive]);
+  }, [current, dirty, visualizerActive]);
 
   // TODO: Update this menu to match the options found in main/macMenu.ts
   return (
