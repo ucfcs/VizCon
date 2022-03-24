@@ -33,8 +33,8 @@ test.describe("Clipboard", async () =>
 
     // Select "New File" so there is a canvas to work on.
     // Wait for the text window to open and move the cursor there.
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("New File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("New File")').click();
     await window.locator('#ide div.view-line').click();
   });
 

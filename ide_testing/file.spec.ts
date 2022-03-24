@@ -38,8 +38,8 @@ test.describe("File Menu", async () =>
   test('New File', async () =>
   {
     // Select "New File".
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("New File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("New File")').click();
 
     // Check that a blank file was opened.
     // Use '#ide' to specify root since the locator also checks #visualizer.
@@ -62,8 +62,8 @@ test.describe("File Menu", async () =>
     console.log("Please select \"dummy.c\".")
 
     // Select "Open File".
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Open File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
 
     // Ensure that a file is loaded (i.e. that it didn't just open a blank file)
     // Use '#ide' to specify root since the locator also checks #visualizer.
@@ -82,8 +82,8 @@ test.describe("File Menu", async () =>
   test('Save New File', async () =>
   {
     // Create new file.
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("New File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("New File")').click();
 
     // Generate random file contents.
     const rand: string = makeString(testStringSize);
@@ -92,8 +92,8 @@ test.describe("File Menu", async () =>
 
     // Select "Save File".
     console.log("Please save as \"overwrite.c\".");
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Save File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Save File")').click();
     
     // File is saved by tester here...
 
@@ -107,8 +107,8 @@ test.describe("File Menu", async () =>
   {
     // Open a file.
     console.log("Please select \"edit.c\".");
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Open File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
 
     // File is loaded by tester here...
 
@@ -124,8 +124,8 @@ test.describe("File Menu", async () =>
     await window.type('#ide div.view-line', rand);
     
     // Select "Save File".
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Save File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Save File")').click();
 
     // Load the file externally and check that the appended string appears.
     // Remove any spaces to avoid issues with encoding.
@@ -137,8 +137,8 @@ test.describe("File Menu", async () =>
   test('Save As New File', async () =>
   {
     // Create new file.
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("New File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("New File")').click();
 
     // Generate random file contents.
     const rand: string = makeString(testStringSize);
@@ -147,8 +147,8 @@ test.describe("File Menu", async () =>
 
     // Select "Save As".
     console.log("Please save as \"overwrite-as.c\".");
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Save As")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Save As")').click();
     
     // File is saved by tester here...
 
@@ -162,8 +162,8 @@ test.describe("File Menu", async () =>
   {
     // Open a file.
     console.log("Please select \"edit.c\".");
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Open File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
 
     // File is loaded by tester here...
 
@@ -180,8 +180,8 @@ test.describe("File Menu", async () =>
     
     // Select "Save As".
     console.log("Please save as \"edit-as.c\".");
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Save As")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Save As")').click();
 
     // File is saved by tester here...
 
@@ -195,23 +195,23 @@ test.describe("File Menu", async () =>
   test('Save All New Files', async () =>
   {
     // Create a new file and generate random contents.
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("New File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("New File")').click();
     const rand1: string = makeString(testStringSize);
     await window.locator('#ide div.view-line').click();
     await window.type('#ide div.view-line', rand1);
 
     // Create another new file and generate random contents.
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("New File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("New File")').click();
     const rand2: string = makeString(testStringSize);
     await window.locator('#ide div.view-line').click();
     await window.type('#ide div.view-line', rand2);
 
     // Select "Save All".
     console.log("Please save as \"overwrite-all-1.c\" and \"overwrite-all-2.c\".");
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Save All")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Save All")').click();
     
     // Files are saved by tester here...
 
@@ -227,8 +227,8 @@ test.describe("File Menu", async () =>
   {
     // Open the first file.
     console.log("Please select \"edit-all-1.c\", then \"edit-all-2.c\".");
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Open File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
 
     // File 1 is opened by tester here...
 
@@ -243,8 +243,8 @@ test.describe("File Menu", async () =>
     await window.pause();
 
     // Open the second file.
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Open File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
 
     // File 2 is opened by tester here...
 
@@ -259,8 +259,8 @@ test.describe("File Menu", async () =>
     await window.pause();
 
     // Select "Save All".
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Save All")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Save All")').click();
 
     // Load the files externally and check that the appended string appears.
     // Remove any spaces to avoid issues with encoding.
@@ -276,8 +276,8 @@ test.describe("File Menu", async () =>
   {
     // Open a file.
     console.log("Please select \"dummy.c\".")
-    await window.locator('div.menu-item:has-text("File")').click();
-    await window.locator('span.action-label:has-text("Open File")').click();
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
 
     // File is loaded by tester here...
 
