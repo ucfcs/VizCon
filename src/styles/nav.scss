@@ -57,6 +57,10 @@
     position: relative;
     z-index: 3000;
     flex-shrink: 0;
+
+    .darwin & {
+      display: none;
+    }
   }
 
   .window-title {
@@ -84,6 +88,10 @@
     flex-wrap: wrap;
     z-index: 2500;
     height: 30px;
+
+    .darwin & {
+      display: none;
+    }
 
     .menu-item {
       align-items: center;
