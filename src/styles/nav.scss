@@ -113,7 +113,7 @@
         position: fixed;
         outline: 0;
         border: none;
-        top: 30px; // must be equavilent to the height of the menu bar
+        top: 30px; // must be equivalent to the height of the menu bar
         z-index: 2000;
         overflow: hidden;
         box-shadow: rgb(0 0 0 / 36%) 0px 2px 4px;
@@ -180,6 +180,15 @@
                   border-bottom: 1px solid #bbb;
                   align-items: center;
                 }
+              }
+
+              .keybind {
+                flex: 2 1 auto;
+                display: inline-block;
+                text-align: right;
+                line-height: 1;
+                font-size: inherit;
+                padding: 0 2em;
               }
             }
           }

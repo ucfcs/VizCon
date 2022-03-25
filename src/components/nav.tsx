@@ -67,7 +67,7 @@ export default function Nav({
         <MenuItem
           title="File"
           options={[
-            { name: 'New File', action: openBlankFile },
+            { name: 'New File', action: openBlankFile, keybind: 'Ctrl+N' },
             {
               name: 'b',
               action: () => {
@@ -75,7 +75,7 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Open File', action: openFile },
+            { name: 'Open File', action: openFile, keybind: 'Ctrl+O' },
             {
               name: 'b',
               action: () => {
@@ -83,9 +83,9 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Save File', action: saveFile },
-            { name: 'Save As', action: saveAs },
-            { name: 'Save All', action: saveAll },
+            { name: 'Save File', action: saveFile, keybind: 'Ctrl+S' },
+            { name: 'Save As', action: saveAs, keybind: 'Ctrl+Shift+S' },
+            { name: 'Save All', action: saveAll, keybind: 'Ctrl+Alt+S' },
             {
               name: 'b',
               action: () => {
@@ -93,8 +93,8 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Close File', action: closeFile },
-            { name: 'Close Window', action: closeWindow },
+            { name: 'Close File', action: closeFile, keybind: 'Ctrl+W' },
+            { name: 'Close Window', action: closeWindow, keybind: 'Ctrl+Shift+W' },
           ]}
         />
         <MenuItem
@@ -138,18 +138,21 @@ export default function Nav({
               action: () => {
                 console.log('zoom in');
               },
+              keybind: 'Ctrl++',
             },
             {
               name: 'Zoom Out',
               action: () => {
                 console.log('zoom out');
               },
+              keybind: 'Ctrl+-',
             },
             {
               name: 'Reset Zoom',
               action: () => {
                 console.log('reset zoom');
               },
+              keybind: 'Ctrl+0',
             },
           ]}
         />
