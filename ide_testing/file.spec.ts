@@ -223,7 +223,7 @@ test.describe("File Menu", async () =>
   });
 
   // Save All Existing Files  - Check that all existing files are saved at once.
-  /*test('Save All Existing Files', async () =>
+  test('Save All Existing Files', async () =>
   {
     // Open the first file.
     console.log("Please select \"edit-all-1.c\", then \"edit-all-2.c\".");
@@ -240,7 +240,6 @@ test.describe("File Menu", async () =>
     await window.press('#ide div.view-line', 'Control+A');
     await window.press('#ide div.view-line', 'ArrowRight');
     await window.type('#ide div.view-line', rand1);
-    await window.pause();
 
     // Open the second file.
     await window.locator('div.menu-item:has-text("FileNew File")').click();
@@ -256,7 +255,6 @@ test.describe("File Menu", async () =>
     await window.press('#ide div.view-line', 'Control+A');
     await window.press('#ide div.view-line', 'ArrowRight');
     await window.type('#ide div.view-line', rand2);
-    await window.pause();
 
     // Select "Save All".
     await window.locator('div.menu-item:has-text("FileNew File")').click();
@@ -268,8 +266,7 @@ test.describe("File Menu", async () =>
     expect(file_contents1).toBe(original_contents1 + rand1);
     const file_contents2: string = readFileSync(join(__dirname, 'file/edit-all-2.c')).toString().replace(/\s/g, "");
     expect(file_contents2).toBe(original_contents2 + rand2);
-    await window.pause();
-  });*/
+  });
 
   // Close Unedited File - Close a file.
   test('Close Unedited File', async () =>
