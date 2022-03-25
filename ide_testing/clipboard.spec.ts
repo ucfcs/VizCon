@@ -1,35 +1,34 @@
-import { ElectronApplication, Locator, _electron as electron } from "playwright";
-import { test, expect, Page } from "@playwright/test";
-const testStringSize: number = 5;
+import { ElectronApplication, Locator, _electron as electron } from 'playwright';
+import { test, expect, Page } from '@playwright/test';
+const testStringSize = 5;
 let electronApp: ElectronApplication;
 let window: Page;
 
 // makeString - Generates a random string of the given length for use by the tests
-function makeString(length: number): string
-{
-  let result: string = '';
-  const characters: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+function makeString(length: number): string {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const charactersLength: number = characters.length;
-  for (let i: number = 0; i < length; i++)
+  for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
   return result;
 }
 
 // Clipboard - The list of tests begins below.
-test.describe("Clipboard", async () =>
-{
+test.describe('Clipboard', async () => {
   // Before All - Launch the app and get the first window.
-  test.beforeAll(async () =>
-  {
+  test.beforeAll(async () => {
     // Launch Electron app.
-    electronApp = await electron.launch({ args: ['.'] , executablePath: "./out/vizcon-win32-x64/vizcon.exe" });
+    electronApp = await electron.launch({ args: ['.'], executablePath: './out/vizcon-win32-x64/vizcon.exe' });
 
     // Get the first window that the app opens.
     window = await electronApp.firstWindow();
 
     // If the visualizer is open, select "Return to Editor" to open the editor.
-    if(await window.isVisible('[title="Return to Editor"]'))
+    if (await window.isVisible('[title="Return to Editor"]')) {
       await window.locator('[title="Return to Editor"]').click();
+    }
 
     // Select "New File" so there is a canvas to work on.
     // Wait for the text window to open and move the cursor there.
@@ -39,8 +38,7 @@ test.describe("Clipboard", async () =>
   });
 
   // Cut - Check that the cut keyboard shortcut both removes text and adds it to the clipboard.
-  test('Cut', async () =>
-  {
+  test('Cut', async () => {
     // Generate a random string, type it, and select it.
     const rand: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand);
@@ -55,12 +53,11 @@ test.describe("Clipboard", async () =>
 
     // Check that the string is not in the text area.
     const file_contents: string = await window.locator('#ide div.view-line').textContent();
-    expect(file_contents).toBe("");
+    expect(file_contents).toBe('');
   });
 
   // Cut Overwrite - Check that only the most-recently cut string is saved.
-  test('Cut Overwrite', async () =>
-  {
+  test('Cut Overwrite', async () => {
     // Generate a random string, type it, and select it.
     const rand: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand);
@@ -82,43 +79,42 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+X');
 
     // Check the clipboard and compare it to both the second string and previous contents.
-    const clipboardText2: string = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText2: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText2).toBe(rand2);
     expect(clipboardText2).not.toBe(clipboardText);
   });
 
   // Cut Portion - Check that the cut function only saves and removes selected text.
-  test('Cut Portion', async () =>
-  {
+  test('Cut Portion', async () => {
     // Generate three random strings and type all of them in order.
     const rand1: string = makeString(testStringSize);
     const rand2: string = makeString(testStringSize);
     const rand3: string = makeString(testStringSize);
-    await window.type('#ide div.view-line', rand1 + " " + rand2 + " " + rand3);
+    await window.type('#ide div.view-line', rand1 + ' ' + rand2 + ' ' + rand3);
 
     // Select the second string.
     // Move the cursor to the word and double-click.
     await window.keyboard.press('ArrowRight');
-    for(let i: number = 0; i < testStringSize + 1; i++)
+    for (let i = 0; i < testStringSize + 1; i++) {
       await window.keyboard.press('ArrowLeft');
+    }
     await window.keyboard.press('Control+D');
 
     // Press Ctrl + X.
     await window.keyboard.press('Control+X');
 
     // Check the clipboard and compare it to the second string.
-    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand2);
 
     // Check that the text area still contains the first and third string but not the second.
     const file_contents: Locator = window.locator('#ide div.view-line');
-    await expect(file_contents).toHaveText(rand1 + "  " + rand3);
+    await expect(file_contents).toHaveText(rand1 + '  ' + rand3);
     await expect(file_contents).not.toHaveText(rand2);
   });
 
   // Copy - Check that the copy keyboard shortcut adds text to the clipboard without removing it.
-  test('Copy', async () =>
-  {
+  test('Copy', async () => {
     // Generate a random string, type it, and select it.
     const rand: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand);
@@ -137,8 +133,7 @@ test.describe("Clipboard", async () =>
   });
 
   // Copy Overwrite - Check that only the most-recently copied string is saved.
-  test('Copy Overwrite', async () =>
-  {
+  test('Copy Overwrite', async () => {
     // Generate a random string, type it, and select it.
     const rand: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand);
@@ -162,38 +157,37 @@ test.describe("Clipboard", async () =>
     await window.keyboard.press('Control+C');
 
     // Check the clipboard and compare it to both the concatenated string and previous contents.
-    const clipboardText2: string = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText2: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText2).toBe(rand + rand2);
     expect(clipboardText2).not.toBe(clipboardText);
   });
 
   // Copy Portion - Check that the cut function only saves selected text.
-  test('Copy Portion', async () =>
-  {
+  test('Copy Portion', async () => {
     // Generate three random strings and type all of them in order.
     const rand1: string = makeString(testStringSize);
     const rand2: string = makeString(testStringSize);
     const rand3: string = makeString(testStringSize);
-    await window.type('#ide div.view-line', rand1 + " " + rand2 + " " + rand3);
+    await window.type('#ide div.view-line', rand1 + ' ' + rand2 + ' ' + rand3);
 
     // Select the second string.
     // Move the cursor to the word and press Ctrl + D.
     await window.keyboard.press('ArrowRight');
-    for(let i: number = 0; i < testStringSize + 1; i++)
+    for (let i = 0; i < testStringSize + 1; i++) {
       await window.keyboard.press('ArrowLeft');
+    }
     await window.keyboard.press('Control+D');
 
     // Press Ctrl + C.
     await window.keyboard.press('Control+C');
 
     // Check the clipboard and compare it to the second string.
-    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText())
+    const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand2);
   });
 
   // Paste - Check that the paste keyboard shortcut writes the clipboard content.
-  test('Paste', async () =>
-  {
+  test('Paste', async () => {
     // Generate a random string and copy it to the clipboard.
     const rand: string = makeString(testStringSize);
     await window.evaluate(str => navigator.clipboard.writeText(str), rand);
@@ -204,15 +198,14 @@ test.describe("Clipboard", async () =>
     // Check the text and compare it to the random string.
     const file_contents: Locator = window.locator('#ide div.view-line');
     expect(file_contents).toContainText(rand);
-    
+
     // Check that the string is still in the clipboard.
     const clipboardText: string = await window.evaluate(() => navigator.clipboard.readText());
     expect(clipboardText).toBe(rand);
   });
 
   // Paste at Cursor - Check that the paste function occurs at the cursor.
-  test('Paste at Cursor', async () =>
-  {
+  test('Paste at Cursor', async () => {
     // Generate three random strings.
     // Type the first two and save the third to the clipboard.
     const rand1: string = makeString(testStringSize);
@@ -220,11 +213,12 @@ test.describe("Clipboard", async () =>
     const rand3: string = makeString(testStringSize);
     await window.type('#ide div.view-line', rand1 + rand2);
     await window.evaluate(str => navigator.clipboard.writeText(str), rand3);
-    
+
     // Move the cursor between the first and second string.
     await window.keyboard.press('ArrowRight');
-    for(let i: number = 0; i < testStringSize; i++)
+    for (let i = 0; i < testStringSize; i++) {
       await window.keyboard.press('ArrowLeft');
+    }
 
     // Press Ctrl + V.
     await window.keyboard.press('Control+V');
@@ -245,14 +239,13 @@ test.describe("Clipboard", async () =>
   });
 
   // Paste Overwrite - Check that pasted text overwrites selected text.
-  test('Paste Overwrite', async () =>
-  {
+  test('Paste Overwrite', async () => {
     // Generate three random strings.
     // Type the first two and save the third to the clipboard.
     const rand1: string = makeString(testStringSize);
     const rand2: string = makeString(testStringSize);
     const rand3: string = makeString(testStringSize);
-    await window.type('#ide div.view-line', rand1 + " " + rand2);
+    await window.type('#ide div.view-line', rand1 + ' ' + rand2);
     await window.evaluate(str => navigator.clipboard.writeText(str), rand3);
 
     // Select the first string.
@@ -265,12 +258,11 @@ test.describe("Clipboard", async () =>
 
     // Check that the text area contains only the third and second string.
     const file_contents: Locator = window.locator('#ide div.view-line');
-    await expect(file_contents).toContainText(rand3 + " " + rand2);
+    await expect(file_contents).toContainText(rand3 + ' ' + rand2);
   });
 
   // After Each - Clear the text area and clipboard.
-  test.afterEach(async () =>
-  {
+  test.afterEach(async () => {
     // Clear the text area.
     await window.locator('#ide div.view-line').click();
     await window.keyboard.press('Control+A');
@@ -279,10 +271,9 @@ test.describe("Clipboard", async () =>
     // Clear the clipboard.
     await window.evaluate(() => navigator.clipboard.writeText(''));
   });
-  
+
   // After All - Exit app.
-  test.afterAll(async () =>
-  {
+  test.afterAll(async () => {
     window = null;
     await electronApp.close();
   });
