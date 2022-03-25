@@ -16,8 +16,8 @@
   },
   "keywords": [],
   "author": {
-    "name": "Joseph Terribile",
-    "email": "kartingman25@gmail.com"
+    "name": "CS@UCF VizCon Dev Team",
+    "email": "dev@josephterribile.com"
   },
   "license": "MIT",
   "config": {
@@ -25,7 +25,8 @@
       "packagerConfig": {
         "extraResource": [
           "./concurrency",
-          "./platform"
+          "./platform",
+          "./examples"
         ],
         "icon": "./icons/icon"
       },
