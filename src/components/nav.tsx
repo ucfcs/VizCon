@@ -51,7 +51,7 @@ export default function Nav({
       const titlePrefix = current.dirty ? '• ' : '';
       reactTitle = titlePrefix + shortName + ' - ';
     }
-    const titleSuffix = visualizerActive ? 'Visualier - ' : 'Editor - ';
+    const titleSuffix = visualizerActive ? 'Visualizer - ' : 'Editor - ';
     reactTitle += titleSuffix;
 
     setTitle(reactTitle);

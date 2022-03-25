@@ -49,8 +49,8 @@ const testingGlobalVars = [
 export default function Visualizer({ inVisualizer, current, goBack }: VisualizerProps): React.ReactElement {
   const [className, setClassName] = useState('');
   const [visualizerState, setVisualizerState] = useState<VisualizerState | null>(null);
-  const [runState, setRunState] = useState('not started');
-  const visualizerController = useRef(null);
+  const [runState, setRunState] = useState<VisualizerRunState>('not_started');
+  const visualizerController = useRef<VisualizerController>(null);
   const [consoleOutput, setConsoleOutput] = useState('');
   const [simulationSpeed, setSimulationSpeed] = useState(100);
 
@@ -63,13 +63,11 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     setClassName(!inVisualizer ? 'hidden' : '');
   }, [inVisualizer]);
 
-  // TODO: actual functions
   function start() {
     console.log('test start');
-
-    setRunState('Starting...');
+    setConsoleOutput('');
+    setRunState('starting');
     visualizerController.current = new VisualizerController({
-      // TODO: pass the path to the executable file
       exeFile: current.path,
       speed: simulationSpeed,
       onStateChange: newState => {
@@ -94,21 +92,29 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
 
   function restart() {
     console.log('test restart');
+    setConsoleOutput('');
   }
 
-  function stop() {
+  function terminate() {
     console.log('test stop');
-    visualizerController.current.stop();
+    visualizerController.current.terminate();
+  }
+  function pause() {
+    visualizerController.current.pause();
+  }
+  function resume() {
+    visualizerController.current.resume();
   }
 
   return (
     <div id="visualizer" className={className}>
       <Controls
         fileName={current.path}
-        simulationActive={false}
         start={start}
         restart={restart}
-        stop={stop}
+        terminate={terminate}
+        pause={pause}
+        resume={resume}
         goBack={goBack}
         status={runState}
         setSimulationSpeed={simulationSpeed => {

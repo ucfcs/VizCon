@@ -54,23 +54,30 @@ contextBridge.exposeInMainWorld('platform', {
                 channel.port1.postMessage({ type: 'request' });
                 waitingHandler = msg => {
                   resolve2(msg);
+                  waitingHandler = null;
                 };
               });
             },
             stop: () => {
               return new Promise((resolve2, reject2) => {
-                if (waitingHandler !== null) {
-                  throw new Error('Attempted to step again before previous step completed');
-                }
                 channel.port1.postMessage({ type: 'stop' });
-                waitingHandler = msg => {
-                  resolve2(msg);
+                const oldHandler = waitingHandler;
+                const killHandler = (msg: any) => {
+                  if (msg.type === 'kill_result') {
+                    resolve2(msg);
+                    if (oldHandler) {
+                      oldHandler({ type: 'process_killed' });
+                      waitingHandler = killHandler;
+                    }
+                  }
                 };
+                waitingHandler = killHandler;
               });
             },
           });
           return;
         }
+        console.log('Message from visualizer', msg);
         if (msg.type === 'stdout') {
           stdoutHandler(msg.data);
           return;
@@ -78,17 +85,10 @@ contextBridge.exposeInMainWorld('platform', {
         if (waitingHandler === null) {
           throw new Error('Unprompted response from the debugger');
         }
-        const temp = waitingHandler;
-        waitingHandler = null;
-        temp(msg);
+        waitingHandler(msg);
       };
       ipcRenderer.postMessage('launchProgram', { path }, [channel.port2]);
     });
-  },
-  doStep: async (): Promise<any> => {
-    // Returns an object representing a message from the debugger
-    // TODO: add type
-    return await ipcRenderer.invoke('_temp_doStep');
   },
   zoomIn: (): void => {
     webFrame.setZoomLevel(webFrame.getZoomLevel() + 1);

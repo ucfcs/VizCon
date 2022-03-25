@@ -59,6 +59,7 @@ jobs:
       - name: Build
         run: |
           npm ci
+          npm run downloadLldb
           npm run make
 
       # uploads the various generated files on the matrix of operating systems

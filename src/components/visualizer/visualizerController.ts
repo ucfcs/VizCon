@@ -5,16 +5,17 @@ interface VisualizerControllerOptions {
   speed: number;
   onConsoleOutput: (out: string[]) => void;
   onStateChange: (newState: VisualizerState) => void;
-  onRunStateChange: (newRunState: string) => void;
+  onRunStateChange: (newRunState: VisualizerRunState) => void;
 }
 
 export default class VisualizerController {
-  private running = false;
+  private status: VisualizerRunState = 'not_started';
   private readonly exeFile: string;
   private delayMilliseconds: number;
   private readonly onConsoleOutput: (out: string[]) => void;
   private readonly onStateChange: (newState: VisualizerState) => void;
-  private readonly onRunStateChange: (newRunState: string) => void;
+  private readonly onRunStateChange: (newRunState: VisualizerRunState) => void;
+  private debuggerHandle: DebuggerHandle;
 
   constructor({ exeFile, speed, onConsoleOutput, onStateChange, onRunStateChange }: VisualizerControllerOptions) {
     this.exeFile = exeFile;
@@ -28,9 +29,28 @@ export default class VisualizerController {
     this.startAsync();
   }
 
-  stop(): void {
+  terminate(): void {
     // TODO: improve cancellation
-    this.running = false;
+    this.status = 'terminating';
+    console.log('Terminating visualizer...');
+    this.onRunStateChange('terminating');
+    this.debuggerHandle.stop().then(res => {
+      this.status = 'terminated';
+      this.onRunStateChange('terminated');
+      console.log('Visualizer terminated', res);
+    });
+  }
+
+  pause(): void {
+    this.status = 'pausing';
+    this.onRunStateChange('pausing');
+  }
+  resume(): void {
+    if (this.status !== 'paused') {
+      console.error('The visualizer can only be resumed of it is in the paused state.');
+      return;
+    }
+    this.startLoop();
   }
 
   setSpeed(delayMilliseconds: number): void {
@@ -38,26 +58,33 @@ export default class VisualizerController {
   }
 
   private async startAsync() {
-    const debuggerHandle = await window.platform.launchProgram(this.exeFile, data => {
+    this.debuggerHandle = await window.platform.launchProgram(this.exeFile, data => {
       //console.log("Console stdout output", data);
       this.onConsoleOutput([data]);
     });
-    this.onRunStateChange('Running');
-    this.running = true;
-    while (this.running) {
-      const msg = await debuggerHandle.doStep();
+    await this.startLoop();
+  }
+  private async startLoop() {
+    this.status = 'running';
+    this.onRunStateChange('running');
+    while (this.status === 'running') {
+      const msg = await this.debuggerHandle.doStep();
       //console.log('received visualizer state', msg);
       if (msg.type === 'process_end') {
-        this.onRunStateChange('Finished');
+        this.status = 'finished';
+        this.onRunStateChange('finished');
+        return;
+      }
+      if (msg.type === 'process_killed') {
+        console.log('Process was killed.');
         return;
       }
       this.onStateChange(msg);
       await delay(this.delayMilliseconds);
     }
-    console.log('Stopping visualizer...');
-    this.onRunStateChange('Manually stopping...');
-    const res = await debuggerHandle.stop();
-    this.onRunStateChange('Stopped.');
-    console.log('Visualizer stopped', res);
+    if (this.status === 'pausing') {
+      this.status = 'paused';
+      this.onRunStateChange('paused');
+    }
   }
 }

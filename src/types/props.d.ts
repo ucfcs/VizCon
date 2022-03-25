@@ -32,3 +32,5 @@ interface DebuggerHandle {
   doStep: () => Promise<any>;
   stop: () => Promise<any>;
 }
+
+type VisualizerRunState = 'not_started' | 'starting' | 'pausing' | 'paused' | 'terminating' | 'terminated' | 'running' | 'finished';
