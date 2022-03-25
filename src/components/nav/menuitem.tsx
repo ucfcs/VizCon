@@ -5,11 +5,11 @@ interface MenuItemProps {
   options?: {
     name: string;
     action: () => void;
-    break?: boolean;
+    seperator?: boolean;
   }[];
 }
 
-const callbackCache: { [key: string]: (e: Event) => void } = {};
+const callbackCache: { [key: string]: () => void } = {};
 
 // TODO: mouse out instead of blur
 export default function MenuItem({ title, options }: MenuItemProps): React.ReactElement {
@@ -20,13 +20,17 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
 
   useEffect(() => {
     const els = options.map((opt, i) => {
-      if (opt.break) {
-        return <li key={title + '-' + i} className="menu-action disabled"></li>;
+      if (opt.seperator) {
+        return (
+          <li key={title + '-' + i} className="menu-action disabled">
+            <span className="action-label seperator disabled"></span>
+          </li>
+        );
       }
 
       window.removeEventListener(`Nav-${title}-${opt.name}`, callbackCache[opt.name]);
 
-      callbackCache[opt.name] = (e: Event) => {
+      callbackCache[opt.name] = () => {
         opt.action();
       };
 
@@ -53,7 +57,11 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
     document.body.removeEventListener('click', globalClickReset);
 
     // dont run this code if it inside a menu
-    if ((element.classList.contains('menu-item') || actionRef.current.contains(element)) && element.dataset.title === title) {
+    // TODO: this doesnt always work properly, when clicking on a disabled part of the menu it still closes
+    if (
+      (element.classList.contains('menu-item') || element.classList.contains('disabled') || actionRef.current.contains(element)) &&
+      element.dataset.title === title
+    ) {
       return;
     }
 

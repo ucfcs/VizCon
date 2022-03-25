@@ -157,6 +157,7 @@
 
               &.disabled {
                 cursor: default;
+                opacity: 0.4;
               }
 
               .action-label {
@@ -168,6 +169,17 @@
                 background: none;
                 text-decoration: none;
                 line-height: 1;
+
+                &.seperator {
+                  height: 0px;
+                  width: 100%;
+                  display: block;
+                  margin-left: 0.8em;
+                  margin-right: 0.8em;
+                  padding: 0.2em 0 0;
+                  border-bottom: 1px solid #bbb;
+                  align-items: center;
+                }
               }
             }
           }
