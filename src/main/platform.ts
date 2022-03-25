@@ -7,13 +7,13 @@ import split2 from 'split2';
 import { filePathToFileName } from '../util/utils';
 
 // determine where the concurrency folder is
-let resourcesPrefix = '.';
+let resourcesDir = '.';
 if (app.isPackaged) {
   // replace \\\\ (two escaped \\) with / to simplify things
-  resourcesPrefix = process.resourcesPath.replace(/\\\\/g, pathSep);
+  resourcesDir = process.resourcesPath.replace(/\\\\/g, pathSep);
 }
 
-const concurrencyFolder = resourcesPrefix + pathSep + 'concurrency' + pathSep;
+const concurrencyFolder = resourcesDir + pathSep + 'concurrency' + pathSep;
 
 const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
@@ -93,7 +93,7 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [path, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
-  const commandString = `clang -g ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
+  const commandString = `gcc -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
   console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
@@ -110,21 +110,12 @@ ipcMain.handle('compileFile', async (e, path: string) => {
 });
 
 function launchProgram(path: string, port: Electron.MessagePortMain): void {
-  const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
-  const controllerDir = resourcesPrefix + pathSep + 'concurrency' + pathSep + 'controller';
+  const extension = process.platform === 'win32' ? '.exe' : '';
+  const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + extension;
+  const controllerDir = resourcesDir + pathSep + 'concurrency' + pathSep + 'controller';
   console.log(`Current directory: ${cwd()}`);
-  const lldb =
-    resourcesPrefix +
-    pathSep +
-    'platform' +
-    pathSep +
-    'lldb' +
-    pathSep +
-    'bin' +
-    pathSep +
-    'lldb' +
-    (process.platform === 'win32' ? '.exe' : '');
-  let child = child_process.spawn(lldb, {
+  const lldb = resourcesDir + pathSep + 'platform' + pathSep + 'lldb' + pathSep + 'bin' + pathSep + 'lldb' + extension;
+  const child = child_process.spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
   });
   child.stdin.write(

@@ -90,11 +90,6 @@ contextBridge.exposeInMainWorld('platform', {
       ipcRenderer.postMessage('launchProgram', { path }, [channel.port2]);
     });
   },
-  doStep: async (): Promise<any> => {
-    // Returns an object representing a message from the debugger
-    // TODO: add type
-    return await ipcRenderer.invoke('_temp_doStep');
-  },
   zoomIn: (): void => {
     webFrame.setZoomLevel(webFrame.getZoomLevel() + 1);
   },
