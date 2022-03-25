@@ -23,7 +23,6 @@ interface ControlProps {
   className?: string;
 }
 
-// TODO: restructure so entire element is clickable
 function Control({ label, action, className = '' }: ControlProps): React.ReactElement {
   const labelElem = <div className="label">{label}</div>;
 

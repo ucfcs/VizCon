@@ -14,6 +14,9 @@ declare global {
       saveFileToDisk: (path: string, content: string, forceDialog?: boolean) => Promise<string>;
       compileFile: (path: string) => Promise<string>;
       launchProgram: (path: string, stdoutHandler: (data: string) => void) => Promise<DebuggerHandle>;
+      zoomIn: () => void;
+      zoomOut: () => void;
+      resetZoom: () => void;
     };
   }
 }
