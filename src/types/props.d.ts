@@ -8,6 +8,7 @@ interface OpenFileData {
 interface EditorProps {
   current: OpenFileData;
   regenTabination: () => void;
+  setDirty: (_: boolean) => void;
 }
 
 interface ThreadData {

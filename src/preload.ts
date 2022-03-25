@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webFrame } from 'electron';
 import { platform } from 'process';
 
 contextBridge.exposeInMainWorld('platform', {
@@ -95,4 +95,13 @@ contextBridge.exposeInMainWorld('platform', {
     // TODO: add type
     return await ipcRenderer.invoke('_temp_doStep');
   },
+  zoomIn: (): void => {
+    webFrame.setZoomLevel(webFrame.getZoomLevel() + 1);
+  },
+  zoomOut: (): void => {
+    webFrame.setZoomLevel(webFrame.getZoomLevel() - 1);
+  },
+  resetZoom: (): void => {
+    webFrame.setZoomLevel(0);
+  }
 });
