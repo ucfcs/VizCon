@@ -136,21 +136,21 @@ export default function Nav({
             {
               name: 'Zoom In',
               action: () => {
-                console.log('zoom in');
+                window.platform.zoomIn();
               },
               keybind: 'Ctrl++',
             },
             {
               name: 'Zoom Out',
               action: () => {
-                console.log('zoom out');
+                window.platform.zoomOut();
               },
               keybind: 'Ctrl+-',
             },
             {
               name: 'Reset Zoom',
               action: () => {
-                console.log('reset zoom');
+                window.platform.resetZoom();
               },
               keybind: 'Ctrl+0',
             },
