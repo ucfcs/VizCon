@@ -17,6 +17,7 @@ declare global {
       zoomIn: () => void;
       zoomOut: () => void;
       resetZoom: () => void;
+      disableMenu: (menuParent: string, menuItem: string, disabled: boolean) => void;
     };
   }
 }

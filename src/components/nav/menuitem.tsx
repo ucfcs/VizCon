@@ -60,9 +60,11 @@ function MenuItem({parentTitle, name, action, disable, keybind, seperator}: Menu
     // check if disable func exists and its value
     if (disable && disable()) {
       setDisabled(true);
+      window.platform.disableMenu(parentTitle, name, true);
       return;
     }
     setDisabled(false);
+    window.platform.disableMenu(parentTitle, name, false);
   });
 
   if (seperator) {

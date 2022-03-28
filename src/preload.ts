@@ -98,5 +98,9 @@ contextBridge.exposeInMainWorld('platform', {
   },
   resetZoom: (): void => {
     webFrame.setZoomLevel(0);
+  },
+  disableMenu: (menuParent: string, menuItem: string, disabled: boolean): void => {
+    console.log(`Disabling ${menuParent}-${menuItem} to ${disabled}`);
+    ipcRenderer.invoke('disableMenu', menuParent, menuItem, disabled);
   }
 });
