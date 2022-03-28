@@ -9,6 +9,7 @@ interface NavProps {
   dirty: boolean;
   visualizerActive: boolean;
   openFile: () => void;
+  openExampleFile: () => void;
   openBlankFile: () => void;
   saveFile: () => void;
   saveAll: () => void;
@@ -27,6 +28,7 @@ export default function Nav({
   dirty,
   visualizerActive,
   openFile,
+  openExampleFile,
   openBlankFile,
   saveFile,
   saveAll,
@@ -84,6 +86,7 @@ export default function Nav({
               seperator: true,
             },
             { name: 'Open File', action: openFile, disable: inVisualizer, keybind: 'Ctrl+O' },
+            { name: 'Open Example File', action: openExampleFile, disable: inVisualizer, keybind: 'Ctrl+Shift+O' },
             {
               name: 'b',
               action: () => {

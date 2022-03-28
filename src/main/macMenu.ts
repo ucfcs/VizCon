@@ -44,6 +44,13 @@ const template: Electron.MenuItemConstructorOptions[] = [
           clickCallback('File', 'Open File');
         },
       },
+      {
+        label: 'Open Example File',
+        accelerator: 'CmdOrCtrl+Shift+O',
+        click: () => {
+          clickCallback('File', 'Open Example File');
+        },
+      },
       { type: 'separator' },
       {
         label: 'Save File',

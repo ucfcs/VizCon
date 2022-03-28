@@ -20,35 +20,41 @@ function App(): React.ReactElement {
   const [compileResult, setCompileResult] = useState('');
   const [inVisualizer, setInVisualizer] = useState(false); // TODO: Change back to false later
 
-  function openFile(): void {
-    window.platform.openFileDialog().then(async newFiles => {
-      // if no files were selected, dont attempt to read anything
-      if (newFiles[0].includes('EMPTY:')) {
-        return;
-      }
+  async function handleNewFiles(newFiles: string[]) {
+    // if no files were selected, dont attempt to read anything
+    if (newFiles[0].includes('EMPTY:')) {
+      return;
+    }
 
-      // filter out already open files
-      const filteredFiles = newFiles.filter(file => {
-        for (let i = 0; i < files.length; i++) {
-          if (files[i].path === file) {
-            return false;
-          }
+    // filter out already open files
+    const filteredFiles = newFiles.filter(file => {
+      for (let i = 0; i < files.length; i++) {
+        if (files[i].path === file) {
+          return false;
         }
-        return true;
-      });
-
-      const newFileContents = await window.platform.readFilesSync(filteredFiles);
-      const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
-        return {
-          path: filteredFiles[i],
-          fileContent: diskContent,
-          currentContent: diskContent,
-          dirty: false,
-        };
-      });
-      setFiles([...files, ...newFileData]);
-      setCurrent(newFileData[newFileData.length - 1]);
+      }
+      return true;
     });
+
+    const newFileContents = await window.platform.readFilesSync(filteredFiles);
+    const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
+      return {
+        path: filteredFiles[i],
+        fileContent: diskContent,
+        currentContent: diskContent,
+        dirty: false,
+      };
+    });
+    setFiles([...files, ...newFileData]);
+    setCurrent(newFileData[newFileData.length - 1]);
+  }
+
+  function openFile(): void {
+    window.platform.openFileDialog().then(handleNewFiles);
+  }
+
+  function openExampleFile(): void {
+    window.platform.openExampleFileDialog().then(handleNewFiles);
   }
 
   function openBlankFile(): void {
@@ -223,6 +229,7 @@ function App(): React.ReactElement {
         dirty={dirty}
         visualizerActive={inVisualizer}
         openFile={openFile}
+        openExampleFile={openExampleFile}
         openBlankFile={openBlankFile}
         saveFile={saveFile}
         saveAll={saveAll}
@@ -248,6 +255,7 @@ function App(): React.ReactElement {
         inVisualizer={inVisualizer}
         newFile={openBlankFile}
         openFile={openFile}
+        openExampleFile={openExampleFile}
       />
       <Visualizer inVisualizer={inVisualizer} current={current} goBack={() => setInVisualizer(false)} />
     </>
