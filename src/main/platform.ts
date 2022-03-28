@@ -180,10 +180,9 @@ ipcMain.handle('showUnsavedChangesDialog', async (e, name: string): Promise<Unsa
     title: 'VizCon',
     buttons: ['Save', "Don't Save", 'Cancel'],
     type: 'warning',
-    noLink: true
+    noLink: true,
   });
 
-  console.log(`result from box: ${result.response}`);
   switch (result.response) {
     case 0:
       return 'save';

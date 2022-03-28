@@ -129,7 +129,7 @@ function App(): React.ReactElement {
   async function closeFile(file: OpenFileData): Promise<void> {
     if (file.dirty) {
       const response = await window.platform.showUnsavedChangesDialog(filePathToShortName(file.path));
-      
+
       if (response === 'cancel') {
         return;
       }
