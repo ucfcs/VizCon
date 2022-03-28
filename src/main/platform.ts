@@ -172,3 +172,24 @@ ipcMain.on('launchProgram', (event, msg) => {
   port.start();
   launchProgram(msg.path, port);
 });
+
+ipcMain.handle('showUnsavedChangesDialog', async (e, name: string): Promise<UnsavedChangesResponse> => {
+  const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(e.sender), {
+    message: 'Do you want to save the changes you made to ' + name + '?',
+    detail: 'Your changes will be lost if you dont save them.',
+    title: 'VizCon',
+    buttons: ['Save', "Don't Save", 'Cancel'],
+    type: 'warning',
+    noLink: true
+  });
+
+  console.log(`result from box: ${result.response}`);
+  switch (result.response) {
+    case 0:
+      return 'save';
+    case 1:
+      return 'dontsave';
+    default:
+      return 'cancel';
+  }
+});

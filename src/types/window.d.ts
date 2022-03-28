@@ -18,6 +18,7 @@ declare global {
       zoomOut: () => void;
       resetZoom: () => void;
       disableMenu: (menuParent: string, menuItem: string, disabled: boolean) => void;
+      showUnsavedChangesDialog: (name: string) => Promise<UnsavedChangesResponse>;
     };
   }
 }
