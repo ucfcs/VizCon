@@ -135,7 +135,7 @@ function App(): React.ReactElement {
       }
 
       if (response === 'save') {
-        file = await saveFileImpl(file) || file;
+        file = (await saveFileImpl(file)) || file;
       }
 
       // if dontsave or save, fall through to the rest of the close code
@@ -231,6 +231,8 @@ function App(): React.ReactElement {
         showOutput={outputVisible}
         closeOutput={() => setOutputVisible(false)}
         inVisualizer={inVisualizer}
+        newFile={openBlankFile}
+        openFile={openFile}
       />
       <Visualizer inVisualizer={inVisualizer} current={current} goBack={() => setInVisualizer(false)} />
     </>
