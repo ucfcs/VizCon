@@ -58,6 +58,14 @@ export default function Nav({
     document.title = reactTitle + 'VizCon';
   }, [current, dirty, visualizerActive]);
 
+  function inVisualizer() {
+    return visualizerActive;
+  }
+
+  function inEditor() {
+    return !visualizerActive;
+  }
+
   // TODO: Update this menu to match the options found in main/macMenu.ts
   return (
     <div className="titlebar">
@@ -67,7 +75,7 @@ export default function Nav({
         <Menu
           title="File"
           options={[
-            { name: 'New File', action: openBlankFile, keybind: 'Ctrl+N' },
+            { name: 'New File', action: openBlankFile, disable: inVisualizer, keybind: 'Ctrl+N' },
             {
               name: 'b',
               action: () => {
@@ -75,7 +83,7 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Open File', action: openFile, keybind: 'Ctrl+O' },
+            { name: 'Open File', action: openFile, disable: inVisualizer, keybind: 'Ctrl+O' },
             {
               name: 'b',
               action: () => {
@@ -83,9 +91,9 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Save File', action: saveFile, keybind: 'Ctrl+S' },
-            { name: 'Save As', action: saveAs, keybind: 'Ctrl+Shift+S' },
-            { name: 'Save All', action: saveAll, keybind: 'Ctrl+Alt+S' },
+            { name: 'Save File', action: saveFile, disable: inVisualizer, keybind: 'Ctrl+S' },
+            { name: 'Save As', action: saveAs, disable: inVisualizer, keybind: 'Ctrl+Shift+S' },
+            { name: 'Save All', action: saveAll, disable: inVisualizer, keybind: 'Ctrl+Alt+S' },
             {
               name: 'b',
               action: () => {
@@ -93,7 +101,7 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Close File', action: closeFile, keybind: 'Ctrl+W' },
+            { name: 'Close File', action: closeFile, disable: inVisualizer, keybind: 'Ctrl+W' },
             { name: 'Close Window', action: closeWindow, keybind: 'Ctrl+Shift+W' },
           ]}
         />
@@ -115,15 +123,18 @@ export default function Nav({
           options={[
             {
               name: 'Show Compile Output',
+              disable: inVisualizer,
               action: showCompileOutput,
             },
             {
               // TODO: disabling
               name: 'Show Editor',
+              disable: inEditor,
               action: showEditor,
             },
             {
               name: 'Show Visualizer',
+              disable: inVisualizer,
               action: showVisualizer,
             },
             {

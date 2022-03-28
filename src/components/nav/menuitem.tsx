@@ -7,12 +7,12 @@ interface MenuProps {
 
 interface MenuItemProps extends MenuItemOpts {
   parentTitle: string;
-  idx: number;
 }
   
 interface MenuItemOpts {
   name: string;
   action: () => void;
+  disable?: () => boolean;
   keybind?: string;
   seperator?: boolean;
 }
@@ -53,19 +53,37 @@ function getMasksForBind(keybind: string): [KeyboardMasks, string] {
 const callbackCache: { [key: string]: () => void } = {};
 const keyboardCache: { [key: string]: (ke: KeyboardEvent) => void } = {};
 
-function MenuItem({parentTitle, idx, name, action, keybind, seperator}: MenuItemProps): React.ReactElement {
+function MenuItem({parentTitle, name, action, disable, keybind, seperator}: MenuItemProps): React.ReactElement {
+  const [disabled, setDisabled] = useState(false);
+
+  useEffect(() => {
+    // check if disable func exists and its value
+    if (disable && disable()) {
+      setDisabled(true);
+      return;
+    }
+    setDisabled(false);
+  });
+
   if (seperator) {
     return (
-      <li key={parentTitle + '-' + idx} className="menu-action disabled">
+      <li className="menu-action disabled">
         <span className="action-label seperator disabled"></span>
       </li>
     );
   }
 
+  const onClick = () => {
+    if (disabled) {
+      return;
+    }
+    action();
+  }
+
   window.removeEventListener(`Nav-${parentTitle}-${name}`, callbackCache[name]);
 
   callbackCache[name] = () => {
-    action();
+    onClick();
   };
 
   window.addEventListener(`Nav-${parentTitle}-${name}`, callbackCache[name]);
@@ -93,15 +111,17 @@ function MenuItem({parentTitle, idx, name, action, keybind, seperator}: MenuItem
       // additional check to see if the keybind is +, allowing the = to take the place of the + so the user does not need to hold shift
       if (ke.key.toUpperCase() === key || (key === '+' && ke.key.toUpperCase() === '=')) {
         ke.preventDefault();
-        action();
+        onClick();
       }
     };
 
     window.addEventListener('keydown', keyboardCache[name]);
   }
 
+  const className = 'menu-action' + (disabled ? ' disabled' : '');
+
   return (
-    <li key={parentTitle + '-' + idx} className="menu-action" onClick={action}>
+    <li className={className} onClick={onClick}>
       <span className="action-label">{name}</span>
       <span className='keybind'>{keybind}</span>
     </li>
@@ -118,7 +138,7 @@ export default function Menu({ title, options }: MenuProps): React.ReactElement 
 
   useEffect(() => {
     const els = options.map((opt, i) => {
-      return <MenuItem parentTitle={title} idx={i} name={opt.name} action={opt.action} keybind={opt.keybind} seperator={opt.seperator} />
+      return <MenuItem key={title + '-' + i} parentTitle={title} name={opt.name} action={opt.action} disable={opt.disable} keybind={opt.keybind} seperator={opt.seperator} />
     });
     setOptionElements(<ul>{els}</ul>);
   }, [options]);
