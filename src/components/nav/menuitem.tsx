@@ -8,7 +8,7 @@ interface MenuProps {
 interface MenuItemProps extends MenuItemOpts {
   parentTitle: string;
 }
-  
+
 interface MenuItemOpts {
   name: string;
   action: () => void;
@@ -43,17 +43,20 @@ function getMasksForBind(keybind: string): [KeyboardMasks, string] {
     alt = true;
   }
 
-  return [{
-    ctrl: ctrl,
-    shift: shift,
-    alt: alt
-  }, keybind];
+  return [
+    {
+      ctrl: ctrl,
+      shift: shift,
+      alt: alt,
+    },
+    keybind,
+  ];
 }
 
 const callbackCache: { [key: string]: () => void } = {};
 const keyboardCache: { [key: string]: (ke: KeyboardEvent) => void } = {};
 
-function MenuItem({parentTitle, name, action, disable, keybind, seperator}: MenuItemProps): React.ReactElement {
+function MenuItem({ parentTitle, name, action, disable, keybind, seperator }: MenuItemProps): React.ReactElement {
   const [disabled, setDisabled] = useState(false);
 
   useEffect(() => {
@@ -80,7 +83,7 @@ function MenuItem({parentTitle, name, action, disable, keybind, seperator}: Menu
       return;
     }
     action();
-  }
+  };
 
   window.removeEventListener(`Nav-${parentTitle}-${name}`, callbackCache[name]);
 
@@ -125,7 +128,7 @@ function MenuItem({parentTitle, name, action, disable, keybind, seperator}: Menu
   return (
     <li className={className} onClick={onClick}>
       <span className="action-label">{name}</span>
-      <span className='keybind'>{keybind}</span>
+      <span className="keybind">{keybind}</span>
     </li>
   );
 }
@@ -140,7 +143,17 @@ export default function Menu({ title, options }: MenuProps): React.ReactElement 
 
   useEffect(() => {
     const els = options.map((opt, i) => {
-      return <MenuItem key={title + '-' + i} parentTitle={title} name={opt.name} action={opt.action} disable={opt.disable} keybind={opt.keybind} seperator={opt.seperator} />
+      return (
+        <MenuItem
+          key={title + '-' + i}
+          parentTitle={title}
+          name={opt.name}
+          action={opt.action}
+          disable={opt.disable}
+          keybind={opt.keybind}
+          seperator={opt.seperator}
+        />
+      );
     });
     setOptionElements(<ul>{els}</ul>);
   }, [options]);

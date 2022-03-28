@@ -1,4 +1,4 @@
-import Electron, { app, shell, Menu, BrowserWindow, dialog, ipcMain, MenuItem } from 'electron';
+import Electron, { app, shell, Menu, BrowserWindow, dialog, ipcMain } from 'electron';
 
 function clickCallback(title: string, optName: string) {
   BrowserWindow.getAllWindows()[0].webContents.executeJavaScript(`
@@ -12,7 +12,6 @@ function clickCallback(title: string, optName: string) {
 
 // TODO: disabling of some elements of the menu based on state of application
 const template: Electron.MenuItemConstructorOptions[] = [
-  // { role: 'appMenu' }
   {
     label: app.name,
     submenu: [
@@ -27,7 +26,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
       { role: 'quit' },
     ],
   },
-  // { role: 'fileMenu' }
   {
     label: 'File',
     submenu: [
@@ -79,7 +77,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
       { role: 'close', label: 'Close Window', accelerator: 'CmdOrCtrl+Option+W' },
     ],
   },
-  // { role: 'editMenu' }
   {
     label: 'Edit',
     submenu: [
@@ -118,7 +115,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
       },
     ],
   },
-  // { role: 'viewMenu' }
   {
     label: 'View',
     submenu: [
@@ -151,7 +147,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
       { role: 'togglefullscreen' },
     ],
   },
-  // { role: 'windowMenu' }
   {
     label: 'Window',
     submenu: [{ role: 'minimize' }, { role: 'zoom' }, { type: 'separator' }, { role: 'front' }, { type: 'separator' }, { role: 'window' }],

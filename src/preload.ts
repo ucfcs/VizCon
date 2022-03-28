@@ -102,5 +102,5 @@ contextBridge.exposeInMainWorld('platform', {
   disableMenu: (menuParent: string, menuItem: string, disabled: boolean): void => {
     console.log(`Disabling ${menuParent}-${menuItem} to ${disabled}`);
     ipcRenderer.invoke('disableMenu', menuParent, menuItem, disabled);
-  }
+  },
 });
