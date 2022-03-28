@@ -1,13 +1,20 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-interface MenuItemProps {
+interface MenuProps {
   title: string;
-  options?: {
-    name: string;
-    action: () => void;
-    keybind?: string;
-    seperator?: boolean;
-  }[];
+  options?: MenuItemOpts[];
+}
+
+interface MenuItemProps extends MenuItemOpts {
+  parentTitle: string;
+  idx: number;
+}
+  
+interface MenuItemOpts {
+  name: string;
+  action: () => void;
+  keybind?: string;
+  seperator?: boolean;
 }
 
 interface KeyboardMasks {
@@ -46,9 +53,64 @@ function getMasksForBind(keybind: string): [KeyboardMasks, string] {
 const callbackCache: { [key: string]: () => void } = {};
 const keyboardCache: { [key: string]: (ke: KeyboardEvent) => void } = {};
 
+function MenuItem({parentTitle, idx, name, action, keybind, seperator}: MenuItemProps): React.ReactElement {
+  if (seperator) {
+    return (
+      <li key={parentTitle + '-' + idx} className="menu-action disabled">
+        <span className="action-label seperator disabled"></span>
+      </li>
+    );
+  }
+
+  window.removeEventListener(`Nav-${parentTitle}-${name}`, callbackCache[name]);
+
+  callbackCache[name] = () => {
+    action();
+  };
+
+  window.addEventListener(`Nav-${parentTitle}-${name}`, callbackCache[name]);
+
+  if (keybind) {
+    window.removeEventListener('keydown', keyboardCache[name]);
+
+    const [masks, key] = getMasksForBind(keybind);
+
+    keyboardCache[name] = (ke: KeyboardEvent) => {
+      // if ctrl key required but not pressed, return
+      if (masks.ctrl && !ke.ctrlKey) {
+        return;
+      }
+
+      if (masks.shift && !ke.shiftKey) {
+        return;
+      }
+
+      if (masks.alt && !ke.altKey) {
+        return;
+      }
+
+      // check that key matches
+      // additional check to see if the keybind is +, allowing the = to take the place of the + so the user does not need to hold shift
+      if (ke.key.toUpperCase() === key || (key === '+' && ke.key.toUpperCase() === '=')) {
+        ke.preventDefault();
+        action();
+      }
+    };
+
+    window.addEventListener('keydown', keyboardCache[name]);
+  }
+
+  return (
+    <li key={parentTitle + '-' + idx} className="menu-action" onClick={action}>
+      <span className="action-label">{name}</span>
+      <span className='keybind'>{keybind}</span>
+    </li>
+  );
+}
+
 // TODO: mouse out instead of blur
 // TODO: this gets rerendered every time a new file is opened, a solution must be found
-export default function MenuItem({ title, options }: MenuItemProps): React.ReactElement {
+export default function Menu({ title, options }: MenuProps): React.ReactElement {
   const actionRef = useRef<HTMLDivElement>();
   const [expanded, setExpanded] = useState(false);
   const [className, setClassName] = useState('menu-item');
@@ -56,58 +118,7 @@ export default function MenuItem({ title, options }: MenuItemProps): React.React
 
   useEffect(() => {
     const els = options.map((opt, i) => {
-      if (opt.seperator) {
-        return (
-          <li key={title + '-' + i} className="menu-action disabled">
-            <span className="action-label seperator disabled"></span>
-          </li>
-        );
-      }
-
-      window.removeEventListener(`Nav-${title}-${opt.name}`, callbackCache[opt.name]);
-
-      callbackCache[opt.name] = () => {
-        opt.action();
-      };
-
-      window.addEventListener(`Nav-${title}-${opt.name}`, callbackCache[opt.name]);
-
-      if (opt.keybind) {
-        window.removeEventListener('keydown', keyboardCache[opt.name]);
-
-        const [masks, key] = getMasksForBind(opt.keybind);
-
-        keyboardCache[opt.name] = (ke: KeyboardEvent) => {
-          // if ctrl key required but not pressed, return
-          if (masks.ctrl && !ke.ctrlKey) {
-            return;
-          }
-
-          if (masks.shift && !ke.shiftKey) {
-            return;
-          }
-
-          if (masks.alt && !ke.altKey) {
-            return;
-          }
-
-          // check that key matches
-          // additional check to see if the keybind is +, allowing the = to take the place of the + so the user does not need to hold shift
-          if (ke.key.toUpperCase() === key || (key === '+' && ke.key.toUpperCase() === '=')) {
-            ke.preventDefault();
-            opt.action();
-          }
-        };
-
-        window.addEventListener('keydown', keyboardCache[opt.name]);
-      }
-
-      return (
-        <li key={title + '-' + i} className="menu-action" onClick={opt.action}>
-          <span className="action-label">{opt.name}</span>
-          <span className='keybind'>{opt.keybind}</span>
-        </li>
-      );
+      return <MenuItem parentTitle={title} idx={i} name={opt.name} action={opt.action} keybind={opt.keybind} seperator={opt.seperator} />
     });
     setOptionElements(<ul>{els}</ul>);
   }, [options]);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { filePathToShortName } from '../util/utils';
 import WindowControls from './nav/windowcontrols';
-import MenuItem from './nav/menuitem';
+import Menu from './nav/menuitem';
 import '../styles/nav.scss';
 
 interface NavProps {
@@ -64,7 +64,7 @@ export default function Nav({
       <div className="titlebar-drag-region"></div>
       <a className="appicon"></a>
       <div className="menubar" role="menubar">
-        <MenuItem
+        <Menu
           title="File"
           options={[
             { name: 'New File', action: openBlankFile, keybind: 'Ctrl+N' },
@@ -97,7 +97,7 @@ export default function Nav({
             { name: 'Close Window', action: closeWindow, keybind: 'Ctrl+Shift+W' },
           ]}
         />
-        <MenuItem
+        <Menu
           title="Compile"
           options={[
             {
@@ -110,7 +110,7 @@ export default function Nav({
             },
           ]}
         />
-        <MenuItem
+        <Menu
           title="View"
           options={[
             {
