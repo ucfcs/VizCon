@@ -100,10 +100,12 @@ contextBridge.exposeInMainWorld('platform', {
     webFrame.setZoomLevel(0);
   },
   disableMenu: (menuParent: string, menuItem: string, disabled: boolean): void => {
-    console.log(`Disabling ${menuParent}-${menuItem} to ${disabled}`);
     ipcRenderer.invoke('disableMenu', menuParent, menuItem, disabled);
   },
-  showUnsavedChangesDialog: async (name: string): Promise<UnsavedChangesResponse> => {
-    return await ipcRenderer.invoke('showUnsavedChangesDialog', name);
+  showUnsavedSaveDialog: async (name: string): Promise<UnsavedChangesResponse> => {
+    return await ipcRenderer.invoke('showUnsavedSaveDialog', name);
+  },
+  showUnsavedCompileDialog: async (name: string): Promise<UnsavedChangesResponse> => {
+    return await ipcRenderer.invoke('showUnsavedCompileDialog', name);
   },
 });

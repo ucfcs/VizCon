@@ -128,7 +128,7 @@ function App(): React.ReactElement {
 
   async function closeFile(file: OpenFileData): Promise<void> {
     if (file.dirty) {
-      const response = await window.platform.showUnsavedChangesDialog(filePathToShortName(file.path));
+      const response = await window.platform.showUnsavedSaveDialog(filePathToShortName(file.path));
 
       if (response === 'cancel') {
         return;
@@ -184,11 +184,22 @@ function App(): React.ReactElement {
       return;
     }
 
+    let file = current;
+
+    // handle atttempting to compile an unsaved file
     if (current.dirty) {
-      await saveFile();
+      const response = await window.platform.showUnsavedCompileDialog(filePathToShortName(file.path));
+
+      if (response === 'cancel') {
+        return;
+      }
+
+      if (response === 'save') {
+        file = (await saveFileImpl(file)) || file;
+      }
     }
 
-    const results = await window.platform.compileFile(current.path);
+    const results = await window.platform.compileFile(file.path);
     if (results !== '') {
       setOutputVisible(true);
       setCompileResult(results);
@@ -198,6 +209,10 @@ function App(): React.ReactElement {
     if (run) {
       // TODO: hook up the run command
       setInVisualizer(true);
+    } else {
+      // TODO: should this be a dialog???
+      setOutputVisible(true);
+      setCompileResult('Compilation succeeded with no warnings or errors.');
     }
   }
 
