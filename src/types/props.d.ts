@@ -34,3 +34,5 @@ interface DebuggerHandle {
 }
 
 type VisualizerRunState = 'not_started' | 'starting' | 'pausing' | 'paused' | 'terminating' | 'terminated' | 'running' | 'finished';
+
+type UnsavedChangesResponse = 'save' | 'dontsave' | 'cancel';

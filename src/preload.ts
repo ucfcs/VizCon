@@ -34,7 +34,7 @@ contextBridge.exposeInMainWorld('platform', {
     return await ipcRenderer.invoke('compileFile', path);
   },
   launchProgram: (path: string, stdoutHandler: (data: string) => void): Promise<DebuggerHandle> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const channel = new MessageChannel();
       let hasStarted = false;
       let waitingHandler: (state: any) => void = null;
@@ -47,7 +47,7 @@ contextBridge.exposeInMainWorld('platform', {
           hasStarted = true;
           resolve({
             doStep: () => {
-              return new Promise((resolve2, reject2) => {
+              return new Promise((resolve2) => {
                 if (waitingHandler !== null) {
                   throw new Error('Attempted to step again before previous step completed');
                 }
@@ -59,7 +59,7 @@ contextBridge.exposeInMainWorld('platform', {
               });
             },
             stop: () => {
-              return new Promise((resolve2, reject2) => {
+              return new Promise((resolve2) => {
                 channel.port1.postMessage({ type: 'stop' });
                 const oldHandler = waitingHandler;
                 const killHandler = (msg: any) => {
@@ -98,5 +98,8 @@ contextBridge.exposeInMainWorld('platform', {
   },
   resetZoom: (): void => {
     webFrame.setZoomLevel(0);
+  },
+  showUnsavedChangesDialog: async (name: string): Promise<UnsavedChangesResponse> => {
+    return await ipcRenderer.invoke('showUnsavedChangesDialog', name);
   }
 });

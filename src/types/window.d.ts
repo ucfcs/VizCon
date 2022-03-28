@@ -17,6 +17,7 @@ declare global {
       zoomIn: () => void;
       zoomOut: () => void;
       resetZoom: () => void;
+      showUnsavedChangesDialog: (name: string) => Promise<UnsavedChangesResponse>;
     };
   }
 }

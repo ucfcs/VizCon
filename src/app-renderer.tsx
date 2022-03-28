@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom';
 import Nav from './components/nav';
 import IDE from './components/ide';
 import Visualizer from './components/visualizer';
+import { filePathToShortName } from './util/utils';
 
 const root = document.getElementById('vizcon');
 document.body.classList.add(window.platform.getPlatform());
@@ -125,7 +126,21 @@ function App(): React.ReactElement {
     setCurrent(newCurrent || current);
   }
 
-  function closeFile(file: OpenFileData): void {
+  async function closeFile(file: OpenFileData): Promise<void> {
+    if (file.dirty) {
+      const response = await window.platform.showUnsavedChangesDialog(filePathToShortName(file.path));
+      
+      if (response === 'cancel') {
+        return;
+      }
+
+      if (response === 'save') {
+        saveFileImpl(file);
+      }
+
+      // if dontsave or save, fall through to the rest of the close code
+    }
+
     const filesNew = files.filter(f => {
       return f !== file;
     });
