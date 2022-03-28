@@ -63,7 +63,7 @@ function App(): React.ReactElement {
     setCurrent(blank);
   }
 
-  async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<void> {
+  async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<OpenFileData> {
     const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, forceDialog);
     console.log(`saving file ${file.path}, status ${writtenPath}`);
 
@@ -75,7 +75,7 @@ function App(): React.ReactElement {
         newFiles[i].fileContent = newFiles[i].currentContent;
         setFiles(newFiles);
         setCurrent(newFiles[i]);
-        break;
+        return newFiles[i];
       }
     }
   }
@@ -135,7 +135,7 @@ function App(): React.ReactElement {
       }
 
       if (response === 'save') {
-        saveFileImpl(file);
+        file = await saveFileImpl(file) || file;
       }
 
       // if dontsave or save, fall through to the rest of the close code
