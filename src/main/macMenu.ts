@@ -1,4 +1,4 @@
-import Electron, { app, shell, Menu, BrowserWindow, Dialog, dialog } from 'electron';
+import Electron, { app, shell, Menu, BrowserWindow, dialog, ipcMain } from 'electron';
 
 function clickCallback(title: string, optName: string) {
   BrowserWindow.getAllWindows()[0].webContents.executeJavaScript(`
@@ -12,7 +12,6 @@ function clickCallback(title: string, optName: string) {
 
 // TODO: disabling of some elements of the menu based on state of application
 const template: Electron.MenuItemConstructorOptions[] = [
-  // { role: 'appMenu' }
   {
     label: app.name,
     submenu: [
@@ -27,7 +26,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
       { role: 'quit' },
     ],
   },
-  // { role: 'fileMenu' }
   {
     label: 'File',
     submenu: [
@@ -79,7 +77,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
       { role: 'close', label: 'Close Window', accelerator: 'CmdOrCtrl+Option+W' },
     ],
   },
-  // { role: 'editMenu' }
   {
     label: 'Edit',
     submenu: [
@@ -118,7 +115,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
       },
     ],
   },
-  // { role: 'viewMenu' }
   {
     label: 'View',
     submenu: [
@@ -151,7 +147,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
       { role: 'togglefullscreen' },
     ],
   },
-  // { role: 'windowMenu' }
   {
     label: 'Window',
     submenu: [{ role: 'minimize' }, { role: 'zoom' }, { type: 'separator' }, { role: 'front' }, { type: 'separator' }, { role: 'window' }],
@@ -170,7 +165,30 @@ const template: Electron.MenuItemConstructorOptions[] = [
   },
 ];
 
+// cursed typescript typing is cursed
+// creates a reference to a function that handles the disableMenu IPC invoke event, does nothing on non macOS systems, disables menu option on macOS
+let ipcHandler: (e: Electron.IpcMainInvokeEvent, menuParent: string, menuItem: string, disabled: boolean) => void = () => {
+  return;
+};
+
 if (process.platform === 'darwin') {
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
+  ipcHandler = (e: Electron.IpcMainInvokeEvent, menuParent: string, menuItem: string, disabled: boolean) => {
+    // loop menu items
+    for (const parent of menu.items) {
+      if (parent.label === menuParent) {
+        // loop submenus
+        for (const item of parent.submenu.items) {
+          if (item.label === menuItem) {
+            item.enabled = !disabled;
+            break;
+          }
+        }
+        break;
+      }
+    }
+  };
 }
+
+ipcMain.handle('disableMenu', ipcHandler);
