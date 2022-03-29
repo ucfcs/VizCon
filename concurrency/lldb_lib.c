@@ -58,20 +58,36 @@ void vc_internal_init()
 }
 
 
-
+// Semaphores
 void vc_internal_registerSem(CSSem *sem, int initialValue, int maxValue)
 {
-
+    // LLDB
 }
 
 void vcWait(CSSem *sem)
 {
-
+    // LLDB
 }
 
 void vcSignal(CSSem *sem)
 {
+    // LLDB
+}
 
+// Mutexes
+void lldb_hook_registerMutex(CSMutex *mutex)
+{
+    // LLDB
+}
+
+void lldb_hook_lockMutex(CSMutex *mutex)
+{
+    // LLDB
+}
+
+void lldb_hook_unlockMutex(CSMutex *mutex)
+{
+    // LLDB
 }
 
 int main(void)
