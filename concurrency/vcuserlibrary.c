@@ -210,7 +210,7 @@ CSSem* vcSemCreate(int maxCount)
 
 // vcSemCreateInitial - Create a semaphore with the specified initial and maximum permit count.
 //                      Returns: a pointer to the new semaphore.
-CSSem* vcSemCreateInitial(int initialCount, int maxCount)
+CSSem* vcSemCreateInitial(int maxCount, int initialCount)
 {
     // Make sure the counts are valid.
     if(initialCount < 0 || maxCount <= 0 || initialCount > maxCount)

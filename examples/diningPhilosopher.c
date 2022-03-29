@@ -16,7 +16,7 @@ void* Phil1(void* param)
         vcSemSignal(fork1);
         vcSemSignal(room);
     }
-    return (void*)1;
+    return 0;
 }
 
 void* Phil2(void* param)
@@ -32,7 +32,7 @@ void* Phil2(void* param)
         vcSemSignal(fork2);
         vcSemSignal(room);
     }
-    return (void*)1;
+    return 0;
 }
 
 void* Phil3(void* param)
@@ -48,7 +48,7 @@ void* Phil3(void* param)
         vcSemSignal(fork3);
         vcSemSignal(room);
     }
-    return (void*)1;
+    return 0;
 }
 
 void* Phil4(void* param)
@@ -64,7 +64,7 @@ void* Phil4(void* param)
         vcSemSignal(fork4);
         vcSemSignal(room);
     }
-    return (void*)1;
+    return 0;
 }
 
 void* Phil5(void* param)
@@ -80,7 +80,7 @@ void* Phil5(void* param)
         vcSemSignal(fork5);
         vcSemSignal(room);
     }
-    return (void*)1;
+    return 0;
 }
 
 int real_main(void) 

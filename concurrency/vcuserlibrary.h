@@ -36,8 +36,8 @@ void vcThreadSleep(int milliseconds);                            //Puts the call
 int vcThreadId();                                                //returns the id of the calling thread.
 
 // User semaphore functions
-vcSem vcSemCreate(int maxCount);                                              // Creates a semaphore with a user-specified max value.
-vcSem vcSemCreateInitial(int initialCount, int maxCount);                  // Creates a semaphore with a user-specified initial and max value.
+vcSem vcSemCreate(int maxCount);                                           // Creates a semaphore with a user-specified max value.
+vcSem vcSemCreateInitial(int maxCount, int initialCount);                  // Creates a semaphore with a user-specified max and initial value.
 void vcSemWait(vcSem sem);                                                 // Waits for availability, then takes one permit.
 void vcSemWaitMult(vcSem sem, int num);                                    // Waits for availability, then takes multiple permits.
 int vcSemTryWait(vcSem sem);                                               // Attempts to take one permit without waiting.

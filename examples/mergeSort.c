@@ -52,8 +52,6 @@ void Merge(int begin, int mid, int end)
         j++;
         k++;
     }
-
-    return;
 }
 
 void* MergeSort(void* param)
@@ -75,7 +73,7 @@ void* MergeSort(void* param)
     MergeSort(thisParam);
     Merge(begin, mid, end);
 
-    return 1;
+    return 0;
 }
 
 void printArray(char* state)
@@ -110,5 +108,5 @@ int real_main(void)
     Merge(begin, mid, end);
     printArray(" -> After");
 
-    return 1;
+    return 0;
 }

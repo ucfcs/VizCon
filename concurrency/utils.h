@@ -21,10 +21,11 @@
 #define VC_ERROR_NAMEERROR 501
 #define VC_ERROR_BADCOUNT 502
 
-// 51X - Error with mutex permissions
+// 51X - Error with permissions
 #define VC_ERROR_DOUBLEUNLOCK 510
 #define VC_ERROR_DOUBLELOCK 511
 #define VC_ERROR_CROSSTHREADUNLOCK 512
+#define VC_ERROR_SEMVALUELIMIT 513
 
 // 52X - Unexpected system response (Windows only)
 #define VC_ERROR_ABANDONED 520

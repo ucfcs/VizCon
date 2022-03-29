@@ -20,6 +20,7 @@ typedef struct CSSem
 {
     SEM_TYPE sem;       // Semaphore object.
     SEM_VALUE count;    // The semaphore's current value.
+    SEM_VALUE maxCount; // The semaphore's maximum value.
     struct CSSem* next; // The next semaphore in the global list.
 } CSSem;
 

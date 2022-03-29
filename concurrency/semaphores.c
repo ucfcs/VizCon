@@ -30,6 +30,8 @@ CSSem* semCreate(SEM_VALUE maxValue)
         vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_MEMORY);
     
     // Set non-semaphore properties.
+    sem->count = maxValue;
+    sem->maxCount = maxValue;
     sem->next = NULL;
     if (isLldbActive && vizconSem != (void*)-1)
     {
@@ -251,6 +253,8 @@ void platform_semSignal(CSSem* sem)
         }
         platform_semWait(vizconSem);
         sem->count = sem->count + 1;
+        if(sem->count > sem->maxCount)
+            vizconError("vcSemSignal/vcSemSignalMult", VC_ERROR_SEMVALUELIMIT);
         platform_semSignal(vizconSem);
     #endif
 }
