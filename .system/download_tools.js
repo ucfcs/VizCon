@@ -113,14 +113,12 @@ async function unzipFile(file, destDir) {
         }
         fs.promises.mkdir(outDir, { recursive: true }).then(() => {
           entry.pipe(fs.createWriteStream(outFile)).on('finish', () => {
-            if (entry.path === 'extension/lldb/bin/lldb') {
-              fs.chmod(outFile, 0o755, err => {
-                if (err) {
-                  console.error(`Error changing file permissions for lldb executable`, err);
-                  process.exit(9);
-                }
-              });
-            }
+            fs.chmod(outFile, 0o755, err => {
+              if (err) {
+                console.error(`Error changing file permissions for lldb executable`, err);
+                process.exit(9);
+              }
+            });
           });
         });
       })

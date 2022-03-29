@@ -7,9 +7,11 @@ import os
 import sys
 import traceback
 
-def start(exe, visualizerMode):
+def start(exe, terminalOutputFile, visualizerMode):
     try:
-        _start(base64.b64decode(exe).decode(), visualizerMode)
+        if terminalOutputFile is not None:
+            terminalOutputFile = base64.b64decode(terminalOutputFile).decode()
+        _start(base64.b64decode(exe).decode(), terminalOutputFile, visualizerMode)
     except SystemExit as e:
         # Exit immediately to bypass LLDB catching the SystemExit
         sys.stdout.flush()
@@ -21,7 +23,7 @@ def start(exe, visualizerMode):
         sys.stdout.flush()
         sys.stderr.flush()
         os._exit(0)
-def _start(exe, visualizerMode):
+def _start(exe, terminalOutputFile, visualizerMode):
     if not visualizerMode:
         dataOutputFile = sys.stdout
     else:
@@ -100,8 +102,9 @@ def _start(exe, visualizerMode):
 
     error = lldb.SBError()
     #print(launch_info.AddOpenFileAction(0, "CONIN$", True, False))
-    #print(launch_info.AddOpenFileAction(1, "stdout.txt", False, True))
-    #print(launch_info.AddOpenFileAction(2, "stderr.txt", False, True))
+    if terminalOutputFile is not None:
+        print(launch_info.AddOpenFileAction(1, terminalOutputFile, False, True))
+        print(launch_info.AddOpenFileAction(2, terminalOutputFile, False, True))
     launch_info.SetEnvironmentEntries(["lldbMode=1"], True)
     process = target.Launch(launch_info, error)
     debug_print("Error", error.Success(), error, error.GetCString())
