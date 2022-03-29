@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
-//#include <windows.h>
 
 int counter;
 void* SimpleThread(void* param)
@@ -15,7 +14,7 @@ void* SimpleThread(void* param)
     }
     return NULL;
 }
-extern int isLldbActive;
+
 int real_main()
 {
     counter = 0;
@@ -27,7 +26,6 @@ int real_main()
     printf("Returned: ");
     printf("%p, ", returned[0]);
     printf("Counter: %d\n", counter);
-    //if (isLldbActive)
-    //   Sleep(5000);
+
     return 0;
 }

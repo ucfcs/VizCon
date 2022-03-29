@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h> 
-//#include <windows.h>
 
 int counter;
 CSSem *counter_sem;
@@ -19,7 +18,7 @@ void* SimpleThread(void* param)
     }
     return NULL;
 }
-extern int isLldbActive;
+
 int real_main()
 {
     printf("Hello world!\n");
@@ -33,7 +32,6 @@ int real_main()
     printf("Returned: ");
     printf("%p, ", returned[0]);
     printf("Counter: %d\n", counter);
-    //if (isLldbActive)
-    //    Sleep(5000);
+
     return 0;
 }

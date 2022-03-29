@@ -41,11 +41,11 @@ void vc_internal_init()
     if (isLldbActive)
     {
         setbuf(stdout, NULL);
-        fprintf(stderr, "LLDB is active\n");
+        //fprintf(stderr, "LLDB is active\n");
     }
     else
     {
-        fprintf(stderr, "LLDB is NOT active\n");
+        //fprintf(stderr, "LLDB is NOT active\n");
     }
 
     if (isLldbActive)
