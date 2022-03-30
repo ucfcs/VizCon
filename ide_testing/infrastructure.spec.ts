@@ -40,6 +40,33 @@ test.describe("Infrastructure", async () =>
     await expect(vizHeader).toContainText('compile.c', { timeout: 15000 });
   });
 
+  // Compile Failure - Check that file compilation correctly reports errors.
+  test('Compile Failure', async () =>
+  {
+    // Open a testing file.
+    console.log('Please select "compile-fail.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+
+    // File is loaded by tester here...
+    
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+
+    // Wait for the console to appear, which indicates compilation failure,
+    // and then wait for the text to appear in the console (since there is a delay).
+    // If the console doesn't appear, the consoleLoc.textContent will time out.
+    let consoleLoc = window.locator('#ide div.output-container:visible');
+    while ((await consoleLoc.textContent({ timeout: 15000 })) == '');
+
+    // Check for the two known errors.
+    // (Only two are present because Playwright can only check the text currently visible in the xterm window.)
+    // (If more errors are added, there needs to be a way to scroll or something.)
+    expect(consoleLoc).toContainText("compile-fail.c:7:25: error: parameter 1 ('param') has incomplete type");
+    expect(consoleLoc).toContainText("compile-fail.c:17:5: error: 'countr' undeclared (first use in this function); did you mean 'counter'?");
+  });
+
   // After Each - Return to the editor and close all open files.
   test.afterEach(async () =>
   {
