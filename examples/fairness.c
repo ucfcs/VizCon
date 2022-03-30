@@ -17,7 +17,7 @@ void* P2(void* param)
     return 0;
 }
 
-int real_main(void) 
+int main() 
 {
     int i, trials = 10;
     for(i=0; i<trials; i++)

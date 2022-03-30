@@ -5,7 +5,8 @@
 
 // Redefinition of the user's main function.
 // May be needed to start integration with LLDB.
-//#define main userMain
+int userMain();
+#define main userMain
 
 // User type definitions
 #define vcSem CSSem*
@@ -15,14 +16,15 @@
 // Alternate function names
 #define vcAcquire vcSemWait
 #define vcAcquireMult vcSemWaitMult
+#define vcSemPost vcSemWait
 #define vcP vcSemWait
+#define vcSemPostMult vcSemWaitMult
 #define vcPMult vcSemWaitMult
 #define vcRelease vcSemSignal
 #define vcReleaseMult vcSemSignalMult
 #define vcV vcSemSignal
 #define vcVMult vcSemSignalMult
 #define vcMutexLockCreate vcMutexCreate
-#define vcMutexLockCreateNamed vcMutexCreateNamed
 #define vcLock vcMutexLock
 #define vcUnlock vcMutexUnlock
 #define vcLockAvailable vcMutexStatus

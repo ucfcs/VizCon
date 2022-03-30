@@ -86,7 +86,7 @@ void* MainBranch(void* param)
     return 0;
 }
 
-int real_main()
+int main()
 {
     int i;
     srand(vcThreadId());

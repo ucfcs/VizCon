@@ -80,7 +80,7 @@ void* Consumer(void* param)
     return 0;
 }
 
-int real_main(void) 
+int main() 
 {
     empty1 = vcSemCreate(1);
     empty2 = vcSemCreate(1);

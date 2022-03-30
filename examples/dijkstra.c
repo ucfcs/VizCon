@@ -88,7 +88,7 @@ void* BigSet(void* param)
     return 0;
 }
 
-int real_main(void) 
+int main() 
 {
     freeBinS = vcSemCreate(1);
     freeSinB = vcSemCreate(1);

@@ -83,7 +83,7 @@ void* Phil5(void* param)
     return 0;
 }
 
-int real_main(void) 
+int main() 
 {
     fork1 = vcSemCreate(1);
     fork2 = vcSemCreate(1);

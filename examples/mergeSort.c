@@ -87,7 +87,7 @@ void printArray(char* state)
     printf("%s\n", state);
 }
 
-int real_main(void) 
+int main() 
 {
     int i;
     int begin = 0;
