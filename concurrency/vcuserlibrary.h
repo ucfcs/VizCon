@@ -14,13 +14,17 @@ int userMain();
 #define vcMutex CSMutex*
 
 // Alternate function names
+#define vcSemAcquire vcSemWait
 #define vcAcquire vcSemWait
+#define vcSemAcquireMult vcSemWaitMult
 #define vcAcquireMult vcSemWaitMult
-#define vcSemPost vcSemWait
 #define vcP vcSemWait
-#define vcSemPostMult vcSemWaitMult
 #define vcPMult vcSemWaitMult
+#define vcSemPost vcSemSignal
+#define vcSemRelease vcSemSignal
 #define vcRelease vcSemSignal
+#define vcSemPostMult vcSemSignalMult
+#define vcSemReleaseMult vcSemSignalMult
 #define vcReleaseMult vcSemSignalMult
 #define vcV vcSemSignal
 #define vcVMult vcSemSignalMult
