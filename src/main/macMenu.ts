@@ -10,7 +10,6 @@ function clickCallback(title: string, optName: string) {
 `);
 }
 
-// TODO: disabling of some elements of the menu based on state of application
 const template: Electron.MenuItemConstructorOptions[] = [
   {
     label: app.name,
