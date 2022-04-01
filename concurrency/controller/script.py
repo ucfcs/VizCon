@@ -76,7 +76,7 @@ if not target:
     sys.exit(2)
 
 # If the target is valid set a breakpoint at main
-main_bp = target.BreakpointCreateByName ("real_main", target.GetExecutable().GetFilename())
+main_bp = target.BreakpointCreateByName ("userMain", target.GetExecutable().GetFilename())
 thread_bp = target.BreakpointCreateByName ("do_post", target.GetExecutable().GetFilename())
 vcJoin_bp = target.BreakpointCreateByName ("vcJoin", target.GetExecutable().GetFilename())
 vc_internal_registerSem_bp = target.BreakpointCreateByName ("vc_internal_registerSem", target.GetExecutable().GetFilename())
