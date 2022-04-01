@@ -14,7 +14,7 @@ void* Producer(void* param)
         b1 = r;
         vcSemSignal(full1);
     }
-    return 1;
+    return 0;
 }
 
 void* CheckEven(void* param)
@@ -35,7 +35,7 @@ void* CheckEven(void* param)
             vcSemSignal(full2);
         }
     }
-    return 1;
+    return 0;
 }
 
 void* CheckLine(void* param)
@@ -57,7 +57,7 @@ void* CheckLine(void* param)
         }
         count = count + 1;
     }
-    return 1;
+    return 0;
 }
 
 void* Consumer(void* param)
@@ -77,21 +77,21 @@ void* Consumer(void* param)
             printf("%d ", k);
         }
     }
-    return 1;
+    return 0;
 }
 
-int real_main(void) 
+int main() 
 {
     empty1 = vcSemCreate(1);
     empty2 = vcSemCreate(1);
     empty3 = vcSemCreate(1);
-    full1 = vcSemCreateInitial(0, 1);
-    full2 = vcSemCreateInitial(0, 1);
-    full3 = vcSemCreateInitial(0, 1);
+    full1 = vcSemCreateInitial(1, 0);
+    full2 = vcSemCreateInitial(1, 0);
+    full3 = vcSemCreateInitial(1, 0);
     vcThreadQueue(Producer, NULL);
     vcThreadQueue(CheckEven, NULL);
     vcThreadQueue(CheckLine, NULL);
     vcThreadQueue(Consumer, NULL);
     vcThreadStart();
-    return 1;
+    return 0;
 }

@@ -5,7 +5,8 @@
 
 // Redefinition of the user's main function.
 // May be needed to start integration with LLDB.
-//#define main userMain
+int userMain();
+#define main userMain
 
 // User type definitions
 #define vcSem CSSem*
@@ -13,16 +14,21 @@
 #define vcMutex CSMutex*
 
 // Alternate function names
+#define vcSemAcquire vcSemWait
 #define vcAcquire vcSemWait
+#define vcSemAcquireMult vcSemWaitMult
 #define vcAcquireMult vcSemWaitMult
 #define vcP vcSemWait
 #define vcPMult vcSemWaitMult
+#define vcSemPost vcSemSignal
+#define vcSemRelease vcSemSignal
 #define vcRelease vcSemSignal
+#define vcSemPostMult vcSemSignalMult
+#define vcSemReleaseMult vcSemSignalMult
 #define vcReleaseMult vcSemSignalMult
 #define vcV vcSemSignal
 #define vcVMult vcSemSignalMult
 #define vcMutexLockCreate vcMutexCreate
-#define vcMutexLockCreateNamed vcMutexCreateNamed
 #define vcLock vcMutexLock
 #define vcUnlock vcMutexUnlock
 #define vcLockAvailable vcMutexStatus
@@ -36,8 +42,8 @@ void vcThreadSleep(int milliseconds);                            //Puts the call
 int vcThreadId();                                                //returns the id of the calling thread.
 
 // User semaphore functions
-vcSem vcSemCreate(int maxCount);                                              // Creates a semaphore with a user-specified max value.
-vcSem vcSemCreateInitial(int initialCount, int maxCount);                  // Creates a semaphore with a user-specified initial and max value.
+vcSem vcSemCreate(int maxCount);                                           // Creates a semaphore with a user-specified max value.
+vcSem vcSemCreateInitial(int maxCount, int initialCount);                  // Creates a semaphore with a user-specified max and initial value.
 void vcSemWait(vcSem sem);                                                 // Waits for availability, then takes one permit.
 void vcSemWaitMult(vcSem sem, int num);                                    // Waits for availability, then takes multiple permits.
 int vcSemTryWait(vcSem sem);                                               // Attempts to take one permit without waiting.

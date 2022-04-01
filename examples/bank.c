@@ -68,7 +68,7 @@ void* Teller(void* param)
         }
         vcSemSignal(mainSem);
     }
-    return 1;
+    return 0;
 }
 
 void* MainBranch(void* param)
@@ -83,17 +83,17 @@ void* MainBranch(void* param)
         vcSemSignal(tellerSem);
         vcSemWait(mainSem);
     }
-    return 1;
+    return 0;
 }
 
-int real_main()
+int main()
 {
     int i;
     srand(vcThreadId());
     accountSemArray = (vcSem*)malloc(sizeof(vcSem)*accountCount);
     semPrint = vcSemCreate(1);
-    tellerSem = vcSemCreateInitial(0, 1);
-    mainSem = vcSemCreateInitial(0, 1);
+    tellerSem = vcSemCreateInitial(1, 0);
+    mainSem = vcSemCreateInitial(1, 0);
     for(i=0; i<accountCount; i++)
     {
         accountSemArray[i] = vcSemCreate(1);
@@ -103,5 +103,5 @@ int real_main()
     vcThreadQueue(Teller, 1);
     vcThreadQueue(Teller, 2);
     vcThreadStart();
-    return 1;
+    return 0;
 }
