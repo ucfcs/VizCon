@@ -31,6 +31,8 @@ def _start(exe, visualizerMode):
     def debug_print(*args, **kwargs):
         return
         #print(*args, file=sys.stderr, **kwargs)
+        #sys.stderr.flush()
+        #sys.stdout.flush()
 
     def waitForVisualizer():
         if not visualizerMode:

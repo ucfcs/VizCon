@@ -190,6 +190,7 @@ function App(): React.ReactElement {
       return;
     }
 
+    document.body.classList.add('compiling');
     let file = current;
 
     // handle atttempting to compile an unsaved file
@@ -206,6 +207,9 @@ function App(): React.ReactElement {
     }
 
     const results = await window.platform.compileFile(file.path);
+
+    document.body.classList.remove('compiling');
+
     if (results !== '') {
       setOutputVisible(true);
       setCompileResult(results);
