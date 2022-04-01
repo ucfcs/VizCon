@@ -9,14 +9,11 @@ export default function Editor({ current, regenTabination, setDirty }: EditorPro
     editorRef.current = editor;
   }
 
-  function onContentChange(content: string, event: monaco.editor.IModelContentChangedEvent): void {
+  function onContentChange(content: string): void {
     current.currentContent = content;
     current.dirty = current.currentContent !== current.fileContent;
     setDirty(current.dirty);
     regenTabination();
-
-    // for debugging, remove this later
-    console.log(event);
   }
 
   return (

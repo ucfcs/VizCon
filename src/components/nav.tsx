@@ -42,8 +42,6 @@ export default function Nav({
   closeWindow,
 }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
-  // const showMenu = true;
-
   const [title, setTitle] = useState('');
 
   useEffect(() => {

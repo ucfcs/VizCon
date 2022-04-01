@@ -18,7 +18,7 @@ function App(): React.ReactElement {
   const [current, setCurrent] = useState(defaultCurrent);
   const [outputVisible, setOutputVisible] = useState(false);
   const [compileResult, setCompileResult] = useState('');
-  const [inVisualizer, setInVisualizer] = useState(false); // TODO: Change back to false later
+  const [inVisualizer, setInVisualizer] = useState(false);
 
   async function handleNewFiles(newFiles: string[]) {
     // if no files were selected, dont attempt to read anything
@@ -216,7 +216,6 @@ function App(): React.ReactElement {
       // TODO: hook up the run command
       setInVisualizer(true);
     } else {
-      // TODO: should this be a dialog???
       setOutputVisible(true);
       setCompileResult('Compilation succeeded with no warnings or errors.');
     }

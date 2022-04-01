@@ -91,17 +91,17 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   }
 
   function restart() {
-    console.log('test restart');
     setConsoleOutput('');
   }
 
   function terminate() {
-    console.log('test stop');
     visualizerController.current.terminate();
   }
+
   function pause() {
     visualizerController.current.pause();
   }
+  
   function resume() {
     visualizerController.current.resume();
   }
