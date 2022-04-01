@@ -116,7 +116,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
         label: 'Compile And Run File',
         accelerator: '',
         click: () => {
-          dialog.showMessageBox(BrowserWindow.getAllWindows()[0], { message: 'This feature is not yet implemented.' });
           clickCallback('Compile', 'Compile And Run File');
         },
       },
