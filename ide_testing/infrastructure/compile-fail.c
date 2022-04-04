@@ -11,7 +11,7 @@ void* SimpleThread(void param)
     return NULL;
 }
 
-int real_main()
+int main()
 {
     // Start the threads.
     countr = 0;
