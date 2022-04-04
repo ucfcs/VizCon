@@ -112,6 +112,45 @@ test.describe("Infrastructure", async () =>
     expect(await window.isVisible('#visualizer div.control.has-action:has-text("Force Quit Simulation")')).toBeFalsy();
   });
 
+  // Output - Check that the executable output is correctly reported.
+  test('Output', async () =>
+  {
+    // This test is very slow, so set the timeout to 60s.
+    test.setTimeout(60000);
+
+    // Open a testing file.
+    // This file generates a string character-by-character, prints the ASCII value of each character,
+    // and then prints the entire string.
+    console.log('Please select "output.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+
+    // File is loaded by tester here...
+    
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+
+    // Wait for the visualizer to appear, which indicates compilation success,
+    // then create locators and click "Start Simulation".
+    let runStatus = window.locator('#visualizer div.control:has-text("Status:")');
+    let consoleOut = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+
+    // Wait for the program to finish.
+    while ((await runStatus.textContent()) !== 'Status: Finished');
+
+    // Read strings from the file and compare.
+    let strings = (await consoleOut.textContent()).split('|');
+    let reconstruction = '';
+    for(let i = 0; i < strings.length - 1; i++)
+    {
+      let numeric = parseInt(strings[i]);
+      reconstruction += String.fromCharCode(numeric);
+    }
+    expect(reconstruction).toBe(strings[strings.length - 1]);
+  });
+
   // After Each - Return to the editor and close all open files.
   test.afterEach(async () =>
   {
