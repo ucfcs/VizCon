@@ -138,6 +138,7 @@ test.describe("Infrastructure", async () =>
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
 
     // Wait for the program to finish.
+    console.log('Please set the speed to its highest setting.');
     while ((await runStatus.textContent()) !== 'Status: Finished');
 
     // Read strings from the file and compare.
@@ -149,6 +150,63 @@ test.describe("Infrastructure", async () =>
       reconstruction += String.fromCharCode(numeric);
     }
     expect(reconstruction).toBe(strings[strings.length - 1]);
+  });
+
+  // Pause - Check that pause stops the executable and allows for continuing.
+  test('Pause', async () =>
+  {
+    // Open a testing file.
+    console.log('Please select "pause.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+
+    // File is loaded by tester here...
+    
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+
+    // Wait for the visualizer to appear, which indicates compilation success,
+    // then create locators and click "Start Simulation".
+    let runStatus = window.locator('#visualizer div.control:has-text("Status:")');
+    let consoleOut = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+
+    // Wait until the status indicates that the program is running.
+    while ((await runStatus.textContent()) != 'Status: Running');
+
+    // Wait for the console to print something, then click Pause.
+    while ((await consoleOut.textContent()) == '');
+    window.locator('#visualizer div.control.has-action:has-text("Pause Simulation")').click();
+
+    // Check that the status changes to "Pausing...", then "Paused".
+    while ((await runStatus.textContent()) == 'Status: Running');
+    expect(runStatus).toContainText("Status: Pausing...");
+    while ((await runStatus.textContent()) == 'Status: Pausing...');
+    expect(runStatus).toContainText("Status: Paused");
+
+    // Check that the button visibility changed correctly.
+    expect(await window.isVisible('#visualizer div.control.has-action:has-text("Start Simulation")')).toBeFalsy();
+    expect(await window.isVisible('#visualizer div.control.has-action:has-text("Resume Simulation")')).toBeTruthy();
+    expect(await window.isVisible('#visualizer div.control.has-action:has-text("Pause Simulation")')).toBeFalsy();
+    expect(await window.isVisible('#visualizer div.control.has-action:has-text("Force Quit Simulation")')).toBeTruthy();
+
+    // Wait two seconds, then check that "After" doesn't appear.
+    expect(consoleOut).toContainText("Before");
+    await window.waitForTimeout(2000)
+    expect(consoleOut).not.toContainText("After");
+
+    // Resume the program. Make sure the status and button visibility revert.
+    window.locator('#visualizer div.control.has-action:has-text("Resume Simulation")').click();
+    while ((await runStatus.textContent()) == 'Status: Paused');
+    expect(await window.isVisible('#visualizer div.control.has-action:has-text("Start Simulation")')).toBeFalsy();
+    expect(await window.isVisible('#visualizer div.control.has-action:has-text("Resume Simulation")')).toBeFalsy();
+    expect(await window.isVisible('#visualizer div.control.has-action:has-text("Pause Simulation")')).toBeTruthy();
+    expect(await window.isVisible('#visualizer div.control.has-action:has-text("Force Quit Simulation")')).toBeTruthy();
+
+    // Wait for the program to finish, then make sure the other half did run.
+    while ((await runStatus.textContent()) == 'Status: Running');
+    expect(consoleOut).toContainText("After");
   });
 
   // After Each - Return to the editor and close all open files.
