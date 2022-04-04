@@ -13,7 +13,6 @@ export default function WindowControls(): React.ReactElement {
     checkMaximized();
   });
 
-  // TODO remove the text inside the divs, it is present for testing
   return (
     <div className="window-controls">
       <div className="window-icon codicon codicon-chrome-minimize" onClick={window.platform.minimize}></div>

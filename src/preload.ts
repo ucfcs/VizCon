@@ -24,8 +24,10 @@ contextBridge.exposeInMainWorld('platform', {
     return await ipcRenderer.invoke('readFilesSync', files);
   },
   openFileDialog: async (): Promise<string[]> => {
-    const test = await ipcRenderer.invoke('openFileDialog');
-    return test;
+    return await ipcRenderer.invoke('openFileDialog');
+  },
+  openExampleFileDialog: async (): Promise<string[]> => {
+    return await ipcRenderer.invoke('openExampleFileDialog');
   },
   saveFileToDisk: async (path: string, content: string, forceDialog?: boolean): Promise<string> => {
     return await ipcRenderer.invoke('saveFileToDisk', path, content, forceDialog);
@@ -38,33 +40,37 @@ contextBridge.exposeInMainWorld('platform', {
       const channel = new MessageChannel();
       let hasStarted = false;
       let waitingHandler: (state: any) => void = null;
+
       channel.port1.onmessage = e => {
         const msg = e.data;
         if (msg.type === 'hello') {
           if (hasStarted) {
             throw new Error('Already started');
           }
+
           hasStarted = true;
           resolve({
             doStep: () => {
-              return new Promise(resolve2 => {
+              return new Promise(resolveStep => {
                 if (waitingHandler !== null) {
                   throw new Error('Attempted to step again before previous step completed');
                 }
+
                 channel.port1.postMessage({ type: 'request' });
                 waitingHandler = msg => {
-                  resolve2(msg);
+                  resolveStep(msg);
                   waitingHandler = null;
                 };
               });
             },
             stop: () => {
-              return new Promise(resolve2 => {
+              return new Promise(resolveStop => {
                 channel.port1.postMessage({ type: 'stop' });
                 const oldHandler = waitingHandler;
+
                 const killHandler = (msg: any) => {
                   if (msg.type === 'kill_result') {
-                    resolve2(msg);
+                    resolveStop(msg);
                     if (oldHandler) {
                       oldHandler({ type: 'process_killed' });
                       waitingHandler = killHandler;
@@ -77,14 +83,17 @@ contextBridge.exposeInMainWorld('platform', {
           });
           return;
         }
+
         console.log('Message from visualizer', msg);
         if (msg.type === 'stdout') {
           stdoutHandler(msg.data);
           return;
         }
+
         if (waitingHandler === null) {
           throw new Error('Unprompted response from the debugger');
         }
+
         waitingHandler(msg);
       };
       ipcRenderer.postMessage('launchProgram', { path }, [channel.port2]);
@@ -100,10 +109,12 @@ contextBridge.exposeInMainWorld('platform', {
     webFrame.setZoomLevel(0);
   },
   disableMenu: (menuParent: string, menuItem: string, disabled: boolean): void => {
-    console.log(`Disabling ${menuParent}-${menuItem} to ${disabled}`);
     ipcRenderer.invoke('disableMenu', menuParent, menuItem, disabled);
   },
-  showUnsavedChangesDialog: async (name: string): Promise<UnsavedChangesResponse> => {
-    return await ipcRenderer.invoke('showUnsavedChangesDialog', name);
+  showUnsavedSaveDialog: async (name: string): Promise<UnsavedChangesResponse> => {
+    return await ipcRenderer.invoke('showUnsavedSaveDialog', name);
+  },
+  showUnsavedCompileDialog: async (name: string): Promise<UnsavedChangesResponse> => {
+    return await ipcRenderer.invoke('showUnsavedCompileDialog', name);
   },
 });

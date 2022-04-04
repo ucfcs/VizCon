@@ -16,7 +16,7 @@ void* SimpleThread(void* param)
     return NULL;
 }
 extern int isLldbActive;
-int real_main()
+int main()
 {
     counter = 0;
     vcThreadQueue(SimpleThread, NULL);

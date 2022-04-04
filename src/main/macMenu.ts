@@ -10,7 +10,6 @@ function clickCallback(title: string, optName: string) {
 `);
 }
 
-// TODO: disabling of some elements of the menu based on state of application
 const template: Electron.MenuItemConstructorOptions[] = [
   {
     label: app.name,
@@ -42,6 +41,13 @@ const template: Electron.MenuItemConstructorOptions[] = [
         accelerator: 'CmdOrCtrl+O',
         click: () => {
           clickCallback('File', 'Open File');
+        },
+      },
+      {
+        label: 'Open Example File',
+        accelerator: 'CmdOrCtrl+Shift+O',
+        click: () => {
+          clickCallback('File', 'Open Example File');
         },
       },
       { type: 'separator' },
@@ -109,7 +115,6 @@ const template: Electron.MenuItemConstructorOptions[] = [
         label: 'Compile And Run File',
         accelerator: '',
         click: () => {
-          dialog.showMessageBox(BrowserWindow.getAllWindows()[0], { message: 'This feature is not yet implemented.' });
           clickCallback('Compile', 'Compile And Run File');
         },
       },

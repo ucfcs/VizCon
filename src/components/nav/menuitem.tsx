@@ -128,7 +128,7 @@ function MenuItem({ parentTitle, name, action, disable, keybind, seperator }: Me
   return (
     <li className={className} onClick={onClick}>
       <span className="action-label">{name}</span>
-      <span className="keybind">{keybind}</span>
+      {keybind && <span className="keybind">{keybind}</span>}
     </li>
   );
 }

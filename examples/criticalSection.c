@@ -8,7 +8,7 @@ void* P1(void* param)
     printf("P1 is in critical section for 3 seconds\n");
     vcThreadSleep(3000);
     vcSemSignal(s);
-    return 1;
+    return 0;
 }
 
 void* P2(void* param)
@@ -17,7 +17,7 @@ void* P2(void* param)
     printf("P2 is in critical section for 3 seconds\n");
     vcThreadSleep(3000);
     vcSemSignal(s);
-    return 1;
+    return 0;
 }
 
 void* P3(void* param)
@@ -26,15 +26,15 @@ void* P3(void* param)
     printf("P3 is in critical section 3 seconds\n");
     vcThreadSleep(3000);
     vcSemSignal(s);
-    return 1;
+    return 0;
 }
 
-int real_main(void) 
+int main() 
 {
     s = vcSemCreate(1);
     vcThreadQueue(P1, NULL);
     vcThreadQueue(P2, NULL);
     vcThreadQueue(P3, NULL);
     vcThreadStart();
-    return 1;
+    return 0;
 }

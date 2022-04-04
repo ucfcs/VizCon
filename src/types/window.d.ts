@@ -11,6 +11,7 @@ declare global {
       isMaximized: () => Promise<boolean>;
       readFilesSync: (files: string[]) => Promise<string[]>;
       openFileDialog: () => Promise<string[]>;
+      openExampleFileDialog: () => Promise<string[]>;
       saveFileToDisk: (path: string, content: string, forceDialog?: boolean) => Promise<string>;
       compileFile: (path: string) => Promise<string>;
       launchProgram: (path: string, stdoutHandler: (data: string) => void) => Promise<DebuggerHandle>;
@@ -18,7 +19,8 @@ declare global {
       zoomOut: () => void;
       resetZoom: () => void;
       disableMenu: (menuParent: string, menuItem: string, disabled: boolean) => void;
-      showUnsavedChangesDialog: (name: string) => Promise<UnsavedChangesResponse>;
+      showUnsavedSaveDialog: (name: string) => Promise<UnsavedChangesResponse>;
+      showUnsavedCompileDialog: (name: string) => Promise<UnsavedChangesResponse>;
     };
   }
 }

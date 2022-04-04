@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
-import child_process, { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
 import { sep as pathSep } from 'path';
 import split2 from 'split2';
@@ -19,6 +19,17 @@ const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semap
 const libraryPaths = library.map(file => {
   return concurrencyFolder + file;
 });
+
+// TODO: Save this to file and read it in at application start. This is going to involve using the electron path where it saves all the temp data and what not WOW this line got long
+let lastSuccessfulFile: string;
+
+function updateLastSuccessfulFile(files: string[]): void {
+  const filePath = files[files.length - 1].replace(/\\/g, '/');
+  const dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
+  if (!dirPath.endsWith('examples')) {
+    lastSuccessfulFile = dirPath;
+  }
+}
 
 ipcMain.handle('minimize', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
@@ -50,10 +61,26 @@ ipcMain.handle('openFileDialog', e => {
   const results = dialog.showOpenDialogSync(window, {
     filters: [{ name: 'C Language File', extensions: ['c'] }],
     properties: ['openFile', 'multiSelections'],
+    defaultPath: lastSuccessfulFile,
   });
   if (!results) {
     return ['EMPTY: No file selected'];
   }
+  updateLastSuccessfulFile(results);
+  return results;
+});
+
+ipcMain.handle('openExampleFileDialog', e => {
+  const window = BrowserWindow.fromWebContents(e.sender);
+  const results = dialog.showOpenDialogSync(window, {
+    filters: [{ name: 'C Language File', extensions: ['c'] }],
+    properties: ['openFile', 'multiSelections'],
+    defaultPath: resourcesDir + pathSep + 'examples',
+  });
+  if (!results) {
+    return ['EMPTY: No file selected'];
+  }
+  updateLastSuccessfulFile(results);
   return results;
 });
 
@@ -115,7 +142,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   const controllerDir = resourcesDir + pathSep + 'concurrency' + pathSep + 'controller';
   console.log(`Current directory: ${cwd()}`);
   const lldb = resourcesDir + pathSep + 'platform' + pathSep + 'lldb' + pathSep + 'bin' + pathSep + 'lldb' + extension;
-  const child = child_process.spawn(lldb, {
+  const child = spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
   });
   child.stdin.write(
@@ -173,10 +200,30 @@ ipcMain.on('launchProgram', (event, msg) => {
   launchProgram(msg.path, port);
 });
 
-ipcMain.handle('showUnsavedChangesDialog', async (e, name: string): Promise<UnsavedChangesResponse> => {
+ipcMain.handle('showUnsavedSaveDialog', async (e, name: string): Promise<UnsavedChangesResponse> => {
   const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(e.sender), {
     message: 'Do you want to save the changes you made to ' + name + '?',
     detail: 'Your changes will be lost if you dont save them.',
+    title: 'VizCon',
+    buttons: ['Save', "Don't Save", 'Cancel'],
+    type: 'warning',
+    noLink: true,
+  });
+
+  switch (result.response) {
+    case 0:
+      return 'save';
+    case 1:
+      return 'dontsave';
+    default:
+      return 'cancel';
+  }
+});
+
+ipcMain.handle('showUnsavedCompileDialog', async (e, name: string): Promise<UnsavedChangesResponse> => {
+  const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(e.sender), {
+    message: 'Do you want to save the changes you made to ' + name + ' before you compile?',
+    detail: "Your changes will be not be compiled if you don't save them.",
     title: 'VizCon',
     buttons: ['Save', "Don't Save", 'Cancel'],
     type: 'warning',

@@ -81,6 +81,11 @@ void vizconError(char* func, int err)
                 errorMessage = "A thread attempted to unlock an mutex that was locked by another thread.";
                 break;
             }
+            case VC_ERROR_SEMVALUELIMIT:
+            {
+                errorMessage = "Too many posts were made to a semaphore.";
+                break;
+            }
             default:
                 errorMessage = "An unknown error has occurred.";
         }

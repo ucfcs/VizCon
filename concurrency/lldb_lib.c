@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "lldb_lib.h"
 
-int real_main(void);
+extern int userMain();
 CSSem *sem_wait_create_thread;
 int isLldbActive; 
 
@@ -74,8 +74,8 @@ void vcSignal(CSSem *sem)
 
 }
 
-int main(void)
+int main()
 {
     vc_internal_init();
-    return real_main();
+    return userMain();
 }
