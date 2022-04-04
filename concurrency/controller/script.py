@@ -1,6 +1,7 @@
 from time import sleep
 from thread_manager import ThreadManager
 import lldb
+import ctypes
 import json
 import base64
 import os
@@ -23,18 +24,72 @@ def start(exe, terminalOutputFile, visualizerMode):
         sys.stdout.flush()
         sys.stderr.flush()
         os._exit(0)
+def debug_now(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+    sys.stderr.flush()
+    sys.stdout.flush()
+def debug_print(*args, **kwargs):
+    return
+    print(*args, file=sys.stderr, **kwargs)
+    sys.stderr.flush()
+    sys.stdout.flush()
+
+def do_nothing():
+    pass
+def makeSuspendFixer(process):
+    if os.name != "nt":
+        return do_nothing
+    HANDLE = ctypes.c_voidp
+    DWORD = ctypes.c_ulong
+    BOOL = ctypes.c_int
+    SuspendThread = ctypes.windll.kernel32.SuspendThread
+    SuspendThread.argtypes = (HANDLE,)
+    SuspendThread.restype = DWORD
+    ResumeThread = ctypes.windll.kernel32.ResumeThread
+    ResumeThread.argtypes = (HANDLE,)
+    ResumeThread.restype = DWORD
+    OpenThread = ctypes.windll.kernel32.OpenThread
+    OpenThread.argtypes = (DWORD, BOOL, DWORD)
+    OpenThread.restype = HANDLE
+    THREAD_SUSPEND_RESUME = 2
+    CloseHandle = ctypes.windll.kernel32.CloseHandle
+    CloseHandle.argtypes = (HANDLE,)
+    CloseHandle.restype = BOOL
+    def suspendFixer():
+        for t in process:
+            tid = t.GetThreadID()
+            thread_handle = OpenThread(THREAD_SUSPEND_RESUME, 0, tid)
+            if thread_handle == 0:
+                debug_print("Error. Couldn't open thread handle!")
+                continue
+            prev_count = SuspendThread(thread_handle)
+            count = prev_count + 1
+            if prev_count > 127:
+                debug_print("Suspend error.")
+                prev_count = ResumeThread(thread_handle)
+                count = prev_count - 1
+                if prev_count > 127:
+                    debug_print("Failed to fix suspend bug on thread", t)
+                    CloseHandle(thread_handle)
+                    continue
+            target_val = 1 if prev_count > 0 else 0
+            if target_val == 0:
+                debug_print("Surprisingly, target value is 0")
+            original_count = count
+            while count > target_val:
+                prev_count = ResumeThread(thread_handle)
+                if prev_count > 127:
+                    debug_print("Error. Failed to fix suspend bug on thread")
+                    break
+                count = prev_count - 1
+            #debug_now("Final count", count, "target was", target_val, "original was", original_count, t )
+            CloseHandle(thread_handle)
+    return suspendFixer
 def _start(exe, terminalOutputFile, visualizerMode):
     if not visualizerMode:
         dataOutputFile = sys.stdout
     else:
         dataOutputFile = os.fdopen(3, 'w')
-
-    # TODO
-    def debug_print(*args, **kwargs):
-        return
-        #print(*args, file=sys.stderr, **kwargs)
-        #sys.stderr.flush()
-        #sys.stdout.flush()
 
     def waitForVisualizer():
         if not visualizerMode:
@@ -125,7 +180,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
         print(launch_info.AddOpenFileAction(2, terminalOutputFile, False, True))
     launch_info.SetEnvironmentEntries(["lldbMode=1"], True)
     process = target.Launch(launch_info, error)
-    debug_print("Error", error.Success(), error, error.GetCString())
+    debug_print("Launch info:", error.Success(), error, error.GetCString())
 
     for t in process:
         if isStoppedForBreakpoint(t, main_bp):
@@ -134,7 +189,10 @@ def _start(exe, terminalOutputFile, visualizerMode):
             main_thread = t
 
     thread_man = ThreadManager(main_thread)
-
+    # LLDB on Windows has a bug where it reaches MAXIMUM_SUSPEND_COUNT after calling SuspendThread too many times.
+    # Periodically making calls to fixSuspendBug serves as a quick hack to hide the issue by draining the counter
+    # On non-Windows platforms, fixSuspendBug is a no-op (the do_nothing function)
+    fixSuspendBug = makeSuspendFixer(process)
     running_thread = main_thread
     chosen_cthread = None
     def getThreads():
@@ -160,14 +218,15 @@ def _start(exe, terminalOutputFile, visualizerMode):
             break
 
         waitForVisualizer()
+        fixSuspendBug()
         chosen_cthread = thread_man.chooseThread()
-        
+
         if chosen_cthread is None:
             debug_print("Ready list is empty! No more runnable threads! Deadlock?")
             respondToVisualizer({'type': 'error', 'error': 'ready list is empty'})
             sys.exit(1)
         running_thread = chosen_cthread['thread']
-
+        #debug_print("Selected", chosen_cthread['name'], running_thread.GetFrameAtIndex(0), running_thread, running_thread.GetStopReason(), running_thread.GetStopDescription(1024))
         for t in getThreads():
             t.Suspend()
 
@@ -175,11 +234,11 @@ def _start(exe, terminalOutputFile, visualizerMode):
         if running_thread.GetThreadID() in ignore_set:
             ignore_set.remove(running_thread.GetThreadID())
 
-        #debug_print("Before stepInstruction", chosen_cthread['name'])
         running_thread.StepInstruction(False)
         current_function = running_thread.GetFrameAtIndex(0).GetFunction().GetDisplayName()
-        #debug_print("After stepInstruction", current_function, chosen_cthread['name'])
+        #debug_print("Step one instruction", current_function, running_thread.GetFrameAtIndex(0).IsValid(), running_thread.GetFrameAtIndex(0), running_thread, running_thread.GetStopReason(), running_thread.GetStopDescription(1024))
         if current_function == 'vc_internal_thread_wrapper':
+            debug_print("Thread exit")
             # TODO: much more cleanup is needed!
             # for example, remove it from managed threads
             # it probably can't be in ignore set but remove it from that anyway
@@ -209,8 +268,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     if isFrameUserCode(fr):
                         break
                     last_nonuser_code_fr = fr
-                    debug_print(isFrameUserCode(fr), fr)
-                debug_print("Special stepout from", last_nonuser_code_fr)
+                #debug_print(chosen_cthread['name'], " entered function", last_nonuser_code_fr, ". Stepping out.")
                 running_thread.StepOutOfFrame(last_nonuser_code_fr)
         handlingBreakpoints = True
         while handlingBreakpoints:
@@ -229,10 +287,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
                 if isStoppedForBreakpoint(t, vcWait_bp):
                     new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
                     thread_man.onWaitSem(t, str(new_sem))
-                    # TODO: Add a better resume to replace this
                     t.StepInstruction(False)
-                    #t.StepOut()
-                    #process.Continue()
                     handledBreakpoint = True
                     continue
                 if isStoppedForBreakpoint(t, vcSignal_bp):
@@ -251,8 +306,6 @@ def _start(exe, terminalOutputFile, visualizerMode):
                 if isStoppedForBreakpoint(t, lockMutex_bp):
                     mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
                     thread_man.onLockMutex(t, str(mutex_ptr))
-                    # TODO: Add a better resume to replace this
-                    #process.Continue()
                     t.StepInstruction(False)
                     handledBreakpoint = True
                     continue
@@ -271,6 +324,8 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
                     ignore_set.add(t.GetThreadID())
                     thread_man.onJoin(t, thread_val)
+                    t.StepInstruction(False)
+                    continue
                 if isStoppedForBreakpoint(t, hook_createThread_bp):
                     new_thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
                     new_thread_name_ptr = t.GetFrameAtIndex(0).FindVariable("name")
@@ -339,6 +394,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
             for frame_var in globals:
                 globals_list.append(serializeVariable(thread_man, frame_var))
             respondToVisualizer({'type': 'res', 'threads': thread_list, 'globals': globals_list})
+        #debug_print(chosen_cthread['name'], "completed stepping (double). Ended at", running_thread.GetFrameAtIndex(0))
 
 def isStoppedForBreakpoint(thread, bp):
     return thread.stop_reason == lldb.eStopReasonBreakpoint and thread.GetStopReasonDataAtIndex(0) == bp.GetID()
