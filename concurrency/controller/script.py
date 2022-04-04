@@ -223,7 +223,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
 
         if chosen_cthread is None:
             debug_print("Ready list is empty! No more runnable threads! Deadlock?")
-            respondToVisualizer({'type': 'error', 'error': 'ready list is empty'})
+            respondToVisualizer({'type': 'error', 'error': 'deadlock'})
             sys.exit(1)
         running_thread = chosen_cthread['thread']
         #debug_print("Selected", chosen_cthread['name'], running_thread.GetFrameAtIndex(0), running_thread, running_thread.GetStopReason(), running_thread.GetStopDescription(1024))

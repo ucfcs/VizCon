@@ -69,7 +69,7 @@ export default function Controls({
       {/*(status === 'running' || status === 'paused') && (
         <Control label="Restart Simulation" action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }} />
       )*/}
-      {(status === 'not_started' || status === 'finished' || status === 'terminated') && (
+      {(status === 'not_started' || status === 'finished' || status === 'terminated' || status === 'error' || status === 'deadlock') && (
         <Control label="Start Simulation" action={{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }} />
       )}
       {status === 'running' && (
@@ -118,6 +118,8 @@ function getStatusDisplayName(state: VisualizerRunState): string {
     terminating: 'Terminating...',
     terminated: 'Terminated',
     running: 'Running',
+    error: 'Error',
+    deadlock: 'Deadlock',
     pausing: 'Pausing...',
     paused: 'Paused',
     finished: 'Finished',
