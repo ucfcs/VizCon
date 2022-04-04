@@ -66,6 +66,10 @@ export default function Controls({
   return (
     <div className="controls">
       <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r" />
+      {/*Temporary style hack. The status is not a control and not a label.*/}
+      <div className="control">
+        <div className="padding-container label">Status: {getStatusDisplayName(status)}</div>
+      </div>
       {/*(status === 'running' || status === 'paused') && (
         <Control label="Restart Simulation" action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }} />
       )*/}
@@ -87,10 +91,6 @@ export default function Controls({
           action={{ title: 'Force Quit Simulation', codiconClass: 'codicon-debug-stop', action: terminate }}
         />
       )}
-      {/*Temporary style hack. The status is not a control and not a label.*/}
-      <div className="control">
-        <div className="padding-container label">Status: {getStatusDisplayName(status)}</div>
-      </div>
       {/*This input is for testing only and should probably be removed*/}
       <input
         type="range"
