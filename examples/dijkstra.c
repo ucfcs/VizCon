@@ -64,7 +64,7 @@ void* SmallSet(void* param)
         vcSemSignal(freeSinB);
     }
     vcSemSignal(readyBinS);
-    return 0;
+    return (void*)0;
 }
 
 void* BigSet(void* param)
@@ -85,7 +85,7 @@ void* BigSet(void* param)
         vcSemSignal(freeBinS);
     }
     vcSemSignal(readySinB);
-    return 0;
+    return (void*)0;
 }
 
 int main() 

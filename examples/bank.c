@@ -68,7 +68,7 @@ void* Teller(void* param)
         }
         vcSemSignal(mainSem);
     }
-    return 0;
+    return (void*)0;
 }
 
 void* MainBranch(void* param)
@@ -83,7 +83,7 @@ void* MainBranch(void* param)
         vcSemSignal(tellerSem);
         vcSemWait(mainSem);
     }
-    return 0;
+    return (void*)0;
 }
 
 int main()
