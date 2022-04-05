@@ -1,8 +1,5 @@
 import { ElectronApplication, Locator, _electron as electron } from "playwright";
 import { test, expect, Page } from "@playwright/test";
-import { readFileSync, writeFileSync } from "fs";
-import { join } from "path";
-const testStringSize: number = 5;
 let electronApp: ElectronApplication;
 let window: Page;
 
@@ -17,6 +14,13 @@ test.describe("Infrastructure", async () =>
 
     // Get the first window that the app opens.
     window = await electronApp.firstWindow();
+
+    // Switch to the visualizer and set the speed to its fastest setting. Then go back.
+    await window.locator('div.menu-item:has-text("ViewShow")').click();
+    await window.locator('span.action-label:text("Show Visualizer")').click();
+    await window.locator('#visualizer input[type="range"]:visible').fill('0');
+    await window.locator('div.menu-item:has-text("ViewShow")').click();
+    await window.locator('span.action-label:text("Show Editor")').click();
   });
 
   // Compile Success - Check that file compilation works correctly.
@@ -115,9 +119,6 @@ test.describe("Infrastructure", async () =>
   // Output - Check that the executable output is correctly reported.
   test('Output', async () =>
   {
-    // This test is very slow, so set the timeout to 60s.
-    test.setTimeout(60000);
-
     // Open a testing file.
     // This file generates a string character-by-character, prints the ASCII value of each character,
     // and then prints the entire string.
@@ -138,7 +139,6 @@ test.describe("Infrastructure", async () =>
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
 
     // Wait for the program to finish.
-    console.log('Please set the speed to its highest setting.');
     while ((await runStatus.textContent()) !== 'Status: Finished');
 
     // Read strings from the file and compare.
