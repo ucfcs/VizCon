@@ -70,6 +70,10 @@ function App(): React.ReactElement {
   }
 
   async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<OpenFileData> {
+    if (!file.dirty || file.path === defaultCurrent.path) {
+      return;
+    }
+
     const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, forceDialog);
     console.log(`saving file ${file.path}, status ${writtenPath}`);
 
@@ -101,7 +105,8 @@ function App(): React.ReactElement {
 
     for (let i = 0; i < newFiles.length; i++) {
       const file = newFiles[i];
-      if (!file.dirty) {
+      // if the file isnt dirty or is the default current (for the landing page), dont save
+      if (!file.dirty || file.path === defaultCurrent.path) {
         continue;
       }
 
@@ -186,7 +191,7 @@ function App(): React.ReactElement {
   }
 
   async function compile(run: boolean): Promise<void> {
-    if (current.path === 'tracking://Landing') {
+    if (current.path === defaultCurrent.path) {
       return;
     }
 
@@ -231,6 +236,7 @@ function App(): React.ReactElement {
         current={current}
         dirty={dirty}
         visualizerActive={inVisualizer}
+        landingPath={defaultCurrent.path}
         openFile={openFile}
         openExampleFile={openExampleFile}
         openBlankFile={openBlankFile}
