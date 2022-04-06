@@ -220,12 +220,13 @@ function App(): React.ReactElement {
     }
 
     const results = await window.platform.compileFile(file.path);
+    console.log(results);
 
     document.body.classList.remove('compiling');
 
-    if (results !== '') {
+    if (results.err !== '' && results.err.includes('error: ')) {
       setOutputVisible(true);
-      setCompileResult(results);
+      setCompileResult(results.err);
       return;
     }
 
@@ -234,7 +235,11 @@ function App(): React.ReactElement {
       setInVisualizer(true);
     } else {
       setOutputVisible(true);
-      setCompileResult('Compilation succeeded with no warnings or errors.');
+      if (results?.err.includes('warning: ')) {
+        setCompileResult('Compilation succeeded with warnings.\n' + results.err);
+      } else {
+        setCompileResult('Compilation succeeded with no warnings or errors.');
+      }
     }
   }
 
