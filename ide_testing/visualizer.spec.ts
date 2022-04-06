@@ -38,20 +38,91 @@ test.describe("Visualizer", async () =>
     await window.locator('span.action-label:text("Compile And Run File")').click();
 
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
-    let runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:"):visible');
-    let consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:"):visible');
+    const consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
     while ((await runStatus.textContent()) != 'Status: Finished');
 
     // Once the program finishes, compare the console output to the names in the thread list.
-    let outputNames = (await consoleOut.textContent()).split('|');
-    let tableNames = await window.locator("#visualizer td.thread-name").allTextContents();
+    const outputNames = (await consoleOut.textContent()).split('|');
+    const tableNames = await window.locator("#visualizer td.thread-name").allTextContents();
     expect(tableNames.length).toBe(outputNames.length + 1);
     expect(tableNames[0]).toBe("#main_thread");
     for(let i = 0; i < outputNames.length; i++)
     {
       // Add 1 to the tableNames index since the first table entry is #main_thread.
       expect(outputNames[i]).toBe(tableNames[i + 1]);
+    }
+  });
+
+  // Thread Status - All thread statuses are correct and up-to-date.
+  test('Thread Status', async () =>
+  {
+    // Open a testing file that generates a set of threads with random names.
+    console.log('Please select "threadstatus.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+
+    // File is loaded by tester here...
+    
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+
+    // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
+    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:"):visible');
+    const consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+
+    // Wait for the first ID to be printed, then get the number of threads.
+    // Use that to create an array of statuses for each thread: true means the thread has finished.
+    while ((await consoleOut.textContent({ timeout: 15000 })) == '');
+    const numThreads = (await window.locator("#visualizer td.thread-name").count()) - 1;
+    let threads: Array<Boolean> = new Array(numThreads);
+    for(let i = 0; i < numThreads; i++) threads[i] = false;
+    
+    // When an ID number is printed, check that the corresponding thread is highlighted and that 'ACTIVE' is true.
+    // Also check that the others' ACTIVE and FINISHED values are correct.
+    let lastOut = '';
+    for(let i = 0; i < numThreads; i++)
+    {
+      // Wait for something to be printed.
+      while ((await consoleOut.textContent()) == lastOut);
+      lastOut = await consoleOut.textContent();
+
+      // Get the most recent ID number.
+      let lastThreadID = parseInt(lastOut.charAt(lastOut.length - 1));
+
+      // Check every thread's ACTIVE and FINISH values.
+      for(let j = 0; j < numThreads; j++)
+      {
+        // If this is the active thread, make sure that this is the highlighted row.
+        // Also make sure that ACTIVE is true and FINISH is false.
+        // Then, mark it as having been active.
+        if((j + 1) == lastThreadID)
+        {
+          let tableRow: Locator = window.locator('#visualizer tr.thread-row.current');
+          await expect(tableRow).toContainText('Thread ' + (j + 1));
+          await expect(tableRow).toContainText('truefalse');
+          threads[j] = true;
+        }
+
+        // If threads[j] is true, the corresponding thread has finished.
+        // Also make sure that ACTIVE is false and FINISH is true.
+        else if(threads[j] == true)
+        {
+          let tableRow: Locator = window.locator('#visualizer tr.thread-row:has-text("Thread ' + (j + 1) + '")');
+          await expect(tableRow).toContainText('falsetrue');
+        }
+
+        // If threads[j] is false, the corresponding thread has not finished.
+        // Also make sure that ACTIVE is false and FINISH is false.
+        else
+        {
+          let tableRow: Locator = window.locator('#visualizer tr.thread-row:has-text("Thread ' + (j + 1) + '")');
+          await expect(tableRow).toContainText('falsefalse');
+        }
+      }
     }
   });
 

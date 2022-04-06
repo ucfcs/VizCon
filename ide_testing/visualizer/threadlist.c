@@ -7,7 +7,7 @@
 // Close all threads function is used since some threads are purposefully never started.
 extern void closeAllThreads();
 
-// Uncalled thread that just returns the parameter.
+// Basic thread that just returns the parameter.
 void* SimpleThread(void* param)
 {
     return param;
