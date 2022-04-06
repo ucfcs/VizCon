@@ -22,6 +22,7 @@ void *vc_internal_thread_wrapper(void *parameter)
     //printf("Thread runs!\n");
     do_post();
     void *retval = thread->func(thread->arg);
+    thread->returnVal = retval;
     return retval;
 }
 void lldb_hook_createThread(CSThread *thread, char *name)
@@ -41,11 +42,11 @@ void vc_internal_init()
     if (isLldbActive)
     {
         setbuf(stdout, NULL);
-        fprintf(stderr, "LLDB is active\n");
+        //fprintf(stderr, "LLDB is active\n");
     }
     else
     {
-        fprintf(stderr, "LLDB is NOT active\n");
+        //fprintf(stderr, "LLDB is NOT active\n");
     }
 
     if (isLldbActive)
@@ -58,20 +59,36 @@ void vc_internal_init()
 }
 
 
-
+// Semaphores
 void vc_internal_registerSem(CSSem *sem, int initialValue, int maxValue)
 {
-
+    // LLDB
 }
 
 void vcWait(CSSem *sem)
 {
-
+    // LLDB
 }
 
 void vcSignal(CSSem *sem)
 {
+    // LLDB
+}
 
+// Mutexes
+void lldb_hook_registerMutex(CSMutex *mutex)
+{
+    // LLDB
+}
+
+void lldb_hook_lockMutex(CSMutex *mutex)
+{
+    // LLDB
+}
+
+void lldb_hook_unlockMutex(CSMutex *mutex)
+{
+    // LLDB
 }
 
 int main()

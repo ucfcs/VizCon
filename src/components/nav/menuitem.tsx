@@ -123,12 +123,15 @@ function MenuItem({ parentTitle, name, action, disable, keybind, seperator }: Me
   };
   window.addEventListener(`Nav-${parentTitle}-${name}`, callbackCache[name]);
 
+  let displayKeybind = keybind;
+
   // handle keybinds
   if (keybind) {
     window.removeEventListener('keydown', keyboardCache[name]);
 
     // get the disallowed masks, then the allowed masks, in that order
     const [disallowedMasks, partialKeybind] = getDisallowedMasksForBind(keybind);
+    displayKeybind = partialKeybind;
     const [masks, key] = getMasksForBind(partialKeybind);
 
     keyboardCache[name] = (ke: KeyboardEvent) => {
@@ -174,7 +177,7 @@ function MenuItem({ parentTitle, name, action, disable, keybind, seperator }: Me
   return (
     <li className={className} onClick={onClick}>
       <span className="action-label">{name}</span>
-      {keybind && <span className="keybind">{keybind}</span>}
+      {displayKeybind && <span className="keybind">{displayKeybind}</span>}
     </li>
   );
 }

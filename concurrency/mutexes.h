@@ -1,3 +1,5 @@
+#pragma once
+
 // Utilities library
 #include "utils.h"
 

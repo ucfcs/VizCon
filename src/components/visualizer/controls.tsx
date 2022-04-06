@@ -4,14 +4,11 @@ import { filePathToShortName } from '../../util/utils';
 interface ControlsProps {
   fileName: string;
   start: () => void;
-  restart: () => void;
   pause: () => void;
   resume: () => void;
   terminate: () => void;
   goBack: () => void;
   status: VisualizerRunState;
-  simulationSpeed: number;
-  setSimulationSpeed: (speed: number) => void;
 }
 
 interface ControlProps {
@@ -54,22 +51,23 @@ function Control({ label, action, className = '' }: ControlProps): React.ReactEl
 export default function Controls({
   fileName,
   start,
-  restart,
   pause,
   resume,
   terminate,
   goBack,
   status,
-  setSimulationSpeed,
-  simulationSpeed,
 }: ControlsProps): React.ReactElement {
   return (
     <div className="controls">
       <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r" />
+      {/*Temporary style hack. The status is not a control and not a label.*/}
+      <div className="control">
+        <div className="padding-container label">Status: {getStatusDisplayName(status)}</div>
+      </div>
       {/*(status === 'running' || status === 'paused') && (
         <Control label="Restart Simulation" action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }} />
       )*/}
-      {(status === 'not_started' || status === 'finished' || status === 'terminated') && (
+      {(status === 'not_started' || status === 'finished' || status === 'terminated' || status === 'error' || status === 'deadlock') && (
         <Control label="Start Simulation" action={{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }} />
       )}
       {status === 'running' && (
@@ -87,21 +85,6 @@ export default function Controls({
           action={{ title: 'Force Quit Simulation', codiconClass: 'codicon-debug-stop', action: terminate }}
         />
       )}
-      {/*Temporary style hack. The status is not a control and not a label.*/}
-      <div className="control">
-        <div className="padding-container label">Status: {getStatusDisplayName(status)}</div>
-      </div>
-      {/*This input is for testing only and should probably be removed*/}
-      <input
-        type="range"
-        min="0"
-        max="1000"
-        value={simulationSpeed}
-        step="20"
-        onChange={e => {
-          setSimulationSpeed(e.target.valueAsNumber);
-        }}
-      />
       <Control
         label="Return to Editor"
         action={{ title: 'Return to Editor', codiconClass: 'codicon-discard', action: goBack }}
@@ -118,6 +101,8 @@ function getStatusDisplayName(state: VisualizerRunState): string {
     terminating: 'Terminating...',
     terminated: 'Terminated',
     running: 'Running',
+    error: 'Error',
+    deadlock: 'Deadlock',
     pausing: 'Pausing...',
     paused: 'Paused',
     finished: 'Finished',

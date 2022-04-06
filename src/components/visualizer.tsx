@@ -52,7 +52,7 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   const [runState, setRunState] = useState<VisualizerRunState>('not_started');
   const visualizerController = useRef<VisualizerController>(null);
   const [consoleOutput, setConsoleOutput] = useState('');
-  const [simulationSpeed, setSimulationSpeed] = useState(100);
+  const [simulationSpeed, setSimulationSpeed] = useState(10);
 
   // This is a testing useeffect
   useEffect(() => {
@@ -64,7 +64,6 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   }, [inVisualizer]);
 
   function start() {
-    console.log('test start');
     setConsoleOutput('');
     setRunState('starting');
     visualizerController.current = new VisualizerController({
@@ -90,10 +89,6 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
     visualizerController.current.start();
   }
 
-  function restart() {
-    setConsoleOutput('');
-  }
-
   function terminate() {
     visualizerController.current.terminate();
   }
@@ -101,7 +96,7 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
   function pause() {
     visualizerController.current.pause();
   }
-  
+
   function resume() {
     visualizerController.current.resume();
   }
@@ -111,19 +106,11 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
       <Controls
         fileName={current.path}
         start={start}
-        restart={restart}
         terminate={terminate}
         pause={pause}
         resume={resume}
         goBack={goBack}
         status={runState}
-        setSimulationSpeed={simulationSpeed => {
-          if (visualizerController.current !== null) {
-            visualizerController.current.setSpeed(simulationSpeed);
-          }
-          setSimulationSpeed(simulationSpeed);
-        }}
-        simulationSpeed={simulationSpeed}
       />
       <div className="visualizer-main">
         <Threads data={visualizerState?.threads || testingThreadData} />

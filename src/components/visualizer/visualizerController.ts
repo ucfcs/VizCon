@@ -79,6 +79,17 @@ export default class VisualizerController {
         console.log('Process was killed.');
         return;
       }
+      if (msg.type === 'error') {
+        if (msg.error === 'deadlock') {
+          this.status = 'deadlock';
+          this.onRunStateChange('deadlock');
+        } else {
+          this.status = 'error';
+          this.onRunStateChange('error');
+        }
+        //TODO: this.onStateChange(msg);
+        return;
+      }
       this.onStateChange(msg);
       await delay(this.delayMilliseconds);
     }

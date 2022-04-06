@@ -33,6 +33,16 @@ interface DebuggerHandle {
   stop: () => Promise<any>;
 }
 
-type VisualizerRunState = 'not_started' | 'starting' | 'pausing' | 'paused' | 'terminating' | 'terminated' | 'running' | 'finished';
+type VisualizerRunState =
+  | 'not_started'
+  | 'starting'
+  | 'error'
+  | 'deadlock'
+  | 'pausing'
+  | 'paused'
+  | 'terminating'
+  | 'terminated'
+  | 'running'
+  | 'finished';
 
 type UnsavedChangesResponse = 'save' | 'dontsave' | 'cancel';

@@ -1,4 +1,7 @@
 #include "mutexes.h"
+#include "lldb_lib.h"
+
+extern int isLldbActive;
 
 // mutexCreate - Create a mutex struct.
 //               Returns: a pointer to the mutex struct.
@@ -16,6 +19,13 @@ CSMutex* mutexCreate()
     mutex->available = 1;
     mutex->holderID = (THREAD_ID_TYPE) 0;
     mutex->next = NULL;
+
+    if (isLldbActive)
+    {
+        mutex->mutex = NULL;
+        lldb_hook_registerMutex(mutex);
+        return mutex;
+    }
 
     // Platform-dependent mutex creation.
     // Create a mutex with default settings. Error out where needed.
@@ -56,7 +66,16 @@ void mutexLock(CSMutex* mutex)
             return;
         }
 
-        DWORD ret = WaitForSingleObject(mutex->mutex, INFINITE);
+        DWORD ret;
+        if (isLldbActive)
+        {
+            lldb_hook_lockMutex(mutex);
+            ret = WAIT_OBJECT_0;
+        }
+        else
+        {
+            ret = WaitForSingleObject(mutex->mutex, INFINITE);
+        }
         switch(ret)
         {
             // WAIT_OBJECT_0 - No error. Mark lock as unavailable.
@@ -94,9 +113,18 @@ void mutexLock(CSMutex* mutex)
             return;
         }
 
-        // pthread_mutex_lock returns 0 on success.
-        // With success, mark lock as unavailable.
-        int ret = pthread_mutex_lock(mutex->mutex);
+        int ret;
+        if (isLldbActive)
+        {
+            lldb_hook_lockMutex(mutex);
+            ret = 0;
+        }
+        else
+        {
+            // pthread_mutex_lock returns 0 on success.
+            // With success, mark lock as unavailable.
+            ret = pthread_mutex_lock(mutex->mutex);
+        }
         if(!ret)
         {
             mutex->available = 0;
@@ -209,7 +237,11 @@ void mutexUnlock(CSMutex* mutex)
         int oldHolderID = mutex->holderID;
         mutex->available = 1;
         mutex->holderID = (THREAD_ID_TYPE) 0;
-
+        if (isLldbActive)
+        {
+            lldb_hook_unlockMutex(mutex);
+            return;
+        }
         if(!ReleaseMutex(mutex->mutex))
         {
             mutex->available = 0;
@@ -223,7 +255,16 @@ void mutexUnlock(CSMutex* mutex)
             return;
         }
 
-        int ret = pthread_mutex_unlock(mutex->mutex);
+        int ret;
+        if (isLldbActive)
+        {
+            lldb_hook_unlockMutex(mutex);
+            ret = 0;
+        }
+        else
+        {
+            ret = pthread_mutex_unlock(mutex->mutex);
+        }
         if(ret)
         {
             vizconError("vcMutexUnlock", ret);
@@ -247,6 +288,12 @@ int mutexStatus(CSMutex* mutex)
 // mutexClose - Close the mutex lock and free the struct.
 void mutexClose(CSMutex* mutex)
 {
+    if (isLldbActive)
+    {
+        // TODO: cleanup
+        free(mutex);
+        return;
+    }
     // Platform-dependent mutex destruction.
     // Create a release request, then free the rest of the struct. 
     #ifdef _WIN32 // Windows version

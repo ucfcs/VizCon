@@ -135,22 +135,32 @@ ipcMain.handle('compileFile', async (e, path: string) => {
 
   return await prom;
 });
-
+import * as pty from 'node-pty';
 function launchProgram(path: string, port: Electron.MessagePortMain): void {
   const extension = process.platform === 'win32' ? '.exe' : '';
   const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + extension;
   const controllerDir = resourcesDir + pathSep + 'concurrency' + pathSep + 'controller';
   console.log(`Current directory: ${cwd()}`);
   const lldb = resourcesDir + pathSep + 'platform' + pathSep + 'lldb' + pathSep + 'bin' + pathSep + 'lldb' + extension;
+  let term: any = null;
+  if (process.platform !== 'win32') {
+    term = (pty as any).open({ name: 'dumb' });
+    term.on('data', (data: any) => {
+      console.log(`pty data ${data}`);
+      port.postMessage({ type: 'stdout', data: data + '' });
+    });
+  }
+  const terminalOutputFile = term == null ? 'None' : `'${btoa(term._pty)}'`;
   const child = spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
   });
   child.stdin.write(
     `script import sys; import base64; sys.path.append(base64.b64decode('${btoa(
       controllerDir
-    )}').decode()); import script; script.start('${btoa(exeFile)}', True)\n`
+    )}').decode()); import script; script.start('${btoa(exeFile)}', ${terminalOutputFile}, True)\n`
   );
   child.on('close', code => {
+    if (term) term.destroy();
     console.log(`child process exited with code ${code}`);
   });
 

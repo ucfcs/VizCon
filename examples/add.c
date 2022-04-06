@@ -1,5 +1,8 @@
 #include "vcuserlibrary.h"
 
+// Standard libraries.
+#include <stdio.h>
+
 int loop = 100;
 int counter;
 
