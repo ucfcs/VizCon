@@ -64,7 +64,7 @@ void* SmallSet(void* param)
         vcSemSignal(freeSinB);
     }
     vcSemSignal(readyBinS);
-    return (void*)1;
+    return (void*)0;
 }
 
 void* BigSet(void* param)
@@ -85,15 +85,15 @@ void* BigSet(void* param)
         vcSemSignal(freeBinS);
     }
     vcSemSignal(readySinB);
-    return (void*)1;
+    return (void*)0;
 }
 
-int real_main(void) 
+int main() 
 {
     freeBinS = vcSemCreate(1);
     freeSinB = vcSemCreate(1);
-    readyBinS = vcSemCreateInitial(0, 1);
-    readySinB = vcSemCreateInitial(0, 1);
+    readyBinS = vcSemCreateInitial(1, 0);
+    readySinB = vcSemCreateInitial(1, 0);
     srand(vcThreadId());
     int i;
     int array1[len], array2[len];
@@ -107,5 +107,5 @@ int real_main(void)
     vcThreadQueue(BigSet, array2);
     vcThreadStart();
     printArray("after", array1, array2);
-    return 1;
+    return 0;
 }

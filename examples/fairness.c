@@ -8,16 +8,16 @@ void* P1(void* param)
     {
         n++;
     }
-    return 1;
+    return (void*)0;
 }
 
 void* P2(void* param)
 {
     b = 0;
-    return 1;
+    return (void*)0;
 }
 
-int real_main(void) 
+int main() 
 {
     int i, trials = 10;
     for(i=0; i<trials; i++)

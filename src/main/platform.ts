@@ -120,16 +120,16 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [path, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
-  const commandString = `gcc -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile}`;
+  const commandString = `gcc -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile} -Wall`;
   console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
     exec(commandString, (err, stdout, stderr) => {
       if (err && err.code !== 0) {
-        resolve(stderr);
+        resolve({out: stdout, err: stderr});
         return;
       }
-      resolve(stdout);
+      resolve({out: stdout, err: stderr});
     });
   });
 

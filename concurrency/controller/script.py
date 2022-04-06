@@ -156,7 +156,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
         sys.exit(2)
 
     # If the target is valid set a breakpoint at main
-    main_bp = target.BreakpointCreateByName ("real_main", target.GetExecutable().GetFilename())
+    main_bp = target.BreakpointCreateByName ("userMain", target.GetExecutable().GetFilename())
     thread_bp = target.BreakpointCreateByName ("do_post", target.GetExecutable().GetFilename())
     hook_createThread_bp = target.BreakpointCreateByName ("lldb_hook_createThread", target.GetExecutable().GetFilename())
     vcJoin_bp = target.BreakpointCreateByName ("vcJoin", target.GetExecutable().GetFilename())
@@ -250,6 +250,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
             # TODO: think about this, but I think conveniently
             # stepover does not stop othe threads, so we don't actually have to worry about it
             running_thread.Resume()
+            running_thread.StepOut()
             # TODO: it might be appropriate to resume all the threads that were waiting
             # but it probably doesn't matter
         elif current_function == 'main':

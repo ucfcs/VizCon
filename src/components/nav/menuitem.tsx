@@ -24,9 +24,9 @@ interface KeyboardMasks {
 }
 
 function getMasksForBind(keybind: string): [KeyboardMasks, string] {
-  let ctrl: boolean;
-  let shift: boolean;
-  let alt: boolean;
+  let ctrl = false;
+  let shift = false;
+  let alt = false;
 
   if (keybind.includes('Ctrl+')) {
     keybind = keybind.replace('Ctrl+', '');
@@ -40,6 +40,36 @@ function getMasksForBind(keybind: string): [KeyboardMasks, string] {
 
   if (keybind.includes('Alt+')) {
     keybind = keybind.replace('Alt+', '');
+    alt = true;
+  }
+
+  return [
+    {
+      ctrl: ctrl,
+      shift: shift,
+      alt: alt,
+    },
+    keybind,
+  ];
+}
+
+function getDisallowedMasksForBind(keybind: string): [KeyboardMasks, string] {
+  let ctrl = false;
+  let shift = false;
+  let alt = false;
+
+  if (keybind.includes('!Ctrl+')) {
+    keybind = keybind.replace('!Ctrl+', '');
+    ctrl = true;
+  }
+
+  if (keybind.includes('!Shift+')) {
+    keybind = keybind.replace('!Shift+', '');
+    shift = true;
+  }
+
+  if (keybind.includes('!Alt+')) {
+    keybind = keybind.replace('!Alt+', '');
     alt = true;
   }
 
@@ -85,18 +115,21 @@ function MenuItem({ parentTitle, name, action, disable, keybind, seperator }: Me
     action();
   };
 
+  // add the event for macOS
+  // TODO: remove this for non macOS platforms??
   window.removeEventListener(`Nav-${parentTitle}-${name}`, callbackCache[name]);
-
   callbackCache[name] = () => {
     onClick();
   };
-
   window.addEventListener(`Nav-${parentTitle}-${name}`, callbackCache[name]);
 
+  // handle keybinds
   if (keybind) {
     window.removeEventListener('keydown', keyboardCache[name]);
 
-    const [masks, key] = getMasksForBind(keybind);
+    // get the disallowed masks, then the allowed masks, in that order
+    const [disallowedMasks, partialKeybind] = getDisallowedMasksForBind(keybind);
+    const [masks, key] = getMasksForBind(partialKeybind);
 
     keyboardCache[name] = (ke: KeyboardEvent) => {
       // if ctrl key required but not pressed, return
@@ -109,6 +142,19 @@ function MenuItem({ parentTitle, name, action, disable, keybind, seperator }: Me
       }
 
       if (masks.alt && !ke.altKey) {
+        return;
+      }
+
+      // check if any of the disallowed masks are present and pressed
+      if (disallowedMasks.ctrl && ke.ctrlKey) {
+        return;
+      }
+      
+      if (disallowedMasks.shift && ke.shiftKey) {
+        return;
+      }
+
+      if (disallowedMasks.alt && ke.altKey) {
         return;
       }
 
@@ -128,7 +174,7 @@ function MenuItem({ parentTitle, name, action, disable, keybind, seperator }: Me
   return (
     <li className={className} onClick={onClick}>
       <span className="action-label">{name}</span>
-      <span className="keybind">{keybind}</span>
+      {keybind && <span className="keybind">{keybind}</span>}
     </li>
   );
 }

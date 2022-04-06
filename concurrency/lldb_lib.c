@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include "lldb_lib.h"
 
-int real_main(void);
+extern int userMain();
 CSSem *sem_wait_create_thread;
 int isLldbActive; 
 
@@ -22,6 +22,7 @@ void *vc_internal_thread_wrapper(void *parameter)
     //printf("Thread runs!\n");
     do_post();
     void *retval = thread->func(thread->arg);
+    thread->returnVal = retval;
     return retval;
 }
 void lldb_hook_createThread(CSThread *thread, char *name)
@@ -90,8 +91,8 @@ void lldb_hook_unlockMutex(CSMutex *mutex)
     // LLDB
 }
 
-int main(void)
+int main()
 {
     vc_internal_init();
-    return real_main();
+    return userMain();
 }

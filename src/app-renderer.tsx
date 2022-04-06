@@ -18,7 +18,7 @@ function App(): React.ReactElement {
   const [current, setCurrent] = useState(defaultCurrent);
   const [outputVisible, setOutputVisible] = useState(false);
   const [compileResult, setCompileResult] = useState('');
-  const [inVisualizer, setInVisualizer] = useState(false); // TODO: Change back to false later
+  const [inVisualizer, setInVisualizer] = useState(false);
 
   async function handleNewFiles(newFiles: string[]) {
     // if no files were selected, dont attempt to read anything
@@ -35,6 +35,19 @@ function App(): React.ReactElement {
       }
       return true;
     });
+
+    // if no files, dont do anything so we dont break the application
+    if (filteredFiles.length == 0) {
+      // if they only opened one file, set the current file to be that file
+      if (newFiles.length == 1) {
+        for (let i = 0; i < files.length; i++) {
+          if (files[i].path === newFiles[0]) {
+            setCurrent(files[i]);
+          }
+        }
+      }
+      return;
+    }
 
     const newFileContents = await window.platform.readFilesSync(filteredFiles);
     const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
@@ -70,6 +83,10 @@ function App(): React.ReactElement {
   }
 
   async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<OpenFileData> {
+    if (!file.dirty || file.path === defaultCurrent.path) {
+      return;
+    }
+
     const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, forceDialog);
     console.log(`saving file ${file.path}, status ${writtenPath}`);
 
@@ -101,7 +118,8 @@ function App(): React.ReactElement {
 
     for (let i = 0; i < newFiles.length; i++) {
       const file = newFiles[i];
-      if (!file.dirty) {
+      // if the file isnt dirty or is the default current (for the landing page), dont save
+      if (!file.dirty || file.path === defaultCurrent.path) {
         continue;
       }
 
@@ -186,10 +204,11 @@ function App(): React.ReactElement {
   }
 
   async function compile(run: boolean): Promise<void> {
-    if (current.path === 'tracking://Landing') {
+    if (current.path === defaultCurrent.path) {
       return;
     }
 
+    document.body.classList.add('compiling');
     let file = current;
 
     // handle atttempting to compile an unsaved file
@@ -206,9 +225,13 @@ function App(): React.ReactElement {
     }
 
     const results = await window.platform.compileFile(file.path);
-    if (results !== '') {
+    console.log(results);
+
+    document.body.classList.remove('compiling');
+
+    if (results.err !== '' && results.err.includes('error: ')) {
       setOutputVisible(true);
-      setCompileResult(results);
+      setCompileResult(results.err);
       return;
     }
 
@@ -216,9 +239,12 @@ function App(): React.ReactElement {
       // TODO: hook up the run command
       setInVisualizer(true);
     } else {
-      // TODO: should this be a dialog???
       setOutputVisible(true);
-      setCompileResult('Compilation succeeded with no warnings or errors.');
+      if (results?.err.includes('warning: ')) {
+        setCompileResult('Compilation succeeded with warnings.\n' + results.err);
+      } else {
+        setCompileResult('Compilation succeeded with no warnings or errors.');
+      }
     }
   }
 
@@ -228,6 +254,7 @@ function App(): React.ReactElement {
         current={current}
         dirty={dirty}
         visualizerActive={inVisualizer}
+        landingPath={defaultCurrent.path}
         openFile={openFile}
         openExampleFile={openExampleFile}
         openBlankFile={openBlankFile}

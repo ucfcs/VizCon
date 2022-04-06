@@ -8,6 +8,7 @@ interface NavProps {
   current: OpenFileData;
   dirty: boolean;
   visualizerActive: boolean;
+  landingPath: string;
   openFile: () => void;
   openExampleFile: () => void;
   openBlankFile: () => void;
@@ -27,6 +28,7 @@ export default function Nav({
   current,
   dirty,
   visualizerActive,
+  landingPath,
   openFile,
   openExampleFile,
   openBlankFile,
@@ -42,13 +44,11 @@ export default function Nav({
   closeWindow,
 }: NavProps): React.ReactElement {
   const showMenu = window.platform.getPlatform() !== 'darwin';
-  // const showMenu = true;
-
   const [title, setTitle] = useState('');
 
   useEffect(() => {
     let reactTitle = '';
-    if (current.path !== 'tracking://Landing') {
+    if (current.path !== landingPath) {
       const shortName = filePathToShortName(current.path);
       const titlePrefix = current.dirty ? '• ' : '';
       reactTitle = titlePrefix + shortName + ' - ';
@@ -68,6 +68,14 @@ export default function Nav({
     return !visualizerActive;
   }
 
+  function isFileOpen() {
+    return current.path !== landingPath;
+  }
+
+  function vizOrNoFile() {
+    return inVisualizer() || (!isFileOpen() && false);
+  }
+
   // TODO: Update this menu to match the options found in main/macMenu.ts
   return (
     <div className="titlebar">
@@ -85,7 +93,7 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Open File', action: openFile, disable: inVisualizer, keybind: 'Ctrl+O' },
+            { name: 'Open File', action: openFile, disable: inVisualizer, keybind: 'Ctrl+!Shift+O' },
             { name: 'Open Example File', action: openExampleFile, disable: inVisualizer, keybind: 'Ctrl+Shift+O' },
             {
               name: 'b',
@@ -94,9 +102,9 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Save File', action: saveFile, disable: inVisualizer, keybind: 'Ctrl+S' },
-            { name: 'Save As', action: saveAs, disable: inVisualizer, keybind: 'Ctrl+Shift+S' },
-            { name: 'Save All', action: saveAll, disable: inVisualizer, keybind: 'Ctrl+Alt+S' },
+            { name: 'Save File', action: saveFile, disable: vizOrNoFile, keybind: 'Ctrl+!Shift+!Alt+S' },
+            { name: 'Save As', action: saveAs, disable: vizOrNoFile, keybind: 'Ctrl+Shift+!Alt+S' },
+            { name: 'Save All', action: saveAll, disable: vizOrNoFile, keybind: 'Ctrl+!Shift+Alt+S' },
             {
               name: 'b',
               action: () => {
@@ -104,42 +112,23 @@ export default function Nav({
               },
               seperator: true,
             },
-            { name: 'Close File', action: closeFile, disable: inVisualizer, keybind: 'Ctrl+W' },
+            { name: 'Close File', action: closeFile, disable: vizOrNoFile, keybind: 'Ctrl+!Shift+W' },
             { name: 'Close Window', action: closeWindow, keybind: 'Ctrl+Shift+W' },
           ]}
         />
         <Menu
           title="Compile"
           options={[
-            {
-              name: 'Compile File',
-              action: compile,
-            },
-            {
-              name: 'Compile And Run File',
-              action: compileAndRun,
-            },
+            { name: 'Compile File', action: compile, disable: vizOrNoFile, keybind: 'F5' },
+            { name: 'Compile And Run File', action: compileAndRun, disable: vizOrNoFile, keybind: 'F7' },
           ]}
         />
         <Menu
           title="View"
           options={[
-            {
-              name: 'Show Compile Output',
-              disable: inVisualizer,
-              action: showCompileOutput,
-            },
-            {
-              // TODO: disabling
-              name: 'Show Editor',
-              disable: inEditor,
-              action: showEditor,
-            },
-            {
-              name: 'Show Visualizer',
-              disable: inVisualizer,
-              action: showVisualizer,
-            },
+            { name: 'Show Compile Output', action: showCompileOutput, disable: inVisualizer },
+            { name: 'Show Editor', action: showEditor, disable: inEditor },
+            { name: 'Show Visualizer', action: showVisualizer, disable: inVisualizer },
             {
               name: 'b',
               action: () => {
