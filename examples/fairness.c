@@ -8,13 +8,13 @@ void* P1(void* param)
     {
         n++;
     }
-    return 0;
+    return (void*)0;
 }
 
 void* P2(void* param)
 {
     b = 0;
-    return 0;
+    return (void*)0;
 }
 
 int main() 

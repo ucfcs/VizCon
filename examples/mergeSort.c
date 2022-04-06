@@ -73,7 +73,7 @@ void* MergeSort(void* param)
     MergeSort(thisParam);
     Merge(begin, mid, end);
 
-    return 0;
+    return (void*)0;
 }
 
 void printArray(char* state)
