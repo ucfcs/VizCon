@@ -19,7 +19,7 @@ void* SimpleThread(void* param)
     return NULL;
 }
 
-int real_main()
+int main()
 {
     printf("Hello world!\n");
     counter = 0;
