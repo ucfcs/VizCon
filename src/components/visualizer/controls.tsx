@@ -4,14 +4,11 @@ import { filePathToShortName } from '../../util/utils';
 interface ControlsProps {
   fileName: string;
   start: () => void;
-  restart: () => void;
   pause: () => void;
   resume: () => void;
   terminate: () => void;
   goBack: () => void;
   status: VisualizerRunState;
-  simulationSpeed: number;
-  setSimulationSpeed: (speed: number) => void;
 }
 
 interface ControlProps {
@@ -54,14 +51,11 @@ function Control({ label, action, className = '' }: ControlProps): React.ReactEl
 export default function Controls({
   fileName,
   start,
-  restart,
   pause,
   resume,
   terminate,
   goBack,
   status,
-  setSimulationSpeed,
-  simulationSpeed,
 }: ControlsProps): React.ReactElement {
   return (
     <div className="controls">
@@ -91,17 +85,6 @@ export default function Controls({
           action={{ title: 'Force Quit Simulation', codiconClass: 'codicon-debug-stop', action: terminate }}
         />
       )}
-      {/*This input is for testing only and should probably be removed*/}
-      <input
-        type="range"
-        min="0"
-        max="1000"
-        value={simulationSpeed}
-        step="20"
-        onChange={e => {
-          setSimulationSpeed(e.target.valueAsNumber);
-        }}
-      />
       <Control
         label="Return to Editor"
         action={{ title: 'Return to Editor', codiconClass: 'codicon-discard', action: goBack }}
