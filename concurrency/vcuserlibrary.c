@@ -264,7 +264,7 @@ void vcSemWaitMult(CSSem* sem, int num)
             // return all the ones already acquired and restart the wait.
             if(!vcSemTryWait(sem))
             {
-                for(i = i; i > 0; i--)
+                for(; i > 0; i--)
                     vcSemSignal(sem);
                 i = -1;
                 break;
