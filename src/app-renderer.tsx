@@ -36,6 +36,18 @@ function App(): React.ReactElement {
       return true;
     });
 
+    // if no files, dont do anything so we dont break the application
+    if (filteredFiles.length == 0) {
+      if (newFiles.length == 1) {
+        for (let i = 0; i < files.length; i++) {
+          if (files[i].path === newFiles[0]) {
+            setCurrent(files[i]);
+          }
+        }
+      }
+      return;
+    }
+
     const newFileContents = await window.platform.readFilesSync(filteredFiles);
     const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
       return {
