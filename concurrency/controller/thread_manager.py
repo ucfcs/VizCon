@@ -19,7 +19,7 @@ class ThreadManager:
     semWaitLists = {}
     mutexMap = {}
     def __init__(self, main_lldb_thread):
-        main_thread = {'thread': main_lldb_thread, 'name': '#main_thread', 'state': 'ready', 'csthread_ptr': 'N/A'}
+        main_thread = {'thread': main_lldb_thread, 'name': 'Main Thread', 'state': 'ready', 'csthread_ptr': 'N/A'}
         self.ready_list2 = [main_thread]
         self.managed_threads.append(main_thread)
 
