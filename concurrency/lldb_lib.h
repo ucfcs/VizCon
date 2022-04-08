@@ -11,7 +11,9 @@ void lldb_waitForThreadStart(void);
 void vc_internal_registerSem(CSSem *sem, int initialValue, int maxValue);
 void vcWait(CSSem *sem);
 void vcSignal(CSSem *sem);
+int lldb_hook_semTryWait(CSSem *sem);
 
 void lldb_hook_registerMutex(CSMutex *mutex);
 void lldb_hook_lockMutex(CSMutex *mutex);
 void lldb_hook_unlockMutex(CSMutex *mutex);
+int lldb_hook_mutexTryLock(CSMutex *mutex);

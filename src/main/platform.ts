@@ -198,9 +198,14 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
     }
     port.postMessage({ type: 'stdout', data: str });
   });
-
-  child.stderr.on('data', data => {
-    console.log(`child process error: "${data}"`);
+  child.stderr.on('data', (data: string) => {
+    console.log(`child process stderr: "${data}"`);
+    const str = data + '';
+    if (!haveSeenLldbMessage && str.startsWith('(lldb) script import sys;')) {
+      haveSeenLldbMessage = true;
+      return;
+    }
+    port.postMessage({ type: 'stdout', data: str });
   });
 }
 

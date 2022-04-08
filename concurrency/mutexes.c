@@ -152,7 +152,16 @@ int mutexTryLock(CSMutex* mutex)
         if (mutex->holderID == GetCurrentThreadId())
             return 0;
 
-        DWORD ret = WaitForSingleObject(mutex->mutex, 0);
+        DWORD ret;
+        if (!isLldbActive)
+        {
+            ret = WaitForSingleObject(mutex->mutex, 0);
+        }
+        else
+        {
+            int success = lldb_hook_mutexTryLock(mutex);
+            ret = success ? WAIT_OBJECT_0 : WAIT_TIMEOUT;
+        }
         switch(ret)
         {
             // WAIT_OBJECT_0 - No error. Mark lock as unavailable.
@@ -184,7 +193,16 @@ int mutexTryLock(CSMutex* mutex)
             }
         }
     #elif __linux__ || __APPLE__ // POSIX version
-        int ret = pthread_mutex_trylock(mutex->mutex);
+        int ret;
+        if (!isLldbActive)
+        {
+            ret = pthread_mutex_trylock(mutex->mutex);
+        }
+        else
+        {
+            int success = lldb_hook_mutexTryWait(mutex);
+            ret = success ? 0 : EBUSY;
+        }
         switch(ret)
         {
             // 0 - Success. Mark mutex as unavailable.

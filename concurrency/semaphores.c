@@ -148,8 +148,12 @@ int semTryWait(CSSem* sem)
 {
     if (isLldbActive)
     {
-        fprintf(stderr, "Warning: semTryWait is unimplemented!\n"); 
-        return 0;
+        int success = lldb_hook_semTryWait(sem);
+        if (success)
+        {
+           sem->count = sem->count - 1; 
+        } 
+        return success;
     }
     // Platform-dependent trywaiting.
     #if defined(_WIN32) // Windows version
@@ -265,7 +269,8 @@ void semClose(CSSem* sem)
 {
     if (isLldbActive)
     {
-        fprintf(stderr, "Warning: semClose is unimplemented!\n"); 
+        //fprintf(stderr, "Warning: semClose is unimplemented!\n"); 
+        free(sem);
         return;
     }
     // Platform-dependent closure and memory management.

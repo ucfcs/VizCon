@@ -87,6 +87,15 @@ class ThreadManager:
         self.semWaitLists[sem].append(c_thread)
         self.ready_list2.remove(c_thread)
         c_thread['state'] = 'waiting (sempahore)'
+    def onTryWaitSem(self, lldb_thread, sem):
+        c_thread = self.__lookupFromLLDB(lldb_thread)
+        debug_print("Semaphore wait:", c_thread['name'], "try waited on", sem)
+        sem_obj = self.semaphoreMap[sem]
+        old_val = sem_obj['value']
+        if old_val > 0:
+            sem_obj['value'] -= 1
+            return True
+        return False
     def onSignalSem(self, lldb_thread, sem):
         c_thread = self.__lookupFromLLDB(lldb_thread)
         sem_obj = self.semaphoreMap[sem]
@@ -188,6 +197,17 @@ class ThreadManager:
             debug_print("\tAdding back", woken_thread['name'], "to the ready list")
             self.ready_list2.append(woken_thread)
             woken_thread['state'] = 'ready'
+    def onTryLockMutex(self, lldb_thread, mutex):
+        c_thread = self.__lookupFromLLDB(lldb_thread)
+        debug_print("Mutex tryLock:", c_thread['name'], "waited on", mutex)
+        mutex_obj = self.mutexMap[mutex]
+        if mutex_obj['locked_by'] is None:
+            mutex_obj['locked_by'] = c_thread
+            return True
+        if mutex_obj['locked_by'] == c_thread:
+            #debug_print("A thread attempted to tryLock a mutex that it already owns")
+            return True
+        return False
     
     def getManagedThreads(self):
         return self.managed_threads

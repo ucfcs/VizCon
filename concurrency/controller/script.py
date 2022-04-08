@@ -165,11 +165,13 @@ def _start(exe, terminalOutputFile, visualizerMode):
     vc_internal_registerSem_bp = target.BreakpointCreateByName ("vc_internal_registerSem", target.GetExecutable().GetFilename())
     vcWait_bp = target.BreakpointCreateByName ("vcWait", target.GetExecutable().GetFilename())
     vcSignal_bp = target.BreakpointCreateByName ("vcSignal", target.GetExecutable().GetFilename())
+    hook_semTryWait_bp = target.BreakpointCreateByName ("lldb_hook_semTryWait", target.GetExecutable().GetFilename())
 
     # Mutex breakpoints
     registerMutex_bp = target.BreakpointCreateByName ("lldb_hook_registerMutex", target.GetExecutable().GetFilename())
     lockMutex_bp = target.BreakpointCreateByName ("lldb_hook_lockMutex", target.GetExecutable().GetFilename())
     unlockMutex_bp = target.BreakpointCreateByName ("lldb_hook_unlockMutex", target.GetExecutable().GetFilename())
+    hook_mutexTryLock_bp = target.BreakpointCreateByName ("lldb_hook_mutexTryLock", target.GetExecutable().GetFilename())
 
     launch_info = target.GetLaunchInfo()
 
@@ -303,6 +305,20 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     process.Continue()
                     handledBreakpoint = True
                     continue
+                if isStoppedForBreakpoint(t, hook_semTryWait_bp):
+                    sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    while True:
+                        val = t.GetFrameAtIndex(0).FindVariable("res")
+                        if val.IsValid():
+                            break
+                        t.StepInstruction(False)
+                    
+                    result = thread_man.onTryWaitSem(t, str(sem))
+                    val.SetValueFromCString("1" if result else "0")
+                    t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
+                    t.StepOut()
+                    handledBreakpoint = True
+                    continue
                 # Mutexes:
                 if isStoppedForBreakpoint(t, registerMutex_bp):
                     new_mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
@@ -320,6 +336,19 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
                     thread_man.onUnlockMutex(t, str(mutex_ptr))
                     process.Continue()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_mutexTryLock_bp):
+                    mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    while True:
+                        val = t.GetFrameAtIndex(0).FindVariable("res")
+                        if val.IsValid():
+                            break
+                        t.StepInstruction(False)
+                    result = thread_man.onTryLockMutex(t, str(mutex))
+                    val.SetValueFromCString("1" if result else "0")
+                    t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
+                    t.StepOut()
                     handledBreakpoint = True
                     continue
                 # Other:

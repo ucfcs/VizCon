@@ -91,6 +91,22 @@ void lldb_hook_unlockMutex(CSMutex *mutex)
     // LLDB
 }
 
+int lldb_hook_semTryWait(CSSem *sem)
+{
+    int res;
+    // LLDB
+    fprintf(stderr, "Error\n");
+    return res;
+}
+
+int lldb_hook_mutexTryLock(CSMutex *mutex)
+{
+    int res;
+    // LLDB
+    fprintf(stderr, "Error\n");
+    return res;
+}
+
 int main()
 {
     vc_internal_init();
