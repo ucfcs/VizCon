@@ -6,7 +6,7 @@ let window: Page;
 // Infrastructure - The list of tests begins below.
 test.describe("Infrastructure", async () =>
 {
-  // Before All - Launch the app and get the first window.
+  // Before All - Launch the app, get the first window, and set execution speed to max.
   test.beforeAll(async () =>
   {
     // Launch Electron app.
@@ -40,7 +40,7 @@ test.describe("Infrastructure", async () =>
     // Wait for the visualizer to appear, which indicates compilation success,
     // and make sure the file is loaded.
     // If the visualizer doesn't appear, the window.locator will time out.
-    let vizHeader = window.locator('#visualizer div.control.pad-r:visible');
+    let vizHeader: Locator = window.locator('#visualizer div.control.pad-r:visible');
     await expect(vizHeader).toContainText('compile.c', { timeout: 15000 });
   });
 
@@ -61,7 +61,7 @@ test.describe("Infrastructure", async () =>
     // Wait for the console to appear, which indicates compilation failure,
     // and then wait for the text to appear in the console (since there is a delay).
     // If the console doesn't appear, the consoleLoc.textContent will time out.
-    let consoleLoc = window.locator('#ide div.output-container:visible');
+    let consoleLoc: Locator = window.locator('#ide div.output-container:visible');
     while ((await consoleLoc.textContent({ timeout: 15000 })) == '');
 
     // Check for the two known errors.
@@ -87,8 +87,8 @@ test.describe("Infrastructure", async () =>
 
     // Wait for the visualizer to appear, which indicates compilation success,
     // then create locators and click "Start Simulation".
-    let runStatus = window.locator('#visualizer div.control:has-text("Status:")');
-    let consoleOut = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    let runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
+    let consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
 
     // Check that the status correctly changes as the program is started.
@@ -168,8 +168,8 @@ test.describe("Infrastructure", async () =>
 
     // Wait for the visualizer to appear, which indicates compilation success,
     // then create locators and click "Start Simulation".
-    let runStatus = window.locator('#visualizer div.control:has-text("Status:")');
-    let consoleOut = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    let runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
+    let consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
 
     // Wait until the status indicates that the program is running.
@@ -177,7 +177,7 @@ test.describe("Infrastructure", async () =>
 
     // Wait for the console to print something, then click Pause.
     while ((await consoleOut.textContent()) == '');
-    window.locator('#visualizer div.control.has-action:has-text("Pause Simulation")').click();
+    await window.locator('#visualizer div.control.has-action:has-text("Pause Simulation")').click();
 
     // Check that the status changes to "Pausing...", then "Paused".
     while ((await runStatus.textContent()) == 'Status: Running');
@@ -197,7 +197,7 @@ test.describe("Infrastructure", async () =>
     expect(consoleOut).not.toContainText("After");
 
     // Resume the program. Make sure the status and button visibility revert.
-    window.locator('#visualizer div.control.has-action:has-text("Resume Simulation")').click();
+    await window.locator('#visualizer div.control.has-action:has-text("Resume Simulation")').click();
     while ((await runStatus.textContent()) == 'Status: Paused');
     expect(await window.isVisible('#visualizer div.control.has-action:has-text("Start Simulation")')).toBeFalsy();
     expect(await window.isVisible('#visualizer div.control.has-action:has-text("Resume Simulation")')).toBeFalsy();
@@ -225,8 +225,8 @@ test.describe("Infrastructure", async () =>
 
     // Wait for the visualizer to appear, which indicates compilation success,
     // then create locators and click "Start Simulation".
-    let runStatus = window.locator('#visualizer div.control:has-text("Status:")');
-    let consoleOut = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    let runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
+    let consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
 
     // Wait until the status indicates that the program is running.
@@ -234,7 +234,7 @@ test.describe("Infrastructure", async () =>
 
     // Wait for the console to print something, then click Pause.
     while ((await consoleOut.textContent()) == '');
-    window.locator('#visualizer div.control.has-action:has-text("Force Quit Simulation")').click();
+    await window.locator('#visualizer div.control.has-action:has-text("Force Quit Simulation")').click();
 
     // Check that the status changes to "Terminated".
     while ((await runStatus.textContent()) == 'Status: Running');
@@ -252,7 +252,7 @@ test.describe("Infrastructure", async () =>
     expect(consoleOut).not.toContainText("After");
 
     // Restart the program. Check that the console was cleared.
-    window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
     while ((await runStatus.textContent()) != 'Status: Running');
     expect(consoleOut).not.toContainText("Before");
   });
