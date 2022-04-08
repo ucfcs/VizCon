@@ -70,9 +70,8 @@ test.describe("Visualizer", async () =>
     await window.locator('span.action-label:text("Compile And Run File")').click();
 
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
-    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:"):visible');
-    const consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+    const consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
 
     // Wait for the first ID to be printed, then get the number of threads.
     // Use that to create an array of statuses for each thread: true means the thread has finished.
@@ -124,6 +123,49 @@ test.describe("Visualizer", async () =>
         }
       }
     }
+  });
+
+  // Variable List - All in-scope variables are listed with the correct type.
+  test('Variable List', async () =>
+  {
+    // Open a testing file that generates a set of threads with random names.
+    console.log('Please select "varlist.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+
+    // File is loaded by tester here...
+    
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+
+    // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
+    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:"):visible');
+    const consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+
+    // Wait for the "loop start" statement to be printed, then pause.
+    while ((await consoleOut.textContent({ timeout: 15000 })) == '');
+    await window.locator('#visualizer div.control.has-action:has-text("Pause Simulation")').click();
+
+    // Check the entire variable list.
+    // For each entry, make sure it's present and that the type is correct.
+    // Check with expectedVars, which is an array of [name, type] tuples.
+    const expectedVars: [string, string][] = [['numVar', 'int'], ['numPtr', 'int *'],
+    ['tinyVar', 'short'], ['tinyPtr', 'short *'], ['bigVar', 'long'], ['decimalVar', 'float'],
+    ['bigDecVar', 'double'], ['letterVar', 'char'], ['testPtr', 'TestStruct *'], ['testVar', 'TestStruct'],
+    ['theArray', 'int[5]'], ['iterator', 'int'], ['loopNum', 'short']];
+    expectedVars.forEach(async ([name, type]) => {
+      const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("' + name + '")');
+      expect(await tableRow.isVisible()).toBeTruthy();
+      expect(tableRow).toContainText(type);
+    });
+
+    // Resume the program. Once it finishes, check that iterator and loopNum disappeared because their scope ended.
+    await window.locator('#visualizer div.control.has-action:has-text("Resume Simulation")').click();
+    while((await runStatus.textContent()) != 'Status: Finished');
+    expect(await window.isVisible('#visualizer tr.variable-row:has-text("iterator")')).toBeFalsy();
+    expect(await window.isVisible('#visualizer tr.variable-row:has-text("loopNum")')).toBeFalsy();
   });
 
   // After Each - Return to the editor and close all open files.
