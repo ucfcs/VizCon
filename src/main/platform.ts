@@ -4,6 +4,7 @@ import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
 import { sep as pathSep } from 'path';
 import split2 from 'split2';
+import * as pty from 'node-pty';
 import { filePathToFileName } from '../util/utils';
 
 // determine where the concurrency folder is
@@ -17,7 +18,7 @@ const concurrencyFolder = resourcesDir + pathSep + 'concurrency' + pathSep;
 
 const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
-  return concurrencyFolder + file;
+  return '"' + concurrencyFolder + file + '"';
 });
 
 // TODO: Save this to file and read it in at application start. This is going to involve using the electron path where it saves all the temp data and what not WOW this line got long
@@ -117,10 +118,10 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
 });
 
 ipcMain.handle('compileFile', async (e, path: string) => {
-  const files = [path, ...libraryPaths];
+  const files = [`"${path}"`, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
-  const commandString = `gcc -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o ${outputFile} -Wall`;
+  const commandString = `gcc -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
   console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
@@ -135,7 +136,7 @@ ipcMain.handle('compileFile', async (e, path: string) => {
 
   return await prom;
 });
-import * as pty from 'node-pty';
+
 function launchProgram(path: string, port: Electron.MessagePortMain): void {
   const extension = process.platform === 'win32' ? '.exe' : '';
   const exeFile = app.getPath('temp') + pathSep + filePathToFileName(path) + extension;
