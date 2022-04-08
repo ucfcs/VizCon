@@ -275,8 +275,7 @@ test.describe('File Menu', async () => {
   });
 
   // Close Edited File - Close a file and check that a save is requested.
-  test('Close Edited File', async () =>
-  {
+  test('Close Edited File', async () => {
     // Open a file.
     console.log('Please select "close.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
@@ -301,10 +300,10 @@ test.describe('File Menu', async () => {
 
     // "Save" is selected by tester here...
     let runLoop = true;
-    while (runLoop)
-    {
-      if (!(await window.isVisible('#ide div.view-line')))
+    while (runLoop) {
+      if (!(await window.isVisible('#ide div.view-line'))) {
         runLoop = false;
+      }
     }
 
     // Load the file externally and check that the appended string appears.
@@ -314,8 +313,7 @@ test.describe('File Menu', async () => {
   });
 
   // Close New File - Close a file and check that a save is requested.
-  test('Close New File', async () =>
-  {
+  test('Close New File', async () => {
     // Create new file.
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("New File")').click();
@@ -332,10 +330,10 @@ test.describe('File Menu', async () => {
 
     // "Save" is selected and file is saved by tester here...
     let runLoop = true;
-    while (runLoop)
-    {
-      if (!(await window.isVisible('#ide div.view-line')))
+    while (runLoop) {
+      if (!(await window.isVisible('#ide div.view-line'))) {
         runLoop = false;
+      }
     }
 
     // Load the file externally and check that the contents are correct.

@@ -48,15 +48,7 @@ function Control({ label, action, className = '' }: ControlProps): React.ReactEl
   );
 }
 
-export default function Controls({
-  fileName,
-  start,
-  pause,
-  resume,
-  terminate,
-  goBack,
-  status,
-}: ControlsProps): React.ReactElement {
+export default function Controls({ fileName, start, pause, resume, terminate, goBack, status }: ControlsProps): React.ReactElement {
   return (
     <div className="controls">
       <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r" />
