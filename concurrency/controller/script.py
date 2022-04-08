@@ -208,6 +208,12 @@ def _start(exe, terminalOutputFile, visualizerMode):
                 var_value = "Unlocked"
             else:
                 var_value = "Locked by " + owner['name']
+        else:
+            out = lldb.SBStream()
+            lldb_var.GetDescription(out)
+            desc = out.GetData()
+            loc = desc.index(" = ")
+            var_value = desc[loc + len(" = "):]
         return {'name': lldb_var.GetName(), 'type': lldb_var.GetTypeName(), 'value': var_value}
 
     ignore_set = set()
@@ -390,6 +396,10 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     for local in frame.GetVariables(True, True, False, True):
                         locals.append(serializeVariable(thread_man, local))
                 thread_list.append({'name': thread['name'], 'state': thread_state, 'locals': locals})
+            frame = None
+            for frame in main_thread:
+                if isFrameUserCode(frame):
+                    break
             globals = frame.get_statics()
             globals_list = []
             for frame_var in globals:
