@@ -12,40 +12,6 @@ interface VisualizerProps {
   goBack: () => void;
 }
 
-const testingThreadData: ThreadData[] = [
-  {
-    state: 'running',
-    name: '1 main',
-    locals: [{ name: 'sem', type: 'VCSem*', value: '0x76b949c587f3942a' }],
-  },
-  {
-    state: 'ready',
-    name: '2 coroutine',
-    locals: [
-      { name: 'sem', type: 'VCSem*', value: '0x76b949c587f3942a' },
-      { name: 'counter', type: 'long', value: '3506' },
-    ],
-  },
-];
-
-const testingGlobalVars = [
-  {
-    name: 'i',
-    type: 'int',
-    value: '0',
-  },
-  {
-    name: 'counter',
-    type: 'int',
-    value: '42',
-  },
-  {
-    name: 'ptr',
-    type: 'int *',
-    value: '0x76b949c587f3942a',
-  },
-];
-
 export default function Visualizer({ inVisualizer, current, goBack }: VisualizerProps): React.ReactElement {
   const [className, setClassName] = useState('');
   const [visualizerState, setVisualizerState] = useState<VisualizerState | null>(null);
@@ -113,9 +79,9 @@ export default function Visualizer({ inVisualizer, current, goBack }: Visualizer
         status={runState}
       />
       <div className="visualizer-main">
-        <Threads data={visualizerState?.threads || testingThreadData} />
+        <Threads data={visualizerState?.threads || []} />
         <ConsoleOutput current={current} text={consoleOutput} />
-        <Variables globals={visualizerState?.globals || testingGlobalVars} threads={visualizerState?.threads || []} />
+        <Variables globals={visualizerState?.globals || []} threads={visualizerState?.threads || []} />
       </div>
     </div>
   );
