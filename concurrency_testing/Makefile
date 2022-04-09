@@ -32,10 +32,10 @@ ifneq (, $(findstring MSYS_NT, $(shell uname -s)))
 #	Compile: Link CGreen if requested.
     ifeq ($(usecgreen), 1)
         compile:
-	        gcc ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c /usr/local/lib/libcgreen.dll.a
+	        gcc ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c /usr/local/lib/libcgreen.dll.a
     else
         compile:
-	        gcc ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c
+	        gcc ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c
     endif
 
 # Non-MSYS2 Windows - Only for use with tests that do not require Cgreen.
@@ -55,7 +55,7 @@ else ifeq ($(OS), Windows_NT)
     endif
 
     compile:
-	    gcc ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c
+	    gcc ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c
 
 # Linux
 else ifeq ($(shell uname -s), Linux)
@@ -73,14 +73,14 @@ else ifeq ($(shell uname -s), Linux)
     ifeq ($(usecgreen), 1)
         ifeq ($(cgreenlocal), 1)
             compile:
-	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c $(cgreenlocation)/usr/local/lib/libcgreen.so -I $(cgreenlocation)/usr/local/include/
+	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c $(cgreenlocation)/usr/local/lib/libcgreen.so -I $(cgreenlocation)/usr/local/include/
         else
             compile:
-	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c -lcgreen
+	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c -lcgreen
         endif
     else
         compile:
-	        gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c
+	        gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c
     endif
 
 # macOS
@@ -99,15 +99,15 @@ else ifeq ($(shell uname -s), Darwin)
     ifeq ($(usecgreen), 1)
         ifeq ($(cgreenlocal), 1)
             compile:
-	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c $(cgreenlocation)/usr/local/lib/libcgreen.so -I $(cgreenlocation)/usr/local/include/
+	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c $(cgreenlocation)/usr/local/lib/libcgreen.so -I $(cgreenlocation)/usr/local/include/
 				install_name_tool -change @rpath/libcgreen.1.dylib $(cgreenlocation)/usr/local/lib/libcgreen.1.dylib ./a.out
         else
             compile:
-	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c -lcgreen
+	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c -lcgreen
         endif
     else
         compile:
-	        gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ./$(testfile).c
+	        gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c
     endif
 
 # All Unsupported OSes
