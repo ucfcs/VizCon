@@ -12,17 +12,14 @@ test.describe('Visualizer', async () => {
 
     // Get the first window that the app opens.
     window = await electronApp.firstWindow();
-
-    // Switch to the visualizer and set the speed to its fastest setting. Then go back.
-    await window.locator('div.menu-item:has-text("ViewShow")').click();
-    await window.locator('span.action-label:text("Show Visualizer")').click();
-    await window.locator('#visualizer input[type="range"]:visible').fill('0');
-    await window.locator('div.menu-item:has-text("ViewShow")').click();
-    await window.locator('span.action-label:text("Show Editor")').click();
   });
 
   // Thread List - All threads are listed with the correct names.
   test('Thread List', async () => {
+
+    // Set the timeout to 45 seconds because randomization is slow.
+    test.setTimeout(45000);
+
     // Open a testing file that generates a set of threads with random names.
     console.log('Please select "threadlist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();

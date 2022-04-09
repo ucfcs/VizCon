@@ -10,7 +10,7 @@ void* SimpleThread(void* param)
 {
     vcSemWait(mtx);
     printf("%d", *((int*) param));
-    vcThreadSleep(2000);
+    vcThreadSleep(2500);
     vcSemSignal(mtx);
     return NULL;
 }
