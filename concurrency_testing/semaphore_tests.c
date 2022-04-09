@@ -4,8 +4,6 @@
 
 #include "unit_test.h"
 
-#define CREATE_NAMED_TEST_SIZE 5
-
 vcSemaphore firstSem;
 long long int permitTarget = 0;
 int permitFlag = 0;
@@ -19,7 +17,7 @@ BeforeEach(Semaphores)
     firstSem = vcSemCreate(2);
 }
 
-// create_first - 10 assertions.
+// create_first - 8 assertions.
 //                Ensure that the test semaphore was properly made.
 Ensure(Semaphores, create_first)
 {
@@ -28,10 +26,6 @@ Ensure(Semaphores, create_first)
 
     // The "next" property should be null since there are no others.
     assert_that(firstSem->next, is_null);
-
-    // The ID should be 0, and the name should be "Semaphore 0".
-    assert_that(firstSem->num, is_equal_to(0));
-    assert_that(firstSem->name, is_equal_to_string("Semaphore 0"));
 
     // The semaphore value should be the provided value (2).
     assert_that(firstSem->count, is_equal_to(2));
@@ -56,7 +50,7 @@ Ensure(Semaphores, create_first)
     assert_that(vizconSemList, is_equal_to(firstSem));
 }
 
-// create_second - 7 assertions.
+// create_second - 5 assertions.
 //                 Create a second mutex. Ensure the name and ID are correct
 //                 and that the list variables are properly updated.
 Ensure(Semaphores, create_second)
@@ -67,66 +61,12 @@ Ensure(Semaphores, create_second)
     // The mutex should not be null.
     assert_that(secondSem, is_not_null);
 
-    // The ID should be 1, and the name should be "Semaphore 1".
-    assert_that(secondSem->num, is_equal_to(1));
-    assert_that(secondSem->name, is_equal_to_string("Semaphore 1"));
-
     // The "next" for firstSem should be secondSem.
     // The "next" for secondSem should be null since there are no others.
     assert_that(firstSem->next, is_equal_to(secondSem));
     assert_that(secondSem->next, is_null);
 
     // Make sure the head and tail pointers point to the correct wrappers.
-    assert_that(vizconSemListHead, is_equal_to(firstSem));
-    assert_that(vizconSemList, is_equal_to(secondSem));
-}
-
-// create_named - 12 assertions.
-//                Create a named mutex. Ensure that everything works
-//                like a normal vcMutexCreate and
-//                that the list variables are properly updated.
-Ensure(Semaphores, create_named)
-{
-    // Create a random string of the specified length.
-    // The for loop can generate all ASCII characters except a null char.
-    char str[CREATE_NAMED_TEST_SIZE + 1];
-    int i;
-    for(int i = 0; i < CREATE_NAMED_TEST_SIZE; i++)
-        str[i] = rand() % 126 + 1;
-    str[CREATE_NAMED_TEST_SIZE] = '\0';
-
-    // Create the mutex.
-    vcSem secondSem = vcSemCreateNamed(2, str);
-
-    // The mutex should not be null.
-    assert_that(secondSem, is_not_null);
-
-    // The ID should be 1, and the name should be "Mutex 1".
-    assert_that(secondSem->num, is_equal_to(1));
-    assert_that(secondSem->name, is_equal_to_string(str));
-
-    // The internal struct should be built in the same way as a vcMutexCreate.
-    assert_that(secondSem->sem, is_not_null);
-    assert_that(secondSem->count, is_equal_to(2));
-
-    // Platform-dependent check that the internal semaphore
-    // has exactly the predefined value (2).
-    // Use the system trylock function instead of the VC version
-    // because the VC version hasn't been checked yet.
-    #ifdef _WIN32 // Windows version
-        assert_that(WaitForSingleObject(firstSem->sem, 0), is_equal_to(WAIT_OBJECT_0));
-        assert_that(WaitForSingleObject(firstSem->sem, 0), is_equal_to(WAIT_OBJECT_0));
-        assert_that(WaitForSingleObject(firstSem->sem, 0), is_equal_to(WAIT_TIMEOUT));
-    #elif __linux__ || __APPLE__ // POSIX version
-        assert_that(sem_trywait(firstSem->sem), is_equal_to(0));
-        assert_that(sem_trywait(firstSem->sem), is_equal_to(0));
-        sem_trywait(firstSem->sem);
-        assert_that(errno, is_equal_to(EAGAIN));
-    #endif
-
-    // The nexts and lists should be set in the same way as a vcMutexCreate.
-    assert_that(firstSem->next, is_equal_to(secondSem));
-    assert_that(secondSem->next, is_null);
     assert_that(vizconSemListHead, is_equal_to(firstSem));
     assert_that(vizconSemList, is_equal_to(secondSem));
 }
@@ -141,22 +81,6 @@ Ensure(Semaphores, bad_count)
 
     // Attempt to make the permit.
     vcSem badSem = vcSemCreate(numPermits);
-
-    // Tautological falsehood.
-    // If it's reported, then the program didn't close correctly.
-    assert_that(0, is_true);
-}
-
-// bad_count_named - 1 skipped assertion, 1 exception.
-//                   Attempt to create a named semaphore with an invalid permit count.
-//                   This will result in an a vizcon error, code 502.
-Ensure(Semaphores, bad_count_named)
-{
-    // Pick a random number between 0 and -100.
-    int numPermits = 0 - (rand() % 101);
-
-    // Attempt to make the permit.
-    vcSem badSem = vcSemCreateNamed(numPermits, "Bad Semaphore");
 
     // Tautological falsehood.
     // If it's reported, then the program didn't close correctly.
@@ -565,8 +489,8 @@ AfterEach(Semaphores)
 }
 
 // End of the suite.
-// Total number of assertions: 65
-// Total number of exceptions: 2  (bad_count: 502, bad_count_named: 502)
+// Total number of assertions: 49
+// Total number of exceptions: 1  (bad_count: 502)
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
@@ -574,9 +498,7 @@ int main() {
     TestSuite *suite = create_test_suite();
     add_test_with_context(suite, Semaphores, create_first);
     add_test_with_context(suite, Semaphores, create_second);
-    add_test_with_context(suite, Semaphores, create_named);
     add_test_with_context(suite, Semaphores, bad_count);
-    add_test_with_context(suite, Semaphores, bad_count_named);
     add_test_with_context(suite, Semaphores, wait);
     add_test_with_context(suite, Semaphores, wait_mult);
     add_test_with_context(suite, Semaphores, wait_two);
