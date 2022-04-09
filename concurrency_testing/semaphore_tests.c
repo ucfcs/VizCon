@@ -519,6 +519,40 @@ Ensure(Semaphores, signal_mult)
     assert_that(permitTarget, is_equal_to(15));
 }
 
+// signal_over - 1 assertion, 1 skipped assertion, 1 exception.
+//               Attempt to signal a semaphore beyond the max.
+//               This will result in an a vizcon error, code 513.
+Ensure(Semaphores, signal_over)
+{
+    // Verify that the semaphore is at max value.
+    assert_that(firstSem->count, is_equal_to(firstSem->maxCount));
+
+    // Signal the semaphore. This should throw an error 513.
+    vcSemSignal(firstSem);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
+// signal_mult_over - 1 assertion, 1 skipped assertion, 1 exception.
+//                    Attempt to signal a semaphore beyond the max with vcSemSignalMult.
+//                    This will result in an a vizcon error, code 513.
+Ensure(Semaphores, signal_mult_over)
+{
+    // Take the semaphore once so it's one away from max value.
+    // Then verify that the wait was successful.
+    vcSemWait(firstSem);
+    assert_that(firstSem->count, is_equal_to(firstSem->maxCount - 1));
+
+    // Signal the semaphore twice. This should throw an error 513.
+    vcSemSignalMult(firstSem, 2);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
 // value - 6 assertions.
 //         Ensure that vcSemValue works.
 Ensure(Semaphores, value)
@@ -584,8 +618,9 @@ AfterEach(Semaphores)
 }
 
 // End of the suite.
-// Total number of assertions: 59
-// Total number of exceptions: 4  (bad_count: 502, bad_initial_count: 502, bad_max_count: 502, small_max_count: 502)
+// Total number of assertions: 61
+// Total number of exceptions: 6  (bad_count: 502, bad_initial_count: 502, bad_max_count: 502, small_max_count: 502
+//                                 signal_over: 513, signal_mult_over: 513)
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
@@ -603,6 +638,8 @@ int main() {
     add_test_with_context(suite, Semaphores, wait_two);
     add_test_with_context(suite, Semaphores, signal);
     add_test_with_context(suite, Semaphores, signal_mult);
+    add_test_with_context(suite, Semaphores, signal_over);
+    add_test_with_context(suite, Semaphores, signal_mult_over);
     add_test_with_context(suite, Semaphores, value);
     add_test_with_context(suite, Semaphores, trywait);
     return run_test_suite(suite, create_text_reporter());

@@ -236,6 +236,8 @@ void platform_semSignal(CSSem* sem)
 {
     // Platform-dependent senaphore release.
     #ifdef _WIN32 // Windows version
+        if((sem->count + 1) > sem->maxCount)
+            vizconError("vcSemSignal/vcSemSignalMult", VC_ERROR_SEMVALUELIMIT);
         if(!ReleaseSemaphore(sem->sem, 1, NULL))
             vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
         if(sem == vizconSem)
