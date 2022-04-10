@@ -167,6 +167,68 @@ test.describe('Visualizer', async () => {
     expect(await window.isVisible('#visualizer tr.variable-row:has-text("loopNum")')).toBeFalsy();
   });
 
+  // Variable Thread List - All in-scope variables are listed under the correct thread.
+  test('Variable Thread List', async () =>
+  {
+    // Open a testing file that generates a set of threads with random names.
+    console.log('Please select "varthreadlist.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+  
+    // File is loaded by tester here...
+      
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+  
+    // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+    const consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+
+    // Wait for the number of threads to be printed.
+    while ((await consoleOut.textContent({ timeout: 15000 })).split('|').length <= 1);
+    const numThreads = parseInt((await consoleOut.textContent()).split('|')[0]);
+  
+    // Wait for all the characters to be printed to the console, and then force quit.
+    while ((await consoleOut.textContent({ timeout: 15000 })).split('|')[1].length != numThreads);
+    await window.locator('#visualizer div.control.has-action:has-text("Force Quit Simulation")').click();
+    const threadNames = (await consoleOut.textContent()).split('|')[1];
+  
+    // Check the globals.
+    const accordionGlobals: Locator = window.locator('#visualizer div.accordion-parent:has-text("Globals")');
+    const expectedGlobals: [string, string][] = [['dummy', 'int'], ['global1', 'int'], ['global2', 'char']];
+    expectedGlobals.forEach(async ([name, type]) => {
+      const tableRow: Locator = accordionGlobals.locator('tr.variable-row:has-text("' + name + '")');
+      expect(await tableRow.isVisible()).toBeTruthy();
+      expect(tableRow).toContainText(type);
+    });
+
+    // Check the main thread.
+    const accordionMain: Locator = window.locator('#visualizer div.accordion-parent:has-text("#Main_thread")');
+    const expectedMain: [string, string][] = [['str', 'char[' + numThreads + '][4]'], ['local', 'int']];
+    expectedMain.forEach(async ([name, type]) => {
+      const tableRow: Locator = accordionMain.locator('tr.variable-row:has-text("' + name + '")');
+      expect(await tableRow.isVisible()).toBeTruthy();
+      expect(tableRow).toContainText(type);
+    });
+
+    // Check each spawned thread.
+    // Also check the value of paramChar to make sure it's the variable part of the thread name.
+    const expectedThread: [string, string][] = [['paramPtr', 'void *'], ['paramChar', 'char']];
+    for(let i = 0; i < threadNames.length; i++)
+    {
+      const threadLetter = threadNames.charAt(i);
+      const accordionThread: Locator = window.locator('#visualizer div.accordion-parent:has-text("|' + threadLetter + '|")');
+      expectedThread.forEach(async ([name, type]) => {
+        const tableRow: Locator = accordionThread.locator('tr.variable-row:has-text("' + name + '")');
+        expect(await tableRow.isVisible()).toBeTruthy();
+        expect(tableRow).toContainText(type);
+      });
+      const tableRow: Locator = accordionThread.locator('tr.variable-row:has-text("paramChar")');
+      expect(tableRow).toContainText("'" + threadLetter + "'");
+    }
+  });
+
   // After Each - Return to the editor and close all open files.
   test.afterEach(async () => {
     // Return to the editor if needed.
