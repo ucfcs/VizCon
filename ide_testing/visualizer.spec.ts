@@ -241,6 +241,64 @@ test.describe('Visualizer', async () => {
     }
   });
 
+  // Variable List Values - All in-scope variables list the correct values.
+  test('Variable List Values', async () =>
+  {
+    // Open a testing file that generates a set of threads with random names.
+    console.log('Please select "varvaluelist.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+  
+    // File is loaded by tester here...
+      
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+  
+    // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+    const consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+
+    // Whenever a change is made, check whether the program finished.
+    // If it didn't, check that the currently-listed values are correct.
+    let lastOut: string = '';
+    while(true)
+    {
+        while ((await consoleOut.textContent()) == lastOut);
+        lastOut = await consoleOut.textContent();
+
+        // Get the most recent output.
+        const lastLine = lastOut.split('|')[lastOut.split('|').length - 1];
+
+        // If this last line is "Done.", leave.
+        if(lastLine == "Done.") break;
+
+        // Split the line into the constituent values. Check each value.
+        const lineVals = lastLine.split('~');
+        const expectedVars: [string, string, string][] = [
+          ['testInt', 'int', lineVals[0]],
+          ['testDouble', 'double', lineVals[1]],
+          ['testChar', 'char', lineVals[2]],
+          ['testPtr', 'void *', lineVals[3]]
+        ];
+        expectedVars.forEach(async ([name, type, expectedVal]) => {
+          const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("' + name + '")');
+          expect(await tableRow.isVisible()).toBeTruthy();
+          expect(tableRow.locator('td.variable-name')).toContainText(name);
+          expect(tableRow.locator('td.variable-type')).toContainText(type);
+
+          // Since the double output is rounded, round the value before comparing.
+          if(name == 'testDouble')
+          {
+            const rawDouble = await tableRow.locator('td.variable-value').textContent();
+            expect(parseFloat(rawDouble).toFixed(2)).toEqual(expectedVal);
+          }
+          else
+            expect(tableRow.locator('td.variable-value')).toContainText(expectedVal);
+        });
+    }
+  });
+
   // After Each - Return to the editor and close all open files.
   test.afterEach(async () => {
     // Return to the editor if needed.
