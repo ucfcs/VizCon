@@ -31,12 +31,12 @@ int main()
     char str[TEST_SIZE][4];
     int local = 7;
 
-    // Generate a one-character string and print it.
+    // Generate one character and surround it with special chars.
     // Then create a thread with that name that takes the character as a parameter.
     for(int i = 0; i < TEST_SIZE; i++)
     {
         str[i][0] = '|';
-        str[i][1] = rand() % 89 + 33;
+        str[i][1] = rand() % 89 + 35;
         str[i][2] = '|';
         str[i][3] = '\0';
         vcThreadQueueNamed(SimpleThread, &str[i][1], str[i]);

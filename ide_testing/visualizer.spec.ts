@@ -92,8 +92,10 @@ test.describe('Visualizer', async () => {
         // Then, mark it as having been active.
         if (j + 1 == lastThreadID) {
           const tableRow: Locator = window.locator('#visualizer tr.thread-row.current');
-          await expect(tableRow).toContainText('Thread ' + (j + 1));
-          await expect(tableRow).toContainText('truefalse');
+          expect(await tableRow.isVisible()).toBeTruthy();
+          expect(tableRow.locator('td.thread-name')).toContainText('Thread ' + (j + 1));
+          expect(tableRow.locator('td.thread-active')).toContainText('true');
+          expect(tableRow.locator('td.thread-complete')).toContainText('false');
           threads[j] = true;
         }
 
@@ -101,14 +103,20 @@ test.describe('Visualizer', async () => {
         // Also make sure that ACTIVE is false and FINISH is true.
         else if (threads[j] == true) {
           const tableRow: Locator = window.locator('#visualizer tr.thread-row:has-text("Thread ' + (j + 1) + '")');
-          await expect(tableRow).toContainText('falsetrue');
+          expect(await tableRow.isVisible()).toBeTruthy();
+          expect(tableRow.locator('td.thread-name')).toContainText('Thread ' + (j + 1));
+          expect(tableRow.locator('td.thread-active')).toContainText('false');
+          expect(tableRow.locator('td.thread-complete')).toContainText('true');
         }
 
         // If threads[j] is false, the corresponding thread has not finished.
         // Also make sure that ACTIVE is false and FINISH is false.
         else {
           const tableRow: Locator = window.locator('#visualizer tr.thread-row:has-text("Thread ' + (j + 1) + '")');
-          await expect(tableRow).toContainText('falsefalse');
+          expect(await tableRow.isVisible()).toBeTruthy();
+          expect(tableRow.locator('td.thread-name')).toContainText('Thread ' + (j + 1));
+          expect(tableRow.locator('td.thread-active')).toContainText('false');
+          expect(tableRow.locator('td.thread-complete')).toContainText('false');
         }
       }
     }
@@ -157,7 +165,8 @@ test.describe('Visualizer', async () => {
     expectedVars.forEach(async ([name, type]) => {
       const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("' + name + '")');
       expect(await tableRow.isVisible()).toBeTruthy();
-      expect(tableRow).toContainText(type);
+      expect(tableRow.locator('td.variable-name')).toContainText(name);
+      expect(tableRow.locator('td.variable-type')).toContainText(type);
     });
 
     // Resume the program. Once it finishes, check that iterator and loopNum disappeared because their scope ended.
@@ -200,7 +209,8 @@ test.describe('Visualizer', async () => {
     expectedGlobals.forEach(async ([name, type]) => {
       const tableRow: Locator = accordionGlobals.locator('tr.variable-row:has-text("' + name + '")');
       expect(await tableRow.isVisible()).toBeTruthy();
-      expect(tableRow).toContainText(type);
+      expect(tableRow.locator('td.variable-name')).toContainText(name);
+      expect(tableRow.locator('td.variable-type')).toContainText(type);
     });
 
     // Check the main thread.
@@ -209,7 +219,8 @@ test.describe('Visualizer', async () => {
     expectedMain.forEach(async ([name, type]) => {
       const tableRow: Locator = accordionMain.locator('tr.variable-row:has-text("' + name + '")');
       expect(await tableRow.isVisible()).toBeTruthy();
-      expect(tableRow).toContainText(type);
+      expect(tableRow.locator('td.variable-name')).toContainText(name);
+      expect(tableRow.locator('td.variable-type')).toContainText(type);
     });
 
     // Check each spawned thread.
@@ -222,10 +233,11 @@ test.describe('Visualizer', async () => {
       expectedThread.forEach(async ([name, type]) => {
         const tableRow: Locator = accordionThread.locator('tr.variable-row:has-text("' + name + '")');
         expect(await tableRow.isVisible()).toBeTruthy();
-        expect(tableRow).toContainText(type);
+        expect(tableRow.locator('td.variable-name')).toContainText(name);
+        expect(tableRow.locator('td.variable-type')).toContainText(type);
       });
       const tableRow: Locator = accordionThread.locator('tr.variable-row:has-text("paramChar")');
-      expect(tableRow).toContainText("'" + threadLetter + "'");
+      expect(tableRow.locator('td.variable-value')).toContainText("'" + threadLetter + "'");
     }
   });
 
