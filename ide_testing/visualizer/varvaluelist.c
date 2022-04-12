@@ -3,12 +3,6 @@
 
 #define TEST_SIZE 3
 
-// Basic thread that just returns the parameter.
-void* SimpleThread(void* param)
-{
-    return param;
-}
-
 int main()
 {
     // Seed the randomizer and initialize the variable.
