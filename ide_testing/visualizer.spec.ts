@@ -301,6 +301,61 @@ test.describe('Visualizer', async () => {
     while ((await runStatus.textContent()) != 'Status: Finished');
   });
 
+  // Semaphore List Values - Check that the value of a semaphore is viewed and updated.
+  test('Semaphore List Values', async () =>
+  {
+    // Set the timeout to 45 seconds because waiting and signaling multiple times is slow.
+    test.setTimeout(45000);
+
+    // Open a testing file that generates a set of threads with random names.
+    console.log('Please select "semvaluelist.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+  
+    // File is loaded by tester here...
+      
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+  
+    // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
+    const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("sem")');
+
+    // Whenever a change is made, check whether the sem was deleted.
+    // If not, check that the currently-listed values are correct.
+    let lastOut: string = '';
+    while(true)
+    {
+        while ((await consoleOut.textContent()) == lastOut);
+        lastOut = await consoleOut.textContent();
+
+        // Get the most recent output.
+        const lastSegment = lastOut.split('|')[lastOut.split('|').length - 1];
+
+        // If this last segment is "new", break for the last check.
+        if(lastSegment == "new") break;
+
+        // Compare to the value of the sem.
+        expect(await tableRow.isVisible()).toBeTruthy();
+        expect(tableRow.locator('td.variable-name')).toContainText("sem");
+        expect(tableRow.locator('td.variable-type')).toContainText("CSSem *");
+        expect(parseInt(await tableRow.locator('td.variable-value').textContent())).toEqual(parseInt(lastSegment));
+    }
+
+    // The last number is the max permit, but the semaphore only has half that number available.
+    // Compare this last number to half of the given one.
+    // Use Math.floor to ensure it works like C division.
+    while ((await consoleOut.textContent()) == lastOut);
+    lastOut = await consoleOut.textContent();
+    const lastSegment = lastOut.split('|')[lastOut.split('|').length - 1];
+    expect(parseInt(await tableRow.locator('td.variable-value').textContent())).toEqual(Math.floor(parseInt(lastSegment) / 2));
+
+    while ((await runStatus.textContent()) != 'Status: Finished');
+  });
+
   // After Each - Quit the program if needed, return to the editor and close all open files.
   test.afterEach(async () => {
     // Quit the program if it is open and return to the editor.
