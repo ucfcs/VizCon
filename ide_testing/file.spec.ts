@@ -274,6 +274,73 @@ test.describe('File Menu', async () => {
     expect(await window.isVisible('#ide div.view-line')).toBeFalsy();
   });
 
+  // Close Edited File - Close a file and check that a save is requested.
+  test('Close Edited File', async () => {
+    // Open a file.
+    console.log('Please select "close.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+
+    // File is loaded by tester here...
+
+    // Save the file contents for later use.
+    // Remove any spaces to avoid issues with encoding.
+    const original_contents: string = (await window.locator('#ide div.view-line').textContent()).replace(/\s/g, '');
+
+    // Append random string.
+    const rand: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.press('#ide div.view-line', 'Control+A');
+    await window.press('#ide div.view-line', 'ArrowRight');
+    await window.type('#ide div.view-line', rand);
+
+    // Close the tab.
+    console.log('Please select "Save".');
+    await window.locator('#ide a.action-label.codicon.codicon-close').first().click();
+
+    // "Save" is selected by tester here...
+    let runLoop = true;
+    while (runLoop) {
+      if (!(await window.isVisible('#ide div.view-line'))) {
+        runLoop = false;
+      }
+    }
+
+    // Load the file externally and check that the appended string appears.
+    // Remove any spaces to avoid issues with encoding.
+    const file_contents: string = readFileSync(join(__dirname, 'file/close.c')).toString().replace(/\s/g, '');
+    expect(file_contents).toBe(original_contents + rand);
+  });
+
+  // Close New File - Close a file and check that a save is requested.
+  test('Close New File', async () => {
+    // Create new file.
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("New File")').click();
+
+    // Generate random file contents.
+    const rand: string = makeString(testStringSize);
+    await window.locator('#ide div.view-line').click();
+    await window.type('#ide div.view-line', rand);
+
+    // Close the tab.
+    console.log('Please select "Save".');
+    console.log('Then save as "close-new.c".');
+    await window.locator('#ide a.action-label.codicon.codicon-close').first().click();
+
+    // "Save" is selected and file is saved by tester here...
+    let runLoop = true;
+    while (runLoop) {
+      if (!(await window.isVisible('#ide div.view-line'))) {
+        runLoop = false;
+      }
+    }
+
+    // Load the file externally and check that the contents are correct.
+    const file_contents: string = readFileSync(join(__dirname, 'file/close-new.c')).toString();
+    expect(file_contents).toBe(rand);
+  });
+
   // After Each - Close all open files.
   test.afterEach(async () => {
     let runLoop = true;
@@ -290,6 +357,8 @@ test.describe('File Menu', async () => {
   test.afterAll(async () => {
     // Reset edited test files.
     // Some files are overwritten instead of deleted because unlinkFile is more likely to fail.
+    writeFileSync(join(__dirname, 'file/close.c'), '// Close test');
+    writeFileSync(join(__dirname, 'file/close-new.c'), '// This is a dummy file to be overwritten.');
     writeFileSync(join(__dirname, 'file/edit.c'), '// Edit test');
     writeFileSync(join(__dirname, 'file/edit-as.c'), '// Edit test');
     writeFileSync(join(__dirname, 'file/edit-all-1.c'), '// Edit test');

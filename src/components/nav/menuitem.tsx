@@ -152,7 +152,7 @@ function MenuItem({ parentTitle, name, action, disable, keybind, seperator }: Me
       if (disallowedMasks.ctrl && ke.ctrlKey) {
         return;
       }
-      
+
       if (disallowedMasks.shift && ke.shiftKey) {
         return;
       }
