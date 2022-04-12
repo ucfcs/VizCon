@@ -1,5 +1,14 @@
 from random import Random, randint
 import sys
+from dataclasses import dataclass, field
+from typing import Any
+import time
+import heapq
+
+@dataclass(order=True)
+class SleepEntry:
+    wakeup_time: int
+    c_thread: Any=field(compare=False)
 
 def debug_print(*args, **kwargs):
     return
@@ -18,8 +27,9 @@ class ThreadManager:
     semaphoreMap = {}
     semWaitLists = {}
     mutexMap = {}
+    sleeping_threads = []
     def __init__(self, main_lldb_thread):
-        main_thread = {'thread': main_lldb_thread, 'name': '#main_thread', 'state': 'ready', 'csthread_ptr': 'N/A'}
+        main_thread = {'thread': main_lldb_thread, 'name': 'Main Thread', 'state': 'ready', 'csthread_ptr': 'N/A'}
         self.ready_list2 = [main_thread]
         self.managed_threads.append(main_thread)
 
@@ -87,6 +97,15 @@ class ThreadManager:
         self.semWaitLists[sem].append(c_thread)
         self.ready_list2.remove(c_thread)
         c_thread['state'] = 'waiting (sempahore)'
+    def onTryWaitSem(self, lldb_thread, sem):
+        c_thread = self.__lookupFromLLDB(lldb_thread)
+        debug_print("Semaphore wait:", c_thread['name'], "try waited on", sem)
+        sem_obj = self.semaphoreMap[sem]
+        old_val = sem_obj['value']
+        if old_val > 0:
+            sem_obj['value'] -= 1
+            return True
+        return False
     def onSignalSem(self, lldb_thread, sem):
         c_thread = self.__lookupFromLLDB(lldb_thread)
         sem_obj = self.semaphoreMap[sem]
@@ -116,16 +135,48 @@ class ThreadManager:
             debug_print("\tAdding back", woken_thread['name'], "to the ready list")
             self.ready_list2.append(woken_thread)
             woken_thread['state'] = 'ready'
-
+    def onCloseSem(self, lldb_thread, sem):
+        del self.semaphoreMap[sem]
+        if sem in self.semWaitLists:
+            del self.semWaitLists[sem]
+        debug_print("Semaphore closed")
     def onCreateThread(self, thread):
         thread['state'] = 'ready'
         self.managed_threads.append(thread)
         self.ready_list2.append(thread)
         debug_print("Created thread:", thread['name'])
+    def onFreeThread(self, calling_thread, thread_ptr):
+        freed_thread = self.__lookupFromCSThreadPtr(thread_ptr)
+        freed_thread['csthread_ptr'] = 'N/A (freed)'
+        debug_print("Thread freed")
+
+    def onSleepThread(self, lldb_thread, millis):
+        c_thread = self.__lookupFromLLDB(lldb_thread)
+        debug_print("Thread sleep:", c_thread['name'], "is sleeping for", millis)
+        c_thread['state'] = 'sleeping'
+        self.ready_list2.remove(c_thread)
+        wakeup_time = round(time.time() * 1000) + millis
+        sleep_entry = SleepEntry(wakeup_time, c_thread)
+        heapq.heappush(self.sleeping_threads, sleep_entry)
 
     def chooseThread(self):
+        now = round(time.time() * 1000)
+        while len(self.sleeping_threads) > 0 and self.sleeping_threads[0].wakeup_time < now:
+            sleep_entry = heapq.heappop(self.sleeping_threads)
+            sleep_entry.c_thread['state'] = 'ready'
+            self.ready_list2.append(sleep_entry.c_thread)
         if len(self.ready_list2) <= 0:
-            return None
+            if len(self.sleeping_threads) == 0:
+                return None
+        while len(self.ready_list2) <= 0:
+            wakeup_time = self.sleeping_threads[0].wakeup_time
+            debug_print("Empty ready list. Waiting for sleep to end")
+            time.sleep((wakeup_time - now) / 1000)
+            now = round(time.time() * 1000)
+            while len(self.sleeping_threads) > 0 and self.sleeping_threads[0].wakeup_time < now:
+                sleep_entry = heapq.heappop(self.sleeping_threads)
+                sleep_entry.c_thread['state'] = 'ready'
+                self.ready_list2.append(sleep_entry.c_thread)
         chosen_thread = thread_scheduler_rng.choice(self.ready_list2)
         return chosen_thread
 
@@ -188,6 +239,20 @@ class ThreadManager:
             debug_print("\tAdding back", woken_thread['name'], "to the ready list")
             self.ready_list2.append(woken_thread)
             woken_thread['state'] = 'ready'
+    def onTryLockMutex(self, lldb_thread, mutex):
+        c_thread = self.__lookupFromLLDB(lldb_thread)
+        debug_print("Mutex tryLock:", c_thread['name'], "waited on", mutex)
+        mutex_obj = self.mutexMap[mutex]
+        if mutex_obj['locked_by'] is None:
+            mutex_obj['locked_by'] = c_thread
+            return True
+        if mutex_obj['locked_by'] == c_thread:
+            #debug_print("A thread attempted to tryLock a mutex that it already owns")
+            return True
+        return False
+    def onCloseMutex(self, lldb_thread, mutex):
+        debug_print("Mutex closed")
+        del self.mutexMap[mutex]
     
     def getManagedThreads(self):
         return self.managed_threads
