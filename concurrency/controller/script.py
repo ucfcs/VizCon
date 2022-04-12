@@ -205,10 +205,13 @@ def _start(exe, terminalOutputFile, visualizerMode):
             yield thread['thread']
     def serializeVariable(thread_man, lldb_var):
         var_value = lldb_var.GetValue()
-        if lldb_var.GetTypeName() == 'CSSem *':
+        type_name = lldb_var.GetTypeName()
+        if type_name == 'CSSem *':
             var_value = thread_man.getSemaphoreValue(str(var_value))
-        elif lldb_var.GetTypeName() == 'CSMutex *':
+            type_name = "vcSem"
+        elif type_name == 'CSMutex *':
             owner = thread_man.getMutexOwner(str(var_value))
+            type_name = "vcMutex"
             if owner is None:
                 var_value = "Unlocked"
             else:
@@ -219,7 +222,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
             desc = out.GetData()
             loc = desc.index(" = ")
             var_value = desc[loc + len(" = "):]
-        return {'name': lldb_var.GetName(), 'type': lldb_var.GetTypeName(), 'value': var_value}
+        return {'name': lldb_var.GetName(), 'type': type_name, 'value': var_value}
 
     ignore_set = set()
     respondToVisualizer({'type': 'hello'})
