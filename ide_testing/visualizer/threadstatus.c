@@ -3,15 +3,15 @@
 
 #define TEST_SIZE 3 // Must be between 0 and 10 (exclusive).
 
-vcSem mtx;
+vcMutex mtx;
 
 // Basic thread that locks, prints the param, waits two seconds, unlocks, and leaves.
 void* SimpleThread(void* param)
 {
-    vcSemWait(mtx);
+    vcMutexLock(mtx);
     printf("%d", *((int*) param));
-    vcThreadSleep(2500);
-    vcSemSignal(mtx);
+    vcThreadSleep(1000);
+    vcMutexUnlock(mtx);
     return NULL;
 }
 
@@ -23,7 +23,7 @@ int main()
         return 1;
     }
 
-    mtx = vcSemCreate(1);
+    mtx = vcMutexCreate();
 
     int params[TEST_SIZE];
     for(int i = 0; i < TEST_SIZE; i++)
