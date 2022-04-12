@@ -30,9 +30,9 @@ def debug_now(*args, **kwargs):
     sys.stdout.flush()
 def debug_print(*args, **kwargs):
     return
-    print(*args, file=sys.stderr, **kwargs)
-    sys.stderr.flush()
-    sys.stdout.flush()
+    #print(*args, file=sys.stderr, **kwargs)
+    #sys.stderr.flush()
+    #sys.stdout.flush()
 
 def do_nothing():
     pass
@@ -156,20 +156,26 @@ def _start(exe, terminalOutputFile, visualizerMode):
         sys.exit(2)
 
     # If the target is valid set a breakpoint at main
-    main_bp = target.BreakpointCreateByName ("userMain", target.GetExecutable().GetFilename())
-    thread_bp = target.BreakpointCreateByName ("do_post", target.GetExecutable().GetFilename())
-    hook_createThread_bp = target.BreakpointCreateByName ("lldb_hook_createThread", target.GetExecutable().GetFilename())
-    vcJoin_bp = target.BreakpointCreateByName ("vcJoin", target.GetExecutable().GetFilename())
+    main_bp = target.BreakpointCreateByName("userMain", target.GetExecutable().GetFilename())
+    thread_bp = target.BreakpointCreateByName("do_post", target.GetExecutable().GetFilename())
+    hook_createThread_bp = target.BreakpointCreateByName("lldb_hook_createThread", target.GetExecutable().GetFilename())
+    vcJoin_bp = target.BreakpointCreateByName("vcJoin", target.GetExecutable().GetFilename())
+    hook_freeThread_bp = target.BreakpointCreateByName("lldb_hook_freeThread", target.GetExecutable().GetFilename())
+    hook_threadSleep_bp = target.BreakpointCreateByName("lldb_hook_threadSleep", target.GetExecutable().GetFilename())
 
     # Semaphore breakpoints
-    vc_internal_registerSem_bp = target.BreakpointCreateByName ("vc_internal_registerSem", target.GetExecutable().GetFilename())
-    vcWait_bp = target.BreakpointCreateByName ("vcWait", target.GetExecutable().GetFilename())
-    vcSignal_bp = target.BreakpointCreateByName ("vcSignal", target.GetExecutable().GetFilename())
+    vc_internal_registerSem_bp = target.BreakpointCreateByName("vc_internal_registerSem", target.GetExecutable().GetFilename())
+    vcWait_bp = target.BreakpointCreateByName("vcWait", target.GetExecutable().GetFilename())
+    vcSignal_bp = target.BreakpointCreateByName("vcSignal", target.GetExecutable().GetFilename())
+    hook_semTryWait_bp = target.BreakpointCreateByName("lldb_hook_semTryWait", target.GetExecutable().GetFilename())
+    hook_semClose_bp = target.BreakpointCreateByName("lldb_hook_semClose", target.GetExecutable().GetFilename())
 
     # Mutex breakpoints
     registerMutex_bp = target.BreakpointCreateByName ("lldb_hook_registerMutex", target.GetExecutable().GetFilename())
     lockMutex_bp = target.BreakpointCreateByName ("lldb_hook_lockMutex", target.GetExecutable().GetFilename())
     unlockMutex_bp = target.BreakpointCreateByName ("lldb_hook_unlockMutex", target.GetExecutable().GetFilename())
+    hook_mutexTryLock_bp = target.BreakpointCreateByName ("lldb_hook_mutexTryLock", target.GetExecutable().GetFilename())
+    hook_mutexClose_bp = target.BreakpointCreateByName("lldb_hook_mutexClose", target.GetExecutable().GetFilename())
 
     launch_info = target.GetLaunchInfo()
 
@@ -200,15 +206,24 @@ def _start(exe, terminalOutputFile, visualizerMode):
             yield thread['thread']
     def serializeVariable(thread_man, lldb_var):
         var_value = lldb_var.GetValue()
-        if lldb_var.GetTypeName() == 'CSSem *':
+        type_name = lldb_var.GetTypeName()
+        if type_name == 'CSSem *':
             var_value = thread_man.getSemaphoreValue(str(var_value))
-        elif lldb_var.GetTypeName() == 'CSMutex *':
+            type_name = "vcSem"
+        elif type_name == 'CSMutex *':
             owner = thread_man.getMutexOwner(str(var_value))
+            type_name = "vcMutex"
             if owner is None:
                 var_value = "Unlocked"
             else:
                 var_value = "Locked by " + owner['name']
-        return {'name': lldb_var.GetName(), 'type': lldb_var.GetTypeName(), 'value': var_value}
+        else:
+            out = lldb.SBStream()
+            lldb_var.GetDescription(out)
+            desc = out.GetData()
+            loc = desc.index(" = ")
+            var_value = desc[loc + len(" = "):]
+        return {'name': lldb_var.GetName(), 'type': type_name, 'value': var_value}
 
     ignore_set = set()
     respondToVisualizer({'type': 'hello'})
@@ -297,6 +312,26 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     process.Continue()
                     handledBreakpoint = True
                     continue
+                if isStoppedForBreakpoint(t, hook_semTryWait_bp):
+                    sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    while True:
+                        val = t.GetFrameAtIndex(0).FindVariable("res")
+                        if val.IsValid():
+                            break
+                        t.StepInstruction(False)
+                    
+                    result = thread_man.onTryWaitSem(t, str(sem))
+                    val.SetValueFromCString("1" if result else "0")
+                    t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
+                    t.StepOut()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_semClose_bp):
+                    new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    thread_man.onCloseSem(t, str(new_sem))
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
                 # Mutexes:
                 if isStoppedForBreakpoint(t, registerMutex_bp):
                     new_mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
@@ -313,6 +348,25 @@ def _start(exe, terminalOutputFile, visualizerMode):
                 if isStoppedForBreakpoint(t, unlockMutex_bp):
                     mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
                     thread_man.onUnlockMutex(t, str(mutex_ptr))
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_mutexTryLock_bp):
+                    mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    while True:
+                        val = t.GetFrameAtIndex(0).FindVariable("res")
+                        if val.IsValid():
+                            break
+                        t.StepInstruction(False)
+                    result = thread_man.onTryLockMutex(t, str(mutex))
+                    val.SetValueFromCString("1" if result else "0")
+                    t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
+                    t.StepOut()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_mutexClose_bp):
+                    mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    thread_man.onCloseMutex(t, str(mutex_ptr))
                     process.Continue()
                     handledBreakpoint = True
                     continue
@@ -371,6 +425,19 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     #    debug_print("\t", fr)
                     handledBreakpoint = True
                     continue
+                if isStoppedForBreakpoint(t, hook_freeThread_bp):
+                    thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                    thread_man.onFreeThread(t, thread_ptr)
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_threadSleep_bp):
+                    milliseconds = t.GetFrameAtIndex(0).FindVariable("milliseconds").GetValueAsSigned()
+                    thread_man.onSleepThread(t, milliseconds)
+                    t.StepInstruction(False)
+                    handledBreakpoint = True
+                    continue
+                    
             handlingBreakpoints = handledBreakpoint
         # Send the program state to the visualizer
         if chosen_cthread is not None:
@@ -390,6 +457,10 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     for local in frame.GetVariables(True, True, False, True):
                         locals.append(serializeVariable(thread_man, local))
                 thread_list.append({'name': thread['name'], 'state': thread_state, 'locals': locals})
+            frame = None
+            for frame in main_thread:
+                if isFrameUserCode(frame):
+                    break
             globals = frame.get_statics()
             globals_list = []
             for frame_var in globals:

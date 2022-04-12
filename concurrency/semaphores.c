@@ -148,8 +148,12 @@ int semTryWait(CSSem* sem)
 {
     if (isLldbActive)
     {
-        fprintf(stderr, "Warning: semTryWait is unimplemented!\n"); 
-        return 0;
+        int success = lldb_hook_semTryWait(sem);
+        if (success)
+        {
+           sem->count = sem->count - 1; 
+        } 
+        return success;
     }
     // Platform-dependent trywaiting.
     #if defined(_WIN32) // Windows version
@@ -263,11 +267,13 @@ void platform_semSignal(CSSem* sem)
 // semClose - Close the semaphore and free the associated struct.
 void semClose(CSSem* sem)
 {
-    if (isLldbActive)
+    if (isLldbActive && sem->sem == NULL)
     {
-        fprintf(stderr, "Warning: semClose is unimplemented!\n"); 
+        lldb_hook_semClose(sem);
+        free(sem);
         return;
     }
+
     // Platform-dependent closure and memory management.
     #ifdef _WIN32 // Windows version.
         if(!CloseHandle(sem->sem))
