@@ -356,6 +356,51 @@ test.describe('Visualizer', async () => {
     while ((await runStatus.textContent()) != 'Status: Finished');
   });
 
+  // Mutex List Values - Check that the value of a mutex is correctly viewed and updated.
+  test('Mutex List Values', async () =>
+  {
+    // Open a testing file that generates a set of threads with random names.
+    console.log('Please select "mutexvaluelist.c".');
+    await window.locator('div.menu-item:has-text("FileNew File")').click();
+    await window.locator('span.action-label:text("Open File")').click();
+  
+    // File is loaded by tester here...
+      
+    // Select Compile > Compile And Run File.
+    await window.locator('div.menu-item:has-text("CompileCompile")').click();
+    await window.locator('span.action-label:text("Compile And Run File")').click();
+  
+    // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
+    await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
+    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
+    const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("mutex")');
+
+    // Whenever a change is made, check whether the sem was deleted.
+    // If not, check that the currently-listed values are correct.
+    let lastOut: string = '';
+    while(true)
+    {
+        while ((await consoleOut.textContent()) == lastOut);
+        lastOut = await consoleOut.textContent();
+
+        // When the program ends, it prints something with a '|' in it.
+        if(lastOut.split('|').length > 1) break;
+
+        // Compare the output to the value given in the table.
+        expect(await tableRow.isVisible()).toBeTruthy();
+        expect(tableRow.locator('td.variable-name')).toContainText("mutex");
+        expect(tableRow.locator('td.variable-type')).toContainText("vcMutex");
+        const lastStatus = lastOut.charAt(lastOut.length - 1);
+        if(lastStatus == '1') 
+          expect(tableRow).toContainText("Unlocked");
+        else
+          expect(tableRow).toContainText("Locked by Main Thread");
+    }
+
+    while ((await runStatus.textContent()) != 'Status: Finished');
+  });
+
   // After Each - Quit the program if needed, return to the editor and close all open files.
   test.afterEach(async () => {
     // Quit the program if it is open and return to the editor.
