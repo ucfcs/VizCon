@@ -14,6 +14,10 @@ export default function ConsoleOutput({ text, current }: ConsoleOutputProps): Re
     editorRef.current = editor;
   }
 
+  function onContentChange(): void {
+    editorRef.current.revealLine(editorRef.current.getModel().getLineCount());
+  }
+
   useEffect(() => {
     editorRef?.current?.setValue(text);
   }, [text]);
@@ -32,6 +36,7 @@ export default function ConsoleOutput({ text, current }: ConsoleOutputProps): Re
           defaultValue={text}
           path={current.path + ' Stdout'}
           onMount={onEditorMount}
+          onChange={onContentChange}
           loading={<div></div>}
           // TODO: add more content to that loading
           options={{
@@ -48,6 +53,7 @@ export default function ConsoleOutput({ text, current }: ConsoleOutputProps): Re
               highlightActiveBracketPair: false,
               highlightActiveIndentation: false,
             },
+            
           }}
         />
       </div>
