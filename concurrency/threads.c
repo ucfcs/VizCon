@@ -122,8 +122,9 @@ void joinThread(CSThread *thread)
 // freeThread - Close the thread (if needed) and free the struct.
 void freeThread(CSThread *thread)
 {
-    if (isLldbActive) {
-        //fprintf(stderr, "freeThread: FIXME\n");
+    if (isLldbActive)
+    {
+        lldb_hook_freeThread(thread);
     }
     // On Windows only, attempt to close the thread.
     // (On POSIX, the thread is closed during the join.)

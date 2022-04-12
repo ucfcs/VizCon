@@ -125,12 +125,20 @@ class ThreadManager:
             debug_print("\tAdding back", woken_thread['name'], "to the ready list")
             self.ready_list2.append(woken_thread)
             woken_thread['state'] = 'ready'
-
+    def onCloseSem(self, lldb_thread, sem):
+        del self.semaphoreMap[sem]
+        if sem in self.semWaitLists:
+            del self.semWaitLists[sem]
+        debug_print("Semaphore closed")
     def onCreateThread(self, thread):
         thread['state'] = 'ready'
         self.managed_threads.append(thread)
         self.ready_list2.append(thread)
         debug_print("Created thread:", thread['name'])
+    def onFreeThread(self, calling_thread, thread_ptr):
+        freed_thread = self.__lookupFromCSThreadPtr(thread_ptr)
+        freed_thread['csthread_ptr'] = 'N/A (freed)'
+        debug_print("Thread freed")
 
     def chooseThread(self):
         if len(self.ready_list2) <= 0:
@@ -208,6 +216,9 @@ class ThreadManager:
             #debug_print("A thread attempted to tryLock a mutex that it already owns")
             return True
         return False
+    def onCloseMutex(self, lldb_thread, mutex):
+        debug_print("Mutex closed")
+        del self.mutexMap[mutex]
     
     def getManagedThreads(self):
         return self.managed_threads

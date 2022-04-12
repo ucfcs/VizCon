@@ -306,9 +306,9 @@ int mutexStatus(CSMutex* mutex)
 // mutexClose - Close the mutex lock and free the struct.
 void mutexClose(CSMutex* mutex)
 {
-    if (isLldbActive)
+    if (isLldbActive && mutex->mutex == NULL)
     {
-        // TODO: cleanup
+        lldb_hook_mutexClose(mutex);
         free(mutex);
         return;
     }

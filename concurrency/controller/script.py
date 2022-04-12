@@ -156,22 +156,25 @@ def _start(exe, terminalOutputFile, visualizerMode):
         sys.exit(2)
 
     # If the target is valid set a breakpoint at main
-    main_bp = target.BreakpointCreateByName ("userMain", target.GetExecutable().GetFilename())
-    thread_bp = target.BreakpointCreateByName ("do_post", target.GetExecutable().GetFilename())
-    hook_createThread_bp = target.BreakpointCreateByName ("lldb_hook_createThread", target.GetExecutable().GetFilename())
-    vcJoin_bp = target.BreakpointCreateByName ("vcJoin", target.GetExecutable().GetFilename())
+    main_bp = target.BreakpointCreateByName("userMain", target.GetExecutable().GetFilename())
+    thread_bp = target.BreakpointCreateByName("do_post", target.GetExecutable().GetFilename())
+    hook_createThread_bp = target.BreakpointCreateByName("lldb_hook_createThread", target.GetExecutable().GetFilename())
+    vcJoin_bp = target.BreakpointCreateByName("vcJoin", target.GetExecutable().GetFilename())
+    hook_freeThread_bp = target.BreakpointCreateByName("lldb_hook_freeThread", target.GetExecutable().GetFilename())
 
     # Semaphore breakpoints
-    vc_internal_registerSem_bp = target.BreakpointCreateByName ("vc_internal_registerSem", target.GetExecutable().GetFilename())
-    vcWait_bp = target.BreakpointCreateByName ("vcWait", target.GetExecutable().GetFilename())
-    vcSignal_bp = target.BreakpointCreateByName ("vcSignal", target.GetExecutable().GetFilename())
-    hook_semTryWait_bp = target.BreakpointCreateByName ("lldb_hook_semTryWait", target.GetExecutable().GetFilename())
+    vc_internal_registerSem_bp = target.BreakpointCreateByName("vc_internal_registerSem", target.GetExecutable().GetFilename())
+    vcWait_bp = target.BreakpointCreateByName("vcWait", target.GetExecutable().GetFilename())
+    vcSignal_bp = target.BreakpointCreateByName("vcSignal", target.GetExecutable().GetFilename())
+    hook_semTryWait_bp = target.BreakpointCreateByName("lldb_hook_semTryWait", target.GetExecutable().GetFilename())
+    hook_semClose_bp = target.BreakpointCreateByName("lldb_hook_semClose", target.GetExecutable().GetFilename())
 
     # Mutex breakpoints
     registerMutex_bp = target.BreakpointCreateByName ("lldb_hook_registerMutex", target.GetExecutable().GetFilename())
     lockMutex_bp = target.BreakpointCreateByName ("lldb_hook_lockMutex", target.GetExecutable().GetFilename())
     unlockMutex_bp = target.BreakpointCreateByName ("lldb_hook_unlockMutex", target.GetExecutable().GetFilename())
     hook_mutexTryLock_bp = target.BreakpointCreateByName ("lldb_hook_mutexTryLock", target.GetExecutable().GetFilename())
+    hook_mutexClose_bp = target.BreakpointCreateByName("lldb_hook_mutexClose", target.GetExecutable().GetFilename())
 
     launch_info = target.GetLaunchInfo()
 
@@ -319,6 +322,12 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     t.StepOut()
                     handledBreakpoint = True
                     continue
+                if isStoppedForBreakpoint(t, hook_semClose_bp):
+                    new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    thread_man.onCloseSem(t, str(new_sem))
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
                 # Mutexes:
                 if isStoppedForBreakpoint(t, registerMutex_bp):
                     new_mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
@@ -349,6 +358,12 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     val.SetValueFromCString("1" if result else "0")
                     t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
                     t.StepOut()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_mutexClose_bp):
+                    mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    thread_man.onCloseMutex(t, str(mutex_ptr))
+                    process.Continue()
                     handledBreakpoint = True
                     continue
                 # Other:
@@ -404,6 +419,12 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     #debug_print(main_thread.stop_reason, main_thread.stop_reason == lldb.eStopReasonBreakpoint)
                     #for fr in main_thread:
                     #    debug_print("\t", fr)
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_freeThread_bp):
+                    thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                    thread_man.onFreeThread(t, thread_ptr)
+                    process.Continue()
                     handledBreakpoint = True
                     continue
             handlingBreakpoints = handledBreakpoint

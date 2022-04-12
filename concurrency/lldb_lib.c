@@ -35,6 +35,11 @@ void vcJoin(CSThread *thread, void *ret)
     // pthread_join(thread, &ret);
 }
 
+void lldb_hook_freeThread(CSThread *thread)
+{
+    // LLDB
+}
+
 void vc_internal_init()
 {
     char *lldbMode = getenv("lldbMode");
@@ -75,6 +80,19 @@ void vcSignal(CSSem *sem)
     // LLDB
 }
 
+int lldb_hook_semTryWait(CSSem *sem)
+{
+    int res;
+    // LLDB
+    fprintf(stderr, "Error\n");
+    return -9;
+}
+
+void lldb_hook_semClose(CSSem *sem)
+{
+    // LLDB
+}
+
 // Mutexes
 void lldb_hook_registerMutex(CSMutex *mutex)
 {
@@ -91,20 +109,17 @@ void lldb_hook_unlockMutex(CSMutex *mutex)
     // LLDB
 }
 
-int lldb_hook_semTryWait(CSSem *sem)
-{
-    int res;
-    // LLDB
-    fprintf(stderr, "Error\n");
-    return res;
-}
-
 int lldb_hook_mutexTryLock(CSMutex *mutex)
 {
     int res;
     // LLDB
     fprintf(stderr, "Error\n");
-    return res;
+    return -9;
+}
+
+void lldb_hook_mutexClose(CSMutex *mutex)
+{
+    // LLDB
 }
 
 int main()
