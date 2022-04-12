@@ -17,11 +17,11 @@ int main()
     for(int i = 0; i < TEST_SIZE; i++)
     {
         int removed = rand() % vcSemValue(sem);
-        for(int j = 0; j < removed; j++) vcSemWait(sem); // Issues with vcSemWaitMult, use this for now.
+        vcSemWaitMult(sem, removed);
         printf("|%d", vcSemValue(sem));
         vcThreadSleep(1000);
 
-        // If retruned is 0, the mod function would otherwise fail.
+        // If returned is 0, the mod function would otherwise fail.
         int returned;
         if(removed == 0)
             returned = 0;
@@ -30,6 +30,10 @@ int main()
         vcSemSignalMult(sem, returned);
         printf("|%d", vcSemValue(sem));
         vcThreadSleep(1000);
+
+        // If the sem value is zero, getting "removed" will fail on the next loop.
+        if(vcSemValue(sem) == 0)
+            vcSemSignal(sem);
     }
 
     // Close the semaphore.

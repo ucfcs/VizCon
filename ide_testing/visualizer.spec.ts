@@ -41,9 +41,9 @@ test.describe('Visualizer', async () => {
     const outputNames = (await consoleOut.textContent()).split('|');
     const tableNames = await window.locator('#visualizer td.thread-name').allTextContents();
     expect(tableNames.length).toBe(outputNames.length + 1);
-    expect(tableNames[0]).toBe('#main_thread');
+    expect(tableNames[0]).toBe('Main Thread');
     for (let i = 0; i < outputNames.length; i++) {
-      // Add 1 to the tableNames index since the first table entry is #main_thread.
+      // Add 1 to the tableNames index since the first table entry is Main Thread.
       expect(outputNames[i]).toBe(tableNames[i + 1]);
     }
   });
@@ -214,7 +214,7 @@ test.describe('Visualizer', async () => {
     });
 
     // Check the main thread.
-    const accordionMain: Locator = window.locator('#visualizer div.accordion-parent:has-text("#Main_thread")');
+    const accordionMain: Locator = window.locator('#visualizer div.accordion-parent:has-text("Main Thread")');
     const expectedMain: [string, string][] = [['str', 'char[' + numThreads + '][4]'], ['local', 'int']];
     expectedMain.forEach(async ([name, type]) => {
       const tableRow: Locator = accordionMain.locator('tr.variable-row:has-text("' + name + '")');
@@ -301,7 +301,7 @@ test.describe('Visualizer', async () => {
     while ((await runStatus.textContent()) != 'Status: Finished');
   });
 
-  // Semaphore List Values - Check that the value of a semaphore is viewed and updated.
+  // Semaphore List Values - Check that the value of a semaphore is correctly viewed and updated.
   test('Semaphore List Values', async () =>
   {
     // Set the timeout to 45 seconds because waiting and signaling multiple times is slow.
@@ -341,7 +341,7 @@ test.describe('Visualizer', async () => {
         // Compare to the value of the sem.
         expect(await tableRow.isVisible()).toBeTruthy();
         expect(tableRow.locator('td.variable-name')).toContainText("sem");
-        expect(tableRow.locator('td.variable-type')).toContainText("CSSem *");
+        expect(tableRow.locator('td.variable-type')).toContainText("vcSem");
         expect(parseInt(await tableRow.locator('td.variable-value').textContent())).toEqual(parseInt(lastSegment));
     }
 
