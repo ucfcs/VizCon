@@ -152,8 +152,12 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
     });
   }
   const terminalOutputFile = term == null ? 'None' : `'${btoa(term._pty)}'`;
+  const env = Object.assign({}, process.env);
+  delete env.PYTHONPATH;
+  delete env.PYTHONHOME;
   const child = spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
+    env
   });
   child.stdin.write(
     `script import sys; import base64; sys.path.append(base64.b64decode('${btoa(
