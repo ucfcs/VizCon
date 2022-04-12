@@ -8,6 +8,7 @@ void *vc_internal_thread_wrapper(void *parameter);
 void lldb_hook_createThread(CSThread *thread, char *name);
 void lldb_waitForThreadStart(void);
 void lldb_hook_freeThread(CSThread *thread);
+void lldb_hook_threadSleep(int milliseconds);
 
 void vc_internal_registerSem(CSSem *sem, int initialValue, int maxValue);
 void vcWait(CSSem *sem);

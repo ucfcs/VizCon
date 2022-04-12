@@ -30,9 +30,9 @@ def debug_now(*args, **kwargs):
     sys.stdout.flush()
 def debug_print(*args, **kwargs):
     return
-    print(*args, file=sys.stderr, **kwargs)
-    sys.stderr.flush()
-    sys.stdout.flush()
+    #print(*args, file=sys.stderr, **kwargs)
+    #sys.stderr.flush()
+    #sys.stdout.flush()
 
 def do_nothing():
     pass
@@ -161,6 +161,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
     hook_createThread_bp = target.BreakpointCreateByName("lldb_hook_createThread", target.GetExecutable().GetFilename())
     vcJoin_bp = target.BreakpointCreateByName("vcJoin", target.GetExecutable().GetFilename())
     hook_freeThread_bp = target.BreakpointCreateByName("lldb_hook_freeThread", target.GetExecutable().GetFilename())
+    hook_threadSleep_bp = target.BreakpointCreateByName("lldb_hook_threadSleep", target.GetExecutable().GetFilename())
 
     # Semaphore breakpoints
     vc_internal_registerSem_bp = target.BreakpointCreateByName("vc_internal_registerSem", target.GetExecutable().GetFilename())
@@ -430,6 +431,13 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     process.Continue()
                     handledBreakpoint = True
                     continue
+                if isStoppedForBreakpoint(t, hook_threadSleep_bp):
+                    milliseconds = t.GetFrameAtIndex(0).FindVariable("milliseconds").GetValueAsSigned()
+                    thread_man.onSleepThread(t, milliseconds)
+                    t.StepInstruction(False)
+                    handledBreakpoint = True
+                    continue
+                    
             handlingBreakpoints = handledBreakpoint
         # Send the program state to the visualizer
         if chosen_cthread is not None:

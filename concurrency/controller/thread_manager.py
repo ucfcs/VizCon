@@ -1,5 +1,14 @@
 from random import Random, randint
 import sys
+from dataclasses import dataclass, field
+from typing import Any
+import time
+import heapq
+
+@dataclass(order=True)
+class SleepEntry:
+    wakeup_time: int
+    c_thread: Any=field(compare=False)
 
 def debug_print(*args, **kwargs):
     return
@@ -18,6 +27,7 @@ class ThreadManager:
     semaphoreMap = {}
     semWaitLists = {}
     mutexMap = {}
+    sleeping_threads = []
     def __init__(self, main_lldb_thread):
         main_thread = {'thread': main_lldb_thread, 'name': 'Main Thread', 'state': 'ready', 'csthread_ptr': 'N/A'}
         self.ready_list2 = [main_thread]
@@ -140,9 +150,33 @@ class ThreadManager:
         freed_thread['csthread_ptr'] = 'N/A (freed)'
         debug_print("Thread freed")
 
+    def onSleepThread(self, lldb_thread, millis):
+        c_thread = self.__lookupFromLLDB(lldb_thread)
+        debug_print("Thread sleep:", c_thread['name'], "is sleeping for", millis)
+        c_thread['state'] = 'sleeping'
+        self.ready_list2.remove(c_thread)
+        wakeup_time = round(time.time() * 1000) + millis
+        sleep_entry = SleepEntry(wakeup_time, c_thread)
+        heapq.heappush(self.sleeping_threads, sleep_entry)
+
     def chooseThread(self):
+        now = round(time.time() * 1000)
+        while len(self.sleeping_threads) > 0 and self.sleeping_threads[0].wakeup_time < now:
+            sleep_entry = heapq.heappop(self.sleeping_threads)
+            sleep_entry.c_thread['state'] = 'ready'
+            self.ready_list2.append(sleep_entry.c_thread)
         if len(self.ready_list2) <= 0:
-            return None
+            if len(self.sleeping_threads) == 0:
+                return None
+        while len(self.ready_list2) <= 0:
+            wakeup_time = self.sleeping_threads[0].wakeup_time
+            debug_print("Empty ready list. Waiting for sleep to end")
+            time.sleep((wakeup_time - now) / 1000)
+            now = round(time.time() * 1000)
+            while len(self.sleeping_threads) > 0 and self.sleeping_threads[0].wakeup_time < now:
+                sleep_entry = heapq.heappop(self.sleeping_threads)
+                sleep_entry.c_thread['state'] = 'ready'
+                self.ready_list2.append(sleep_entry.c_thread)
         chosen_thread = thread_scheduler_rng.choice(self.ready_list2)
         return chosen_thread
 

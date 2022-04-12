@@ -1,5 +1,7 @@
 #include "vcuserlibrary.h"
 
+extern int isLldbActive;
+
 // Pointers used to track all concurrency objects.
 CSThread *vizconThreadListHead, *vizconThreadList;
 CSSem *vizconSemListHead, *vizconSemList;
@@ -155,6 +157,11 @@ void** vcThreadReturn()
 //vcThreadSleep - Put the calling thread to sleep
 void vcThreadSleep(int milliseconds)
 {
+    if (isLldbActive)
+    {
+        lldb_hook_threadSleep(milliseconds);
+        return;
+    }
     #ifdef _WIN32
     Sleep(milliseconds);
     #else

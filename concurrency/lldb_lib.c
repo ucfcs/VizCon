@@ -40,6 +40,11 @@ void lldb_hook_freeThread(CSThread *thread)
     // LLDB
 }
 
+void lldb_hook_threadSleep(int milliseconds)
+{
+    // LLDB
+}
+
 void vc_internal_init()
 {
     char *lldbMode = getenv("lldbMode");
