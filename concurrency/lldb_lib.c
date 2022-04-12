@@ -85,7 +85,8 @@ int lldb_hook_semTryWait(CSSem *sem)
     int res;
     // LLDB
     fprintf(stderr, "Error\n");
-    return -9;
+    res = -9;
+    return res;
 }
 
 void lldb_hook_semClose(CSSem *sem)
@@ -114,7 +115,8 @@ int lldb_hook_mutexTryLock(CSMutex *mutex)
     int res;
     // LLDB
     fprintf(stderr, "Error\n");
-    return -9;
+    res = -9;
+    return res;
 }
 
 void lldb_hook_mutexClose(CSMutex *mutex)
