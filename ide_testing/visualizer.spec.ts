@@ -16,7 +16,6 @@ test.describe('Visualizer', async () => {
 
   // Thread List - All threads are listed with the correct names.
   test('Thread List', async () => {
-
     // Set the timeout to 45 seconds because randomization is slow.
     test.setTimeout(45000);
 
@@ -32,8 +31,8 @@ test.describe('Visualizer', async () => {
     await window.locator('span.action-label:text("Compile And Run File")').click();
 
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
-    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:"):visible');
-    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const runStatus = window.locator('#visualizer div.control:has-text("Status:"):visible');
+    const consoleOut = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
     while ((await runStatus.textContent()) != 'Status: Finished');
 
@@ -63,13 +62,13 @@ test.describe('Visualizer', async () => {
 
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
-    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const consoleOut = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
 
     // Wait for the first ID to be printed, then get the number of threads.
     // Use that to create an array of statuses for each thread: true means the thread has finished.
     while ((await consoleOut.textContent({ timeout: 15000 })) == '');
     const numThreads = (await window.locator('#visualizer td.thread-name').count()) - 1;
-    const threads: Array<Boolean> = new Array(numThreads);
+    const threads = new Array<boolean>(numThreads);
     for (let i = 0; i < numThreads; i++) {
       threads[i] = false;
     }
@@ -91,7 +90,7 @@ test.describe('Visualizer', async () => {
         // Also make sure that ACTIVE is true and FINISH is false.
         // Then, mark it as having been active.
         if (j + 1 == lastThreadID) {
-          const tableRow: Locator = window.locator('#visualizer tr.thread-row.current');
+          const tableRow = window.locator('#visualizer tr.thread-row.current');
           expect(await tableRow.isVisible()).toBeTruthy();
           expect(tableRow.locator('td.thread-name')).toContainText('Thread ' + (j + 1));
           expect(tableRow.locator('td.thread-active')).toContainText('true');
@@ -102,7 +101,7 @@ test.describe('Visualizer', async () => {
         // If threads[j] is true, the corresponding thread has finished.
         // Also make sure that ACTIVE is false and FINISH is true.
         else if (threads[j] == true) {
-          const tableRow: Locator = window.locator('#visualizer tr.thread-row:has-text("Thread ' + (j + 1) + '")');
+          const tableRow = window.locator('#visualizer tr.thread-row:has-text("Thread ' + (j + 1) + '")');
           expect(await tableRow.isVisible()).toBeTruthy();
           expect(tableRow.locator('td.thread-name')).toContainText('Thread ' + (j + 1));
           expect(tableRow.locator('td.thread-active')).toContainText('false');
@@ -112,7 +111,7 @@ test.describe('Visualizer', async () => {
         // If threads[j] is false, the corresponding thread has not finished.
         // Also make sure that ACTIVE is false and FINISH is false.
         else {
-          const tableRow: Locator = window.locator('#visualizer tr.thread-row:has-text("Thread ' + (j + 1) + '")');
+          const tableRow = window.locator('#visualizer tr.thread-row:has-text("Thread ' + (j + 1) + '")');
           expect(await tableRow.isVisible()).toBeTruthy();
           expect(tableRow.locator('td.thread-name')).toContainText('Thread ' + (j + 1));
           expect(tableRow.locator('td.thread-active')).toContainText('false');
@@ -136,8 +135,8 @@ test.describe('Visualizer', async () => {
     await window.locator('span.action-label:text("Compile And Run File")').click();
 
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
-    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:"):visible');
-    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const runStatus = window.locator('#visualizer div.control:has-text("Status:"):visible');
+    const consoleOut = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
 
     // Wait for the "loop start" statement to be printed, then pause.
@@ -163,7 +162,7 @@ test.describe('Visualizer', async () => {
       ['loopNum', 'short'],
     ];
     expectedVars.forEach(async ([name, type]) => {
-      const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("' + name + '")');
+      const tableRow = window.locator('#visualizer tr.variable-row:has-text("' + name + '")');
       expect(await tableRow.isVisible()).toBeTruthy();
       expect(tableRow.locator('td.variable-name')).toContainText(name);
       expect(tableRow.locator('td.variable-type')).toContainText(type);
@@ -177,47 +176,53 @@ test.describe('Visualizer', async () => {
   });
 
   // Variable Thread List - All in-scope variables are listed under the correct thread.
-  test('Variable Thread List', async () =>
-  {
+  test('Variable Thread List', async () => {
     // Open a testing file that generates a set of threads with random names.
     console.log('Please select "varthreadlist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
-  
+
     // File is loaded by tester here...
-      
+
     // Select Compile > Compile And Run File.
     await window.locator('div.menu-item:has-text("CompileCompile")').click();
     await window.locator('span.action-label:text("Compile And Run File")').click();
-  
+
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
-    const consoleOut: Locator = window.locator("#visualizer div.view-lines.monaco-mouse-cursor-text");
+    const consoleOut = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
 
     // Wait for the number of threads to be printed.
     while ((await consoleOut.textContent({ timeout: 15000 })).split('|').length <= 1);
     const numThreads = parseInt((await consoleOut.textContent()).split('|')[0]);
-  
+
     // Wait for all the characters to be printed to the console, and then force quit.
     while ((await consoleOut.textContent({ timeout: 15000 })).split('|')[1].length != numThreads);
     await window.locator('#visualizer div.control.has-action:has-text("Force Quit Simulation")').click();
     const threadNames = (await consoleOut.textContent()).split('|')[1];
-  
+
     // Check the globals.
-    const accordionGlobals: Locator = window.locator('#visualizer div.accordion-parent:has-text("Globals")');
-    const expectedGlobals: [string, string][] = [['dummy', 'int'], ['global1', 'int'], ['global2', 'char']];
+    const accordionGlobals = window.locator('#visualizer div.accordion-parent:has-text("Globals")');
+    const expectedGlobals: [string, string][] = [
+      ['dummy', 'int'],
+      ['global1', 'int'],
+      ['global2', 'char'],
+    ];
     expectedGlobals.forEach(async ([name, type]) => {
-      const tableRow: Locator = accordionGlobals.locator('tr.variable-row:has-text("' + name + '")');
+      const tableRow = accordionGlobals.locator('tr.variable-row:has-text("' + name + '")');
       expect(await tableRow.isVisible()).toBeTruthy();
       expect(tableRow.locator('td.variable-name')).toContainText(name);
       expect(tableRow.locator('td.variable-type')).toContainText(type);
     });
 
     // Check the main thread.
-    const accordionMain: Locator = window.locator('#visualizer div.accordion-parent:has-text("Main Thread")');
-    const expectedMain: [string, string][] = [['str', 'char[' + numThreads + '][4]'], ['local', 'int']];
+    const accordionMain = window.locator('#visualizer div.accordion-parent:has-text("Main Thread")');
+    const expectedMain: [string, string][] = [
+      ['str', 'char[' + numThreads + '][4]'],
+      ['local', 'int'],
+    ];
     expectedMain.forEach(async ([name, type]) => {
-      const tableRow: Locator = accordionMain.locator('tr.variable-row:has-text("' + name + '")');
+      const tableRow = accordionMain.locator('tr.variable-row:has-text("' + name + '")');
       expect(await tableRow.isVisible()).toBeTruthy();
       expect(tableRow.locator('td.variable-name')).toContainText(name);
       expect(tableRow.locator('td.variable-type')).toContainText(type);
@@ -225,85 +230,83 @@ test.describe('Visualizer', async () => {
 
     // Check each spawned thread.
     // Also check the value of paramChar to make sure it's the variable part of the thread name.
-    const expectedThread: [string, string][] = [['paramPtr', 'void *'], ['paramChar', 'char']];
-    for(let i = 0; i < threadNames.length; i++)
-    {
+    const expectedThread: [string, string][] = [
+      ['paramPtr', 'void *'],
+      ['paramChar', 'char'],
+    ];
+    for (let i = 0; i < threadNames.length; i++) {
       const threadLetter = threadNames.charAt(i);
-      const accordionThread: Locator = window.locator('#visualizer div.accordion-parent:has-text("|' + threadLetter + '|")');
+      const accordionThread = window.locator('#visualizer div.accordion-parent:has-text("|' + threadLetter + '|")');
       expectedThread.forEach(async ([name, type]) => {
-        const tableRow: Locator = accordionThread.locator('tr.variable-row:has-text("' + name + '")');
+        const tableRow = accordionThread.locator('tr.variable-row:has-text("' + name + '")');
         expect(await tableRow.isVisible()).toBeTruthy();
         expect(tableRow.locator('td.variable-name')).toContainText(name);
         expect(tableRow.locator('td.variable-type')).toContainText(type);
       });
-      const tableRow: Locator = accordionThread.locator('tr.variable-row:has-text("paramChar")');
+      const tableRow = accordionThread.locator('tr.variable-row:has-text("paramChar")');
       expect(tableRow.locator('td.variable-value')).toContainText("'" + threadLetter + "'");
     }
   });
 
   // Variable List Values - All in-scope variables list the correct values.
-  test('Variable List Values', async () =>
-  {
+  test('Variable List Values', async () => {
     // Open a testing file that generates a set of threads with random names.
     console.log('Please select "varvaluelist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
-  
+
     // File is loaded by tester here...
-      
+
     // Select Compile > Compile And Run File.
     await window.locator('div.menu-item:has-text("CompileCompile")').click();
     await window.locator('span.action-label:text("Compile And Run File")').click();
-  
+
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
-    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
-    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
+    const consoleOut = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const runStatus = window.locator('#visualizer div.control:has-text("Status:")');
 
     // Whenever a change is made, check whether the program finished.
     // If it didn't, check that the currently-listed values are correct.
-    let lastOut: string = '';
-    while(true)
-    {
-        while ((await consoleOut.textContent()) == lastOut);
-        lastOut = await consoleOut.textContent();
+    let lastOut = '';
+    while (true) {
+      while ((await consoleOut.textContent()) == lastOut);
+      lastOut = await consoleOut.textContent();
 
-        // Get the most recent output.
-        const lastLine = lastOut.split('|')[lastOut.split('|').length - 1];
+      // Get the most recent output.
+      const lastLine = lastOut.split('|')[lastOut.split('|').length - 1];
 
-        // If this last line is "Done.", leave.
-        if(lastLine == "Done.") break;
+      // If this last line is "Done.", leave.
+      if (lastLine == 'Done.') break;
 
-        // Split the line into the constituent values. Check each value.
-        const lineVals = lastLine.split('~');
-        const expectedVars: [string, string, string][] = [
-          ['testInt', 'int', lineVals[0]],
-          ['testDouble', 'double', lineVals[1]],
-          ['testChar', 'char', lineVals[2]],
-          ['testPtr', 'void *', lineVals[3]]
-        ];
-        expectedVars.forEach(async ([name, type, expectedVal]) => {
-          const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("' + name + '")');
-          expect(await tableRow.isVisible()).toBeTruthy();
-          expect(tableRow.locator('td.variable-name')).toContainText(name);
-          expect(tableRow.locator('td.variable-type')).toContainText(type);
+      // Split the line into the constituent values. Check each value.
+      const lineVals = lastLine.split('~');
+      const expectedVars: [string, string, string][] = [
+        ['testInt', 'int', lineVals[0]],
+        ['testDouble', 'double', lineVals[1]],
+        ['testChar', 'char', lineVals[2]],
+        ['testPtr', 'void *', lineVals[3]],
+      ];
+      expectedVars.forEach(async ([name, type, expectedVal]) => {
+        const tableRow = window.locator('#visualizer tr.variable-row:has-text("' + name + '")');
+        expect(await tableRow.isVisible()).toBeTruthy();
+        expect(tableRow.locator('td.variable-name')).toContainText(name);
+        expect(tableRow.locator('td.variable-type')).toContainText(type);
 
-          // Since the double output is rounded, round the value before comparing.
-          if(name == 'testDouble')
-          {
-            const rawDouble = await tableRow.locator('td.variable-value').textContent();
-            expect(parseFloat(rawDouble).toFixed(2)).toEqual(expectedVal);
-          }
-          else
-            expect(tableRow.locator('td.variable-value')).toContainText(expectedVal);
-        });
+        // Since the double output is rounded, round the value before comparing.
+        if (name == 'testDouble') {
+          const rawDouble = await tableRow.locator('td.variable-value').textContent();
+          expect(parseFloat(rawDouble).toFixed(2)).toEqual(expectedVal);
+        } else {
+          expect(tableRow.locator('td.variable-value')).toContainText(expectedVal);
+        }
+      });
     }
     while ((await runStatus.textContent()) != 'Status: Finished');
   });
 
   // Semaphore List Values - Check that the value of a semaphore is correctly viewed and updated.
-  test('Semaphore List Values', async () =>
-  {
+  test('Semaphore List Values', async () => {
     // Set the timeout to 45 seconds because waiting and signaling multiple times is slow.
     test.setTimeout(45000);
 
@@ -311,38 +314,37 @@ test.describe('Visualizer', async () => {
     console.log('Please select "semvaluelist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
-  
+
     // File is loaded by tester here...
-      
+
     // Select Compile > Compile And Run File.
     await window.locator('div.menu-item:has-text("CompileCompile")').click();
     await window.locator('span.action-label:text("Compile And Run File")').click();
-  
+
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
-    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
-    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
-    const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("sem")');
+    const consoleOut = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const runStatus = window.locator('#visualizer div.control:has-text("Status:")');
+    const tableRow = window.locator('#visualizer tr.variable-row:has-text("sem")');
 
     // Whenever a change is made, check whether the sem was deleted.
     // If not, check that the currently-listed values are correct.
-    let lastOut: string = '';
-    while(true)
-    {
-        while ((await consoleOut.textContent()) == lastOut);
-        lastOut = await consoleOut.textContent();
+    let lastOut = '';
+    while (true) {
+      while ((await consoleOut.textContent()) == lastOut);
+      lastOut = await consoleOut.textContent();
 
-        // Get the most recent output.
-        const lastSegment = lastOut.split('|')[lastOut.split('|').length - 1];
+      // Get the most recent output.
+      const lastSegment = lastOut.split('|')[lastOut.split('|').length - 1];
 
-        // If this last segment is "new", break for the last check.
-        if(lastSegment == "new") break;
+      // If this last segment is "new", break for the last check.
+      if (lastSegment == 'new') break;
 
-        // Compare to the value of the sem.
-        expect(await tableRow.isVisible()).toBeTruthy();
-        expect(tableRow.locator('td.variable-name')).toContainText("sem");
-        expect(tableRow.locator('td.variable-type')).toContainText("vcSem");
-        expect(parseInt(await tableRow.locator('td.variable-value').textContent())).toEqual(parseInt(lastSegment));
+      // Compare to the value of the sem.
+      expect(await tableRow.isVisible()).toBeTruthy();
+      expect(tableRow.locator('td.variable-name')).toContainText('sem');
+      expect(tableRow.locator('td.variable-type')).toContainText('vcSem');
+      expect(parseInt(await tableRow.locator('td.variable-value').textContent())).toEqual(parseInt(lastSegment));
     }
 
     // The last number is the max permit, but the semaphore only has half that number available.
@@ -357,87 +359,84 @@ test.describe('Visualizer', async () => {
   });
 
   // Mutex List Values - Check that the value of a mutex is correctly viewed and updated.
-  test('Mutex List Values', async () =>
-  {
+  test('Mutex List Values', async () => {
     // Open a testing file that generates a set of threads with random names.
     console.log('Please select "mutexvaluelist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
-  
+
     // File is loaded by tester here...
-      
+
     // Select Compile > Compile And Run File.
     await window.locator('div.menu-item:has-text("CompileCompile")').click();
     await window.locator('span.action-label:text("Compile And Run File")').click();
-  
+
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
-    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
-    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
-    const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("mutex")');
+    const consoleOut = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const runStatus = window.locator('#visualizer div.control:has-text("Status:")');
+    const tableRow = window.locator('#visualizer tr.variable-row:has-text("mutex")');
 
     // Whenever a change is made, check whether the sem was deleted.
     // If not, check that the currently-listed values are correct.
-    let lastOut: string = '';
-    while(true)
-    {
-        while ((await consoleOut.textContent()) == lastOut);
-        lastOut = await consoleOut.textContent();
+    let lastOut = '';
+    while (true) {
+      while ((await consoleOut.textContent()) == lastOut);
+      lastOut = await consoleOut.textContent();
 
-        // When the program ends, it prints something with a '|' in it.
-        if(lastOut.split('|').length > 1) break;
+      // When the program ends, it prints something with a '|' in it.
+      if (lastOut.split('|').length > 1) break;
 
-        // Compare the output to the value given in the table.
-        expect(await tableRow.isVisible()).toBeTruthy();
-        expect(tableRow.locator('td.variable-name')).toContainText("mutex");
-        expect(tableRow.locator('td.variable-type')).toContainText("vcMutex");
-        const lastStatus = lastOut.charAt(lastOut.length - 1);
-        if(lastStatus == '1') 
-          expect(tableRow.locator('td.variable-value')).toContainText("Unlocked");
-        else
-          expect(tableRow.locator('td.variable-value')).toContainText("Locked by Main Thread");
+      // Compare the output to the value given in the table.
+      expect(await tableRow.isVisible()).toBeTruthy();
+      expect(tableRow.locator('td.variable-name')).toContainText('mutex');
+      expect(tableRow.locator('td.variable-type')).toContainText('vcMutex');
+      const lastStatus = lastOut.charAt(lastOut.length - 1);
+      if (lastStatus == '1') {
+        expect(tableRow.locator('td.variable-value')).toContainText('Unlocked');
+      } else {
+        expect(tableRow.locator('td.variable-value')).toContainText('Locked by Main Thread');
+      }
     }
 
     while ((await runStatus.textContent()) != 'Status: Finished');
   });
 
   // Mutex List Owners - Check that the listed owner of a mutex is correctly viewed and updated.
-  test('Mutex List Owners', async () =>
-  {
+  test('Mutex List Owners', async () => {
     // Open a testing file that generates a set of threads with random names.
     console.log('Please select "mutexownerlist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
-  
+
     // File is loaded by tester here...
-      
+
     // Select Compile > Compile And Run File.
     await window.locator('div.menu-item:has-text("CompileCompile")').click();
     await window.locator('span.action-label:text("Compile And Run File")').click();
-  
+
     // Wait for the visualizer to appear, which indicates compilation success, and then run the program.
     await window.locator('#visualizer div.control.has-action:has-text("Start Simulation")').click();
-    const consoleOut: Locator = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
-    const runStatus: Locator = window.locator('#visualizer div.control:has-text("Status:")');
-    const tableRow: Locator = window.locator('#visualizer tr.variable-row:has-text("mutex")');
+    const consoleOut = window.locator('#visualizer div.view-lines.monaco-mouse-cursor-text');
+    const runStatus = window.locator('#visualizer div.control:has-text("Status:")');
+    const tableRow = window.locator('#visualizer tr.variable-row:has-text("mutex")');
 
     // Whenever a change is made, check whether the sem was deleted.
     // If not, check that the currently-listed values are correct.
     let lastOut: string = '';
-    while(true)
-    {
-        while ((await consoleOut.textContent()) == lastOut);
-        lastOut = await consoleOut.textContent();
+    while (true) {
+      while ((await consoleOut.textContent()) == lastOut);
+      lastOut = await consoleOut.textContent();
 
-        // When the program ends, it prints something with a '|' in it.
-        if(lastOut.split('|').length > 1) break;
+      // When the program ends, it prints something with a '|' in it.
+      if (lastOut.split('|').length > 1) break;
 
-        // Compare the output to the value given in the table.
-        expect(await tableRow.isVisible()).toBeTruthy();
-        expect(tableRow.locator('td.variable-name')).toContainText("mutex");
-        expect(tableRow.locator('td.variable-type')).toContainText("vcMutex");
-        const curOwner = lastOut.charAt(lastOut.length - 1);
-        expect(tableRow.locator('td.variable-value')).toContainText("Locked by |" + curOwner + "|");
+      // Compare the output to the value given in the table.
+      expect(await tableRow.isVisible()).toBeTruthy();
+      expect(tableRow.locator('td.variable-name')).toContainText('mutex');
+      expect(tableRow.locator('td.variable-type')).toContainText('vcMutex');
+      const curOwner = lastOut.charAt(lastOut.length - 1);
+      expect(tableRow.locator('td.variable-value')).toContainText('Locked by |' + curOwner + '|');
     }
 
     while ((await runStatus.textContent()) != 'Status: Finished');
@@ -446,12 +445,10 @@ test.describe('Visualizer', async () => {
   // After Each - Quit the program if needed, return to the editor and close all open files.
   test.afterEach(async () => {
     // Quit the program if it is open and return to the editor.
-    if (await window.isVisible('[title="Return to Editor"]'))
-    {
-      if(await window.isVisible('#visualizer div.control.has-action:has-text("Force Quit Simulation")'))
-      {
+    if (await window.isVisible('[title="Return to Editor"]')) {
+      if (await window.isVisible('#visualizer div.control.has-action:has-text("Force Quit Simulation")')) {
         await window.locator('#visualizer div.control.has-action:has-text("Force Quit Simulation")').click();
-        while((await window.locator('#visualizer div.control:has-text("Status:")').textContent()) != 'Status: Terminated');
+        while ((await window.locator('#visualizer div.control:has-text("Status:")').textContent()) != 'Status: Terminated');
       }
       await window.locator('[title="Return to Editor"]').click();
     }

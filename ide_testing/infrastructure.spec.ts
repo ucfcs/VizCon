@@ -246,12 +246,10 @@ test.describe('Infrastructure', async () => {
   // After Each - Quit the program if needed, return to the editor and close all open files.
   test.afterEach(async () => {
     // Quit the program if it is open and return to the editor.
-    if (await window.isVisible('[title="Return to Editor"]'))
-    {
-      if(await window.isVisible('#visualizer div.control.has-action:has-text("Force Quit Simulation")'))
-      {
+    if (await window.isVisible('[title="Return to Editor"]')) {
+      if (await window.isVisible('#visualizer div.control.has-action:has-text("Force Quit Simulation")')) {
         await window.locator('#visualizer div.control.has-action:has-text("Force Quit Simulation")').click();
-        while((await window.locator('#visualizer div.control:has-text("Status:")').textContent()) != 'Status: Terminated');
+        while ((await window.locator('#visualizer div.control:has-text("Status:")').textContent()) != 'Status: Terminated');
       }
       await window.locator('[title="Return to Editor"]').click();
     }
