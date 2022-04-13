@@ -12,13 +12,6 @@ test.describe('Infrastructure', async () => {
 
     // Get the first window that the app opens.
     window = await electronApp.firstWindow();
-
-    // Switch to the visualizer and set the speed to its fastest setting. Then go back.
-    await window.locator('div.menu-item:has-text("ViewShow")').click();
-    await window.locator('span.action-label:text("Show Visualizer")').click();
-    await window.locator('#visualizer input[type="range"]:visible').fill('0');
-    await window.locator('div.menu-item:has-text("ViewShow")').click();
-    await window.locator('span.action-label:text("Show Editor")').click();
   });
 
   // Compile Success - Check that file compilation works correctly.
@@ -250,10 +243,16 @@ test.describe('Infrastructure', async () => {
     expect(consoleOut).not.toContainText('Before');
   });
 
-  // After Each - Return to the editor and close all open files.
+  // After Each - Quit the program if needed, return to the editor and close all open files.
   test.afterEach(async () => {
-    // Return to the editor if needed.
-    if (await window.isVisible('[title="Return to Editor"]')) await window.locator('[title="Return to Editor"]').click();
+    // Quit the program if it is open and return to the editor.
+    if (await window.isVisible('[title="Return to Editor"]')) {
+      if (await window.isVisible('#visualizer div.control.has-action:has-text("Force Quit Simulation")')) {
+        await window.locator('#visualizer div.control.has-action:has-text("Force Quit Simulation")').click();
+        while ((await window.locator('#visualizer div.control:has-text("Status:")').textContent()) != 'Status: Terminated');
+      }
+      await window.locator('[title="Return to Editor"]').click();
+    }
 
     // Close all open files.
     while (true) {
