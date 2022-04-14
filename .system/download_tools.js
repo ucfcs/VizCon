@@ -4,6 +4,7 @@ const https = require('https');
 const os = require('os');
 const path = require('path');
 const process = require('process');
+const child_process = require('child_process');
 const unzipper = require('unzipper');
 
 // The platform packages themselves and the packageName mappings are from the CodeLLDB project
@@ -151,6 +152,7 @@ async function run() {
   console.log('Removing old files');
   try {
     await fs.promises.rm('platform/lldb', { recursive: true });
+    await fs.promises.rm('platform/mingw64', { recursive: true });
   } catch (e) {
     if (e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
       throw e;
@@ -159,12 +161,47 @@ async function run() {
   console.log('Extracting package...');
   await unzipFile(file, 'platform');
   console.log('Finished extracting files.');
-  fs.unlink(file, err => {
-    if (err) {
-      throw err;
-    }
-    console.log('Deleted zip file.');
+  await new Promise((resolve, reject) => {
+    fs.unlink(file, err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
   });
+  console.log('Deleted lldb zip file.');
+
+  if (platformId === 'x64-win32') {
+    console.log('Downloading mingw-w64');
+    await downloadFile(
+      'https://github.com/RyanG10/mingw-w64/releases/download/x86_64-8.1.0-release-posix-sjlj-rt_v6-rev0.7z/mingw64.exe',
+      'mingw64.exe'
+    );
+    console.log('Download complete');
+    await new Promise(resolve => {
+      child_process.exec(`start /w mingw64.exe -o"platform" -y`, (err, stdout, stderr) => {
+        if (err && err.code !== 0) {
+          resolve({ out: stdout, err: stderr });
+          return;
+        }
+        resolve({ out: stdout, err: stderr });
+      });
+    });
+    console.log('Finished extracting mingw64.');
+    console.log('Deleting mingw64.exe...');
+    await new Promise((resolve, reject) => {
+      fs.unlink('mingw64.exe', err => {
+        console.log('callback');
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+    console.log('Deleted mingw64.exe');
+  }
 }
 
 run();

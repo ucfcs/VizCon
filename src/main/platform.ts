@@ -120,8 +120,11 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
 ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [`"${path}"`, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
-
-  const commandString = `gcc -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
+  let gcc = 'gcc';
+  if (process.platform === 'win32') {
+    gcc = '"' + resourcesDir + pathSep + 'platform' + pathSep + 'mingw64' + pathSep + 'bin' + pathSep + 'gcc' + '"';
+  }
+  const commandString = `${gcc} -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
   console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
@@ -157,7 +160,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   delete env.PYTHONHOME;
   const child = spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
-    env
+    env,
   });
   child.stdin.write(
     `script import sys; import base64; sys.path.append(base64.b64decode('${btoa(
