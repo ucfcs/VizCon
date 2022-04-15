@@ -4,6 +4,7 @@ import Editor from './ide/editor';
 import Landing from './ide/landing';
 import Output from './ide/output';
 import Tab from './ide/tab';
+import ScrollableElement from './scrollableElement';
 
 interface IDEProps {
   files: OpenFileData[];
@@ -66,7 +67,12 @@ export default function IDE({
 
   return (
     <div id="ide" className={className}>
-      {tabination}
+      <div className='tabination-and-play'>
+        <ScrollableElement content={tabination}/>
+        <div className='editor-actions'>
+          {/* TODO: play button */}
+        </div>
+      </div>
       <div className="active-editor">
         {files.length == 0 && <Landing newFile={newFile} openFile={openFile} openExampleFile={openExampleFile} />}
         {files.length >= 1 && <Editor current={current} regenTabination={regenTabination} setDirty={setDirty} />}
