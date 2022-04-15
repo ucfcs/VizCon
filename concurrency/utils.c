@@ -86,6 +86,16 @@ void vizconError(char* func, int err)
                 errorMessage = "Too many posts were made to a semaphore.";
                 break;
             }
+            case VC_ERROR_CREATEDISABLED:
+            {
+                errorMessage = "Threads, semaphores, and mutexes may not be created while threads are active.";
+                break;
+            }
+            case VC_ERROR_THREADSACTIVE:
+            {
+                errorMessage = "An instance of this call is already active.";
+                break;
+            }
             default:
                 errorMessage = "An unknown error has occurred.";
         }
@@ -94,6 +104,6 @@ void vizconError(char* func, int err)
     // Print the message and leave.
     sprintf(message, "\nError from %s.\nvizcon error code %d: %s\n", func, err, errorMessage);
     message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
-    printf("%s\n", message);
+    printf("%s", message);
     vcHalt(err);
 }

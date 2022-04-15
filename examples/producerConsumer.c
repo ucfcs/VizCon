@@ -1,6 +1,6 @@
 #include "vcuserlibrary.h"
 
-int loop = 100;
+int loop = 20;
 
 int b1, b2, b3, exitStatus;
 vcSem empty1, *empty2, *empty3, *full1, *full2, *full3;
@@ -16,7 +16,9 @@ void* Producer(void* param)
         b1 = r;
         vcSemSignal(full1);
     }
+    vcSemWait(empty1);
     exitStatus = 1;
+    vcSemSignal(full1);
     return (void*)0;
 }
 
@@ -38,7 +40,9 @@ void* CheckEven(void* param)
             vcSemSignal(full2);
         }
     }
+    vcSemWait(empty2);
     exitStatus = 2;
+    vcSemSignal(full2);
     return (void*)0;
 }
 
@@ -61,7 +65,10 @@ void* CheckLine(void* param)
         }
         count = count + 1;
     }
+    vcSemWait(empty3);
     exitStatus = 3;
+    vcSemSignal(full3);
+    
     return (void*)0;
 }
 
