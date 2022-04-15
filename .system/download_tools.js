@@ -179,6 +179,12 @@ async function run() {
       'mingw64.exe'
     );
     console.log('Download complete');
+    const actualHash = await hashFile('mingw64.exe');
+    const mingwHash = '67a7e4a7f08218893f5d5e9ca395bb13ec52e7f4beecc19a19a08114472299d0';
+    if (actualHash !== mingwHash) {
+      console.error(`Hash mismatch. Expected: ${mingwHash} Actual: ${actualHash}`);
+      process.exit(4);
+    }
     await new Promise(resolve => {
       child_process.exec(`start /w mingw64.exe -o"platform" -y`, (err, stdout, stderr) => {
         if (err && err.code !== 0) {
