@@ -1,7 +1,7 @@
 #include "vcuserlibrary.h"
 
 vcSem fork1, *fork2, *fork3, *fork4, *fork5, *room;
-int m = 100;
+int m = 20;
 
 void* Phil1(void* param)
 {
