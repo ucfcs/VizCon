@@ -16,4 +16,12 @@ function getDisplayValueForBool(bool: boolean): string {
   return bool ? 'true' : 'false';
 }
 
-export { filePathToShortName, filePathToFileName, getDisplayValueForBool };
+function delay(millis: number): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, millis);
+  });
+}
+
+export { filePathToShortName, filePathToFileName, getDisplayValueForBool, delay };

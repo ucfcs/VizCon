@@ -3,14 +3,16 @@ import React, { useState, useEffect } from 'react';
 export default function WindowControls(): React.ReactElement {
   const [maximized, setMaximized] = useState<boolean>(false);
 
+  window.addEventListener('resize', checkMaximized);
+
+  async function checkMaximized() {
+    setMaximized(await window.platform.isMaximized());
+  }
+
   useEffect(() => {
-    async function checkMaximized() {
-      setMaximized(await window.platform.isMaximized());
-    }
     checkMaximized();
   });
 
-  // TODO remove the text inside the divs, it is present for testing
   return (
     <div className="window-controls">
       <div className="window-icon codicon codicon-chrome-minimize" onClick={window.platform.minimize}></div>

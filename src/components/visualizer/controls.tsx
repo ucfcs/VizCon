@@ -3,11 +3,12 @@ import { filePathToShortName } from '../../util/utils';
 
 interface ControlsProps {
   fileName: string;
-  simulationActive: boolean;
   start: () => void;
-  restart: () => void;
-  stop: () => void;
+  pause: () => void;
+  resume: () => void;
+  terminate: () => void;
   goBack: () => void;
+  status: VisualizerRunState;
 }
 
 interface ControlProps {
@@ -20,7 +21,6 @@ interface ControlProps {
   className?: string;
 }
 
-// TODO: restructure so entire element is clickable
 function Control({ label, action, className = '' }: ControlProps): React.ReactElement {
   const labelElem = <div className="label">{label}</div>;
 
@@ -48,17 +48,35 @@ function Control({ label, action, className = '' }: ControlProps): React.ReactEl
   );
 }
 
-export default function Controls({ fileName, simulationActive, start, restart, stop, goBack }: ControlsProps): React.ReactElement {
+export default function Controls({ fileName, start, pause, resume, terminate, goBack, status }: ControlsProps): React.ReactElement {
   return (
     <div className="controls">
       <Control label={'Simulating File: ' + filePathToShortName(fileName)} className="pad-r" />
-      {simulationActive && (
+      {/*Temporary style hack. The status is not a control and not a label.*/}
+      <div className="control">
+        <div className="padding-container label">Status: {getStatusDisplayName(status)}</div>
+      </div>
+      {/*(status === 'running' || status === 'paused') && (
         <Control label="Restart Simulation" action={{ title: 'Restart Simulation', codiconClass: 'codicon-play', action: restart }} />
-      )}
-      {!simulationActive && (
+      )*/}
+      {(status === 'not_started' || status === 'finished' || status === 'terminated' || status === 'error' || status === 'deadlock') && (
         <Control label="Start Simulation" action={{ title: 'Start Simulation', codiconClass: 'codicon-play', action: start }} />
       )}
-      <Control label="Stop Simulation" action={{ title: 'Stop Simulation', codiconClass: 'codicon-debug-stop', action: stop }} />
+      {status === 'running' && (
+        <Control label="Pause Simulation" action={{ title: 'Pause Simulation', codiconClass: 'codicon-debug-pause', action: pause }} />
+      )}
+      {status === 'paused' && (
+        <Control
+          label="Resume Simulation"
+          action={{ title: 'Resume Simulation', codiconClass: 'codicon-debug-continue', action: resume }}
+        />
+      )}
+      {(status === 'running' || status === 'pausing' || status === 'paused') && (
+        <Control
+          label="Force Quit Simulation"
+          action={{ title: 'Force Quit Simulation', codiconClass: 'codicon-debug-stop', action: terminate }}
+        />
+      )}
       <Control
         label="Return to Editor"
         action={{ title: 'Return to Editor', codiconClass: 'codicon-discard', action: goBack }}
@@ -66,4 +84,20 @@ export default function Controls({ fileName, simulationActive, start, restart, s
       />
     </div>
   );
+}
+
+function getStatusDisplayName(state: VisualizerRunState): string {
+  const mapping: { [k in VisualizerRunState]: string } = {
+    not_started: 'Not started',
+    starting: 'Starting...',
+    terminating: 'Terminating...',
+    terminated: 'Terminated',
+    running: 'Running',
+    error: 'Error',
+    deadlock: 'Deadlock',
+    pausing: 'Pausing...',
+    paused: 'Paused',
+    finished: 'Finished',
+  };
+  return mapping[state];
 }

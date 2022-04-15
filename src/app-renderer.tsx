@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom';
 import Nav from './components/nav';
 import IDE from './components/ide';
 import Visualizer from './components/visualizer';
+import { filePathToShortName } from './util/utils';
 
 const root = document.getElementById('vizcon');
 document.body.classList.add(window.platform.getPlatform());
@@ -13,42 +14,60 @@ let untitledCount = 1;
 
 function App(): React.ReactElement {
   const [files, setFiles] = useState<Array<OpenFileData>>([]);
-  // TODO: remove the files length check, that is for when we hard code the initial files
-  // Unless we allow the initial content of the files array to be the files they previously had open
+  const [dirty, setDirty] = useState(false);
   const [current, setCurrent] = useState(defaultCurrent);
   const [outputVisible, setOutputVisible] = useState(false);
   const [compileResult, setCompileResult] = useState('');
-  const [inVisualizer, setInVisualizer] = useState(true); // TODO: Change back to false later
+  const [inVisualizer, setInVisualizer] = useState(false);
 
-  function openFile(): void {
-    window.platform.openFileDialog().then(async newFiles => {
-      // if no files were selected, dont attempt to read anything
-      if (newFiles[0].includes('EMPTY:')) {
-        return;
+  async function handleNewFiles(newFiles: string[]) {
+    // if no files were selected, dont attempt to read anything
+    if (newFiles[0].includes('EMPTY:')) {
+      return;
+    }
+
+    // filter out already open files
+    const filteredFiles = newFiles.filter(file => {
+      for (let i = 0; i < files.length; i++) {
+        if (files[i].path === file) {
+          return false;
+        }
       }
+      return true;
+    });
 
-      // filter out already open files
-      const filteredFiles = newFiles.filter(file => {
+    // if no files, dont do anything so we dont break the application
+    if (filteredFiles.length == 0) {
+      // if they only opened one file, set the current file to be that file
+      if (newFiles.length == 1) {
         for (let i = 0; i < files.length; i++) {
-          if (files[i].path === file) {
-            return false;
+          if (files[i].path === newFiles[0]) {
+            setCurrent(files[i]);
           }
         }
-        return true;
-      });
+      }
+      return;
+    }
 
-      const newFileContents = await window.platform.readFilesSync(filteredFiles);
-      const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
-        return {
-          path: filteredFiles[i],
-          fileContent: diskContent,
-          currentContent: diskContent,
-          dirty: false,
-        };
-      });
-      setFiles([...files, ...newFileData]);
-      setCurrent(newFileData[newFileData.length - 1]);
+    const newFileContents = await window.platform.readFilesSync(filteredFiles);
+    const newFileData = newFileContents.map((diskContent, i): OpenFileData => {
+      return {
+        path: filteredFiles[i],
+        fileContent: diskContent,
+        currentContent: diskContent,
+        dirty: false,
+      };
     });
+    setFiles([...files, ...newFileData]);
+    setCurrent(newFileData[newFileData.length - 1]);
+  }
+
+  function openFile(): void {
+    window.platform.openFileDialog().then(handleNewFiles);
+  }
+
+  function openExampleFile(): void {
+    window.platform.openExampleFileDialog().then(handleNewFiles);
   }
 
   function openBlankFile(): void {
@@ -63,19 +82,23 @@ function App(): React.ReactElement {
     setCurrent(blank);
   }
 
-  async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<void> {
+  async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<OpenFileData> {
+    if ((!file.dirty || file.path === defaultCurrent.path) && !forceDialog) {
+      return;
+    }
+
     const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, forceDialog);
     console.log(`saving file ${file.path}, status ${writtenPath}`);
 
     const newFiles = [...files];
-    for (let i = 0; i < files.length; i++) {
-      if (newFiles[i].path === current.path) {
+    for (let i = 0; i < newFiles.length; i++) {
+      if (newFiles[i].path === file.path) {
         newFiles[i].path = writtenPath;
         newFiles[i].dirty = false;
         newFiles[i].fileContent = newFiles[i].currentContent;
         setFiles(newFiles);
         setCurrent(newFiles[i]);
-        break;
+        return newFiles[i];
       }
     }
   }
@@ -88,13 +111,60 @@ function App(): React.ReactElement {
     saveFileImpl(current, true);
   }
 
-  function saveAll(): void {
-    files.forEach(async file => {
-      saveFileImpl(file);
+  async function saveAll(): Promise<void> {
+    const newFiles = [...files];
+    let oldCurrentPath = current.path;
+    let newCurrent: OpenFileData;
+
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i];
+      // if the file isnt dirty or is the default current (for the landing page), dont save
+      if (!file.dirty || file.path === defaultCurrent.path) {
+        continue;
+      }
+
+      const writtenPath = await window.platform.saveFileToDisk(file.path, file.currentContent, false);
+      console.log(`saving file ${file.path}, status ${writtenPath}`);
+
+      if (oldCurrentPath === file.path) {
+        oldCurrentPath = writtenPath;
+      }
+
+      for (let j = 0; j < newFiles.length; j++) {
+        if (newFiles[j].path === file.path) {
+          newFiles[j].path = writtenPath;
+          newFiles[j].dirty = false;
+          newFiles[j].fileContent = newFiles[j].currentContent;
+          break;
+        }
+      }
+    }
+
+    files.forEach(file => {
+      if (file.path === oldCurrentPath) {
+        newCurrent = file;
+      }
     });
+
+    setFiles(newFiles);
+    setCurrent(newCurrent || current);
   }
 
-  function closeFile(file: OpenFileData): void {
+  async function closeFile(file: OpenFileData): Promise<void> {
+    if (file.dirty) {
+      const response = await window.platform.showUnsavedSaveDialog(filePathToShortName(file.path));
+
+      if (response === 'cancel') {
+        return;
+      }
+
+      if (response === 'save') {
+        file = (await saveFileImpl(file)) || file;
+      }
+
+      // if dontsave or save, fall through to the rest of the close code
+    }
+
     const filesNew = files.filter(f => {
       return f !== file;
     });
@@ -133,47 +203,87 @@ function App(): React.ReactElement {
     }
   }
 
-  async function compile(): Promise<void> {
-    if (current.path === 'tracking://Landing') {
+  async function compile(run: boolean): Promise<void> {
+    if (current.path === defaultCurrent.path) {
       return;
     }
 
+    document.body.classList.add('compiling');
+    let file = current;
+
+    // handle atttempting to compile an unsaved file
     if (current.dirty) {
-      await saveFile();
+      const response = await window.platform.showUnsavedCompileDialog(filePathToShortName(file.path));
+
+      if (response === 'cancel') {
+        return;
+      }
+
+      if (response === 'save') {
+        file = (await saveFileImpl(file)) || file;
+      }
     }
 
-    const results = await window.platform.compileFile(current.path);
+    const results = await window.platform.compileFile(file.path);
     console.log(results);
-    if (results !== '') {
+
+    document.body.classList.remove('compiling');
+
+    if (results.err !== '' && results.err.includes('error: ')) {
       setOutputVisible(true);
-      setCompileResult(results);
+      setCompileResult(results.err);
       return;
     }
 
-    setInVisualizer(true);
+    if (run) {
+      // TODO: hook up the run command
+      setInVisualizer(true);
+    } else {
+      setOutputVisible(true);
+      if (results?.err.includes('warning: ')) {
+        setCompileResult('Compilation succeeded with warnings.\n' + results.err);
+      } else {
+        setCompileResult('Compilation succeeded with no warnings or errors.');
+      }
+    }
   }
 
   return (
     <>
       <Nav
+        current={current}
+        dirty={dirty}
+        visualizerActive={inVisualizer}
+        landingPath={defaultCurrent.path}
         openFile={openFile}
+        openExampleFile={openExampleFile}
         openBlankFile={openBlankFile}
         saveFile={saveFile}
         saveAll={saveAll}
         saveAs={saveAs}
-        current={current}
-        compile={compile}
+        compile={() => compile(false)}
+        compileAndRun={() => compile(true)}
         showCompileOutput={() => setOutputVisible(true)}
+        showVisualizer={() => setInVisualizer(true)}
+        showEditor={() => setInVisualizer(false)}
+        closeFile={() => closeFile(current)}
+        // TODO: additional window close actions
+        closeWindow={() => window.close()}
       />
       <IDE
         files={files}
         current={current}
         setCurrent={setCurrent}
+        setDirty={setDirty}
         closeFile={closeFile}
         compileResults={compileResult}
         showOutput={outputVisible}
         closeOutput={() => setOutputVisible(false)}
         inVisualizer={inVisualizer}
+        newFile={openBlankFile}
+        openFile={openFile}
+        openExampleFile={openExampleFile}
+        compileAndRunFile={() => compile(true)}
       />
       <Visualizer inVisualizer={inVisualizer} current={current} goBack={() => setInVisualizer(false)} />
     </>

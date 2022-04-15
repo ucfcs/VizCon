@@ -1,14 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getDisplayValueForBool } from '../../util/utils';
 
-interface ThreadData {
-  name: string;
-  active: boolean;
-  complete: boolean;
-  inProcessor: boolean;
-  // TODO, paramater function name
-}
-
 interface ThreadsProps {
   data: ThreadData[];
 }
@@ -18,18 +10,21 @@ export default function Threads({ data }: ThreadsProps): React.ReactElement {
 
   useEffect(() => {
     const trs = data.map(thread => {
-      const className = 'thread-row' + (thread.inProcessor ? ' current' : '');
+      const inProcessor = thread.state === 'running';
+      const active = thread.state === 'running' || thread.state === 'ready';
+      const complete = thread.state === 'completed';
+      const className = 'thread-row' + (inProcessor ? ' current' : '');
       return (
         <tr className={className} key={`Thread: ${thread.name}`} title={`Thread: ${thread.name}`}>
           <td className="thread-name">{thread.name}</td>
-          <td className="thread-active">{getDisplayValueForBool(thread.active)}</td>
-          <td className="thread-completed">{getDisplayValueForBool(thread.complete)}</td>
+          <td className="thread-active">{getDisplayValueForBool(active)}</td>
+          <td className="thread-complete">{getDisplayValueForBool(complete)}</td>
         </tr>
       );
     });
 
     setTableValues(trs);
-  }, data);
+  }, [data]);
 
   return (
     <div className="threads-container">
@@ -43,7 +38,7 @@ export default function Threads({ data }: ThreadsProps): React.ReactElement {
           <tr>
             <th className="thread-name">Thread</th>
             <th className="thread-active">Active</th>
-            <th className="thread-completed">Completed</th>
+            <th className="thread-complete">Complete</th>
           </tr>
         </thead>
         <tbody className="thread-body">{tableValues}</tbody>

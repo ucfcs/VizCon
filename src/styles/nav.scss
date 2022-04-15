@@ -48,7 +48,7 @@
 
   .appicon {
     -webkit-app-region: drag;
-    background-image: none; // TODO: add an image here
+    background-image: url('../../icons/icon.svg'); // TODO: add an image here
     background-repeat: no-repeat;
     background-position: 50%;
     background-size: 16px;
@@ -57,6 +57,10 @@
     position: relative;
     z-index: 3000;
     flex-shrink: 0;
+
+    .darwin & {
+      display: none;
+    }
   }
 
   .window-title {
@@ -85,6 +89,10 @@
     z-index: 2500;
     height: 30px;
 
+    .darwin & {
+      display: none;
+    }
+
     .menu-item {
       align-items: center;
       box-sizing: border-box;
@@ -105,7 +113,7 @@
         position: fixed;
         outline: 0;
         border: none;
-        top: 30px; // must be equavilent to the height of the menu bar
+        top: 30px; // must be equivalent to the height of the menu bar
         z-index: 2000;
         overflow: hidden;
         box-shadow: rgb(0 0 0 / 36%) 0px 2px 4px;
@@ -149,6 +157,7 @@
 
               &.disabled {
                 cursor: default;
+                opacity: 0.4;
               }
 
               .action-label {
@@ -160,6 +169,26 @@
                 background: none;
                 text-decoration: none;
                 line-height: 1;
+
+                &.seperator {
+                  height: 0px;
+                  width: 100%;
+                  display: block;
+                  margin-left: 0.8em;
+                  margin-right: 0.8em;
+                  padding: 0.2em 0 0;
+                  border-bottom: 1px solid #bbb;
+                  align-items: center;
+                }
+              }
+
+              .keybind {
+                flex: 2 1 auto;
+                display: inline-block;
+                text-align: right;
+                line-height: 1;
+                font-size: inherit;
+                padding: 0 2em;
               }
             }
           }

@@ -1,3 +1,5 @@
+#pragma once
+
 // Utilities library
 #include "utils.h"
 
@@ -14,15 +16,13 @@
 typedef struct CSMutex
 {
     MUTEX_TYPE mutex;        // Mutex object
-    char* name;              // Internal name.
-    int num;                 // Internal identifier.
     int available;           // Flags whether the mutex is currently available.
     THREAD_ID_TYPE holderID; // If locked, ID of thread that placed the lock.
     struct CSMutex* next;    // The next mutex in the list.
 } CSMutex;
 
 // Function prototypes.
-CSMutex* mutexCreate(char* name); // Creates a mutex with the given name.
+CSMutex* mutexCreate(); // Creates a mutex.
 void mutexLock(CSMutex* mutex);   // Waits for mutex availability, then locks.
 int mutexTryLock(CSMutex* mutex); // Attempts to lock without waiting.
 void mutexUnlock(CSMutex* mutex); // Unlocks the mutex.
