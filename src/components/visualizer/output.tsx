@@ -53,7 +53,6 @@ export default function ConsoleOutput({ text, current }: ConsoleOutputProps): Re
               highlightActiveBracketPair: false,
               highlightActiveIndentation: false,
             },
-            
           }}
         />
       </div>

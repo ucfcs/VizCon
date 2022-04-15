@@ -283,6 +283,7 @@ function App(): React.ReactElement {
         newFile={openBlankFile}
         openFile={openFile}
         openExampleFile={openExampleFile}
+        compileAndRunFile={() => compile(true)}
       />
       <Visualizer inVisualizer={inVisualizer} current={current} goBack={() => setInVisualizer(false)} />
     </>

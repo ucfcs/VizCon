@@ -130,6 +130,45 @@
       flex: initial;
       height: 35px;
       padding: 0px 8px 0px 4px;
+      white-space: nowrap;
+
+      .editor-actions-container {
+        display: flex;
+        margin: 0 auto;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        align-items: center;
+
+        .action-item {
+          display: block;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          margin-right: 4px;
+
+          .action-label {
+            display: flex;
+            align-items: center;
+            width: 16px;
+            height: 16px;
+            padding: 3px;
+            border-radius: 5px;
+            color: #89d185;
+            cursor: pointer;
+
+            &.disabled {
+              opacity: 0.5;
+              cursor: inherit;
+              color: rgb(231, 231, 231);
+            }
+
+            &:not(.disabled):hover {
+              background-color: rgba(90, 93, 94, 0.31);
+            }
+          }
+        }
+      }
     }
   }
 

@@ -19,6 +19,7 @@ interface IDEProps {
   newFile: () => void;
   openFile: () => void;
   openExampleFile: () => void;
+  compileAndRunFile: () => void;
 }
 
 export default function IDE({
@@ -34,6 +35,7 @@ export default function IDE({
   newFile,
   openFile,
   openExampleFile,
+  compileAndRunFile,
 }: IDEProps): React.ReactElement {
   const [tabination, setTabination] = useState(<div className="tabination"></div>);
   const [className, setClassName] = useState('');
@@ -67,10 +69,19 @@ export default function IDE({
 
   return (
     <div id="ide" className={className}>
-      <div className='tabination-and-play'>
-        <ScrollableElement content={tabination}/>
-        <div className='editor-actions'>
-          {/* TODO: play button */}
+      <div className="tabination-and-play">
+        <ScrollableElement content={tabination} />
+        <div className="editor-actions">
+          <ul className="editor-actions-container">
+            <li className="action-item">
+              {files.length == 0 && (
+                <a className="action-label codicon codicon-play disabled" role="button" title="Simulate File" onClick={compileAndRunFile} />
+              )}
+              {files.length >= 1 && (
+                <a className="action-label codicon codicon-play" role="button" title="Simulate File" onClick={compileAndRunFile} />
+              )}
+            </li>
+          </ul>
         </div>
       </div>
       <div className="active-editor">
