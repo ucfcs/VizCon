@@ -11,7 +11,7 @@ void* Producer(void* param)
     srand(vcThreadId());
     for(i=0; i<loop; i++)
     {
-        r = rand() % 100;
+        r = rand() % 99 + 1;
         vcSemWait(empty1);
         b1 = r;
         vcSemSignal(full1);
@@ -75,11 +75,15 @@ void* CheckLine(void* param)
 void* Consumer(void* param)
 {
     int k;
-    while(exitStatus != 3)
+    while(1)
     {
         vcSemWait(full3);
         k = b3;
         vcSemSignal(empty3);
+        if(exitStatus == 3)
+        {
+            break;
+        }
         if(k < 0)
         {
             printf("\n");
