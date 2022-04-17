@@ -88,12 +88,12 @@ void vizconError(char* func, int err)
             }
             case VC_ERROR_CREATEDISABLED:
             {
-                errorMessage = "Threads, semaphores, and mutexes may not be created while threads are active.";
+                errorMessage = "Threads may not be queued while threads are active.";
                 break;
             }
             case VC_ERROR_THREADSACTIVE:
             {
-                errorMessage = "An instance of this call is already active.";
+                errorMessage = "An instance of a thread starting function is already active.";
                 break;
             }
             default:
