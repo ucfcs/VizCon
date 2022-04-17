@@ -25,9 +25,13 @@ void* Producer(void* param)
 void* CheckEven(void* param)
 {
     int n;
-    while(exitStatus != 1)
+    while(1)
     {
         vcSemWait(full1);
+        if(exitStatus == 1)
+        {
+            break;
+        }
         n = b1;
         vcSemSignal(empty1);
         vcSemWait(empty2);
@@ -49,9 +53,13 @@ void* CheckEven(void* param)
 void* CheckLine(void* param)
 {
     int n, count = 1;
-    while(exitStatus != 2)
+    while(1)
     {
         vcSemWait(full2);
+        if(exitStatus == 2)
+        {
+            break;
+        }
         n = b2;
         vcSemSignal(empty2);
         vcSemWait(empty3);
@@ -68,7 +76,6 @@ void* CheckLine(void* param)
     vcSemWait(empty3);
     exitStatus = 3;
     vcSemSignal(full3);
-    
     return (void*)0;
 }
 
@@ -78,12 +85,12 @@ void* Consumer(void* param)
     while(1)
     {
         vcSemWait(full3);
-        k = b3;
-        vcSemSignal(empty3);
         if(exitStatus == 3)
         {
             break;
         }
+        k = b3;
+        vcSemSignal(empty3);
         if(k < 0)
         {
             printf("\n");
