@@ -273,11 +273,11 @@ void semClose(CSSem* sem)
     // Platform-dependent closure and memory management.
     #ifdef _WIN32 // Windows version.
         if(!CloseHandle(sem->sem))
-            vizconError("vcThreadStart/vcThreadReturn/vcThreadHalt", GetLastError());
+            vizconError("vcThreadStart/vcThreadReturn/vcHalt", GetLastError());
         free(sem);
     #elif __linux__ || __APPLE__ // POSIX version.
         if(sem_close(sem->sem))
-            vizconError("vcThreadStart/vcThreadReturn/vcThreadHalt", errno);
+            vizconError("vcThreadStart/vcThreadReturn/vcHalt", errno);
         free(sem);
     #endif
 }
