@@ -52,14 +52,9 @@ Ensure(Threads, queue_first)
     assert_that(queued->name, is_equal_to_string("Thread 1"));
     assert_that(queued->num, is_equal_to(1));
 
-    // Platform-dependent thread property test.
-    // A Windows thread is made but suspended, while
-    // a Linux thread is not built until it is started.
-    #ifdef _WIN32 // Windows version
-        assert_that(queued->thread, is_not_null);
-    #elif __linux__ || __APPLE__ // POSIX version
-        assert_that(queued->thread, is_null);    
-    #endif
+    // The actual thread is created null regardless of platform.
+    // It is started by vcThreadStart or vcThreadReturn.
+    assert_that(queued->thread, is_null);    
     
     // Check that the function and argument are saved correctly.
     assert_that(queued->func, is_equal_to(startTestThread));

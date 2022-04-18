@@ -122,14 +122,16 @@ void joinThread(CSThread *thread)
 // freeThread - Close the thread (if needed) and free the struct.
 void freeThread(CSThread *thread)
 {
-    // On Windows only, attempt to close the thread.
+    // On Windows only, if the thread is running, attempt to close the thread.
     // (On POSIX, the thread is closed during the join.)
     #ifdef _WIN32
-        if (isLldbActive) {
-            fprintf(stderr, "freeThread: FIXME\n");
+        if (thread->thread != NULL) {
+            if (isLldbActive) {
+                fprintf(stderr, "freeThread: FIXME\n");
+            }
+            else if (!CloseHandle(thread->thread))
+                vizconError("vcThreadStart/vcThreadReturn", GetLastError());
         }
-        else if (!CloseHandle(thread->thread))
-            vizconError("vcThreadStart/vcThreadReturn", GetLastError());
     #endif
 
     // Free the struct.
