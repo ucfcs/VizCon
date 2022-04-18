@@ -216,7 +216,7 @@ int vcThreadId()
     #ifdef _WIN32
     return GetCurrentThreadId();
     #else
-    return pthread_self();
+    return (int)gettid();
     #endif
 }
 

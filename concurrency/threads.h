@@ -8,6 +8,8 @@
 #elif __linux__ || __APPLE__
     #define THREAD_TYPE pthread_t
     #include <unistd.h>
+    #include <sys/syscall.h>
+    #define gettid() syscall(SYS_gettid)
 #endif
 
 // Thread function definition
