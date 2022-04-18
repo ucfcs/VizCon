@@ -25,7 +25,7 @@ void vizconError(char* func, int err)
             vcHalt(err);
         }
     #elif __linux__ || __APPLE__ // POSIX version
-        char* errorMessage;
+        char* errorMessage = NULL;
         if(err < 500)
         {
             sprintf(message, "\nError from %s.\nerrno code %d", func, err);
