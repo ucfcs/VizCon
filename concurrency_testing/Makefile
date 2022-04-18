@@ -99,7 +99,7 @@ else ifeq ($(shell uname -s), Darwin)
     ifeq ($(usecgreen), 1)
         ifeq ($(cgreenlocal), 1)
             compile:
-	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c $(cgreenlocation)/usr/local/lib/libcgreen.so -I $(cgreenlocation)/usr/local/include/
+	            gcc -pthread ../concurrency/utils.c ../concurrency/threads.c ../concurrency/semaphores.c ../concurrency/mutexes.c ../concurrency/vcuserlibrary.c ../concurrency/lldb_lib.c ./$(testfile).c $(cgreenlocation)/usr/local/lib/libcgreen.dylib -I $(cgreenlocation)/usr/local/include/
 				install_name_tool -change @rpath/libcgreen.1.dylib $(cgreenlocation)/usr/local/lib/libcgreen.1.dylib ./a.out
         else
             compile:
