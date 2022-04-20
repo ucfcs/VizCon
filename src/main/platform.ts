@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
-import { sep as pathSep } from 'path';
+import { sep as pathSep, resolve as resolvePath } from 'path';
 import split2 from 'split2';
 import * as pty from 'node-pty';
 import { filePathToFileName } from '../util/utils';
@@ -97,6 +97,11 @@ ipcMain.handle('readFilesSync', (e, files: string[]) => {
 });
 
 ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?: boolean) => {
+  // Disallow overwriting install files (namely the examples)
+  // Before removing this check, please be aware that on some platform, write access to install files is disabled
+  if (path.startsWith(resolvePath(resourcesDir))) {
+    forceDialog = true;
+  }
   if (forceDialog || path.includes('tracking://')) {
     const window = BrowserWindow.fromWebContents(e.sender);
     const newPath = dialog.showSaveDialogSync(window, {
