@@ -200,7 +200,7 @@ int mutexTryLock(CSMutex* mutex)
         }
         else
         {
-            int success = lldb_hook_mutexTryWait(mutex);
+            int success = lldb_hook_mutexTryLock(mutex);
             ret = success ? 0 : EBUSY;
         }
         switch(ret)

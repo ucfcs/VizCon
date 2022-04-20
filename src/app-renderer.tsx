@@ -83,7 +83,7 @@ function App(): React.ReactElement {
   }
 
   async function saveFileImpl(file: OpenFileData, forceDialog?: boolean): Promise<OpenFileData> {
-    if (!file.dirty || file.path === defaultCurrent.path) {
+    if ((!file.dirty || file.path === defaultCurrent.path) && !forceDialog) {
       return;
     }
 
@@ -283,6 +283,7 @@ function App(): React.ReactElement {
         newFile={openBlankFile}
         openFile={openFile}
         openExampleFile={openExampleFile}
+        compileAndRunFile={() => compile(true)}
       />
       <Visualizer inVisualizer={inVisualizer} current={current} goBack={() => setInVisualizer(false)} />
     </>

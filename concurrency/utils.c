@@ -25,7 +25,7 @@ void vizconError(char* func, int err)
             vcHalt(err);
         }
     #elif __linux__ || __APPLE__ // POSIX version
-        char* errorMessage;
+        char* errorMessage = NULL;
         if(err < 500)
         {
             sprintf(message, "\nError from %s.\nerrno code %d", func, err);
@@ -83,7 +83,17 @@ void vizconError(char* func, int err)
             }
             case VC_ERROR_SEMVALUELIMIT:
             {
-                errorMessage = "Too many posts were made to a semaphore.";
+                errorMessage = "A thread attempted to signal a semaphore that was already at its maximum value.";
+                break;
+            }
+            case VC_ERROR_CREATEDISABLED:
+            {
+                errorMessage = "Threads may not be queued while threads are active.";
+                break;
+            }
+            case VC_ERROR_THREADSACTIVE:
+            {
+                errorMessage = "An instance of a thread starting function is already active.";
                 break;
             }
             default:
@@ -94,6 +104,6 @@ void vizconError(char* func, int err)
     // Print the message and leave.
     sprintf(message, "\nError from %s.\nvizcon error code %d: %s\n", func, err, errorMessage);
     message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
-    printf("%s\n", message);
+    printf("%s", message);
     vcHalt(err);
 }

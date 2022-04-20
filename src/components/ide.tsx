@@ -4,6 +4,7 @@ import Editor from './ide/editor';
 import Landing from './ide/landing';
 import Output from './ide/output';
 import Tab from './ide/tab';
+import ScrollableElement from './scrollableElement';
 
 interface IDEProps {
   files: OpenFileData[];
@@ -18,6 +19,7 @@ interface IDEProps {
   newFile: () => void;
   openFile: () => void;
   openExampleFile: () => void;
+  compileAndRunFile: () => void;
 }
 
 export default function IDE({
@@ -33,6 +35,7 @@ export default function IDE({
   newFile,
   openFile,
   openExampleFile,
+  compileAndRunFile,
 }: IDEProps): React.ReactElement {
   const [tabination, setTabination] = useState(<div className="tabination"></div>);
   const [className, setClassName] = useState('');
@@ -66,7 +69,21 @@ export default function IDE({
 
   return (
     <div id="ide" className={className}>
-      {tabination}
+      <div className="tabination-and-play">
+        <ScrollableElement content={tabination} />
+        <div className="editor-actions">
+          <ul className="editor-actions-container">
+            <li className="action-item">
+              {files.length == 0 && (
+                <a className="action-label codicon codicon-play disabled" role="button" title="Simulate File" onClick={compileAndRunFile} />
+              )}
+              {files.length >= 1 && (
+                <a className="action-label codicon codicon-play" role="button" title="Simulate File" onClick={compileAndRunFile} />
+              )}
+            </li>
+          </ul>
+        </div>
+      </div>
       <div className="active-editor">
         {files.length == 0 && <Landing newFile={newFile} openFile={openFile} openExampleFile={openExampleFile} />}
         {files.length >= 1 && <Editor current={current} regenTabination={regenTabination} setDirty={setDirty} />}
