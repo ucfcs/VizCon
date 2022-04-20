@@ -1,27 +1,24 @@
 #include "vcuserlibrary.h"
 
-// Standard libraries.
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h> 
-
+int loop = 10;
 int counter;
-CSMutex *counter_mutex;
+vcMutex counter_mutex;
+
 void* SimpleThread(void* param)
 {
-    for (int i = 0; i < 10; i++)
+    int i, id = (int)param;
+    for (i = 0; i < loop; i++)
     {
         vcMutexLock(counter_mutex);
         counter++;
         printf("Counter updated to %d\n", counter);
         vcMutexUnlock(counter_mutex);
     }
-    return NULL;
+    return (void*)i;
 }
 
 int main()
 {
-    printf("Hello world!\n");
     counter = 0;
     counter_mutex = vcMutexCreate();
     vcThreadQueue(SimpleThread, NULL);
@@ -29,8 +26,8 @@ int main()
 
     // Print the address of the returned value and the value itself.
     void** returned = vcThreadReturn();
-    printf("Returned: ");
-    printf("%p, ", returned[0]);
+    printf("\nReturned:\n");
+    printf("Thread 1 incremented %d times\nThread 2 incremented %d times\n", returned[0], returned[1]);
     printf("Counter: %d\n", counter);
 
     return 0;

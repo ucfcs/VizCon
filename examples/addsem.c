@@ -1,9 +1,6 @@
 #include "vcuserlibrary.h"
 
-// Standard libraries.
-#include <stdio.h>
-
-int loop = 100;
+int loop = 10;
 int counter;
 vcSem counter_sem;
 

@@ -1,9 +1,14 @@
 #include "vcuserlibrary.h"
 
+extern int isLldbActive;
+
 // Pointers used to track all concurrency objects.
 CSThread *vizconThreadListHead, *vizconThreadList;
 CSSem *vizconSemListHead, *vizconSemList;
 CSMutex *vizconMutexListHead, *vizconMutexList;
+int vizconCreateFlag = 0;
+
+extern void lldb_hook_threadSleep(int milliseconds);
 
 // Definitions for methods that close objects.
 // They are defined here because a user doesn't need to access them directly.
@@ -15,6 +20,13 @@ void closeAllMutexes();
 //                 Automatically generate the thread name.
 void vcThreadQueue(threadFunc func, void *arg)
 {
+    // If called while threads are already running, throw error
+    if(vizconCreateFlag)
+    {
+        vizconError("vcThreadQueue", VC_ERROR_CREATEDISABLED);
+        return;
+    }
+
     // Attempt to create the thread.
     CSThread *thread = createThread(func, arg);
     int numSize = 1, check = 0, threadNum = 1;
@@ -55,6 +67,13 @@ void vcThreadQueue(threadFunc func, void *arg)
 // vcThreadQueueNamed - Prepare a thread instance with the name, function, and arguments.
 void vcThreadQueueNamed(threadFunc func, void *arg, char *name)
 {
+    // If called while threads are already running, throw error
+    if(vizconCreateFlag)
+    {
+        vizconError("vcThreadQueueNamed", VC_ERROR_CREATEDISABLED);
+        return;
+    }
+    
     CSThread *thread = createThread(func, arg);
     int i;
     for(i = 0; name[i] != '\0'; i++);
@@ -87,6 +106,17 @@ void vcThreadQueueNamed(threadFunc func, void *arg, char *name)
 // vcThreadStart - Start all threads created by vcThreadQueue and vcThreadQueueNamed.
 void vcThreadStart()
 {
+    // If called while another instance is running, throw error
+    if(vizconCreateFlag)
+    {
+        vizconError("vcThreadStart", VC_ERROR_THREADSACTIVE);
+        return;
+    }
+    else
+    {
+        vizconCreateFlag = 1;
+    }
+
     // If there are no threads in the list, return immediately.
     if (vizconThreadListHead == NULL)
         return;
@@ -106,6 +136,7 @@ void vcThreadStart()
         joinThread(vizconThreadList);
         vizconThreadList = vizconThreadList->next;
     }
+    vizconCreateFlag = 0;
     
     // Close all the resources.
     closeAllThreads();
@@ -117,6 +148,17 @@ void vcThreadStart()
 //                  Returns: an array of all values returned by the threads.
 void** vcThreadReturn()
 {
+    // If called while another instance is running, throw error
+    if(vizconCreateFlag)
+    {
+        vizconError("vcThreadReturn", VC_ERROR_THREADSACTIVE);
+        return NULL;
+    }
+    else
+    {
+        vizconCreateFlag = 1;
+    }
+
     // If there are no threads in the list, return immediately.
     if (vizconThreadListHead == NULL)
         return NULL;
@@ -144,6 +186,7 @@ void** vcThreadReturn()
         vizconThreadList = vizconThreadList->next;
         i++;
     }
+    vizconCreateFlag = 0;
 
     // Free all the resources and return.
     closeAllThreads();
@@ -155,6 +198,11 @@ void** vcThreadReturn()
 //vcThreadSleep - Put the calling thread to sleep
 void vcThreadSleep(int milliseconds)
 {
+    if (isLldbActive)
+    {
+        lldb_hook_threadSleep(milliseconds);
+        return;
+    }
     #ifdef _WIN32
     Sleep(milliseconds);
     #else
@@ -168,7 +216,7 @@ int vcThreadId()
     #ifdef _WIN32
     return GetCurrentThreadId();
     #else
-    return pthread_self();
+    return (int)gettid();
     #endif
 }
 
@@ -187,7 +235,7 @@ void closeAllThreads()
 // vcSemCreate - Create a semaphore with the specified maximum permit count.
 //               Returns: a pointer to the new semaphore.
 CSSem* vcSemCreate(int maxCount)
-{
+{   
     // Make sure the count is valid.
     if(maxCount <= 0)
         vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
@@ -211,7 +259,7 @@ CSSem* vcSemCreate(int maxCount)
 // vcSemCreateInitial - Create a semaphore with the specified initial and maximum permit count.
 //                      Returns: a pointer to the new semaphore.
 CSSem* vcSemCreateInitial(int maxCount, int initialCount)
-{
+{   
     // Make sure the counts are valid.
     if(initialCount < 0 || maxCount <= 0 || initialCount > maxCount)
         vizconError("vcSemCreateInitial", VC_ERROR_BADCOUNT);

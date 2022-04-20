@@ -4,9 +4,6 @@
 #define TEST_SIZE 5
 #define TEST_STR_LEN 5
 
-// Close all threads function is used since some threads are purposefully never started.
-extern void closeAllThreads();
-
 // Basic thread that just returns the parameter.
 void* SimpleThread(void* param)
 {
@@ -46,6 +43,5 @@ int main()
         vcThreadQueueNamed(SimpleThread, NULL, str2[i]);
     }
     
-    closeAllThreads();
     return 0;
 }

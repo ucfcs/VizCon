@@ -1,6 +1,6 @@
 #include "vcuserlibrary.h"
 
-int loop = 100;
+int loop = 20;
 
 int b1, b2, b3, exitStatus;
 vcSem empty1, *empty2, *empty3, *full1, *full2, *full3;
@@ -11,21 +11,27 @@ void* Producer(void* param)
     srand(vcThreadId());
     for(i=0; i<loop; i++)
     {
-        r = rand() % 100;
+        r = rand() % 99 + 1;
         vcSemWait(empty1);
         b1 = r;
         vcSemSignal(full1);
     }
+    vcSemWait(empty1);
     exitStatus = 1;
+    vcSemSignal(full1);
     return (void*)0;
 }
 
 void* CheckEven(void* param)
 {
     int n;
-    while(exitStatus != 1)
+    while(1)
     {
         vcSemWait(full1);
+        if(exitStatus == 1)
+        {
+            break;
+        }
         n = b1;
         vcSemSignal(empty1);
         vcSemWait(empty2);
@@ -38,16 +44,22 @@ void* CheckEven(void* param)
             vcSemSignal(full2);
         }
     }
+    vcSemWait(empty2);
     exitStatus = 2;
+    vcSemSignal(full2);
     return (void*)0;
 }
 
 void* CheckLine(void* param)
 {
     int n, count = 1;
-    while(exitStatus != 2)
+    while(1)
     {
         vcSemWait(full2);
+        if(exitStatus == 2)
+        {
+            break;
+        }
         n = b2;
         vcSemSignal(empty2);
         vcSemWait(empty3);
@@ -61,16 +73,22 @@ void* CheckLine(void* param)
         }
         count = count + 1;
     }
+    vcSemWait(empty3);
     exitStatus = 3;
+    vcSemSignal(full3);
     return (void*)0;
 }
 
 void* Consumer(void* param)
 {
     int k;
-    while(exitStatus != 3)
+    while(1)
     {
         vcSemWait(full3);
+        if(exitStatus == 3)
+        {
+            break;
+        }
         k = b3;
         vcSemSignal(empty3);
         if(k < 0)
