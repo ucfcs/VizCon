@@ -83,7 +83,7 @@ void vizconError(char* func, int err)
             }
             case VC_ERROR_SEMVALUELIMIT:
             {
-                errorMessage = "Too many posts were made to a semaphore.";
+                errorMessage = "A thread attempted to signal a semaphore that was already at its maximum value.";
                 break;
             }
             case VC_ERROR_CREATEDISABLED:

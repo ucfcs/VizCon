@@ -4,8 +4,6 @@
 
 #include "unit_test.h"
 
-#define CREATE_NAMED_TEST_SIZE 5
-
 vcSemaphore firstSem;
 long long int permitTarget = 0;
 int permitFlag = 0;
@@ -19,7 +17,7 @@ BeforeEach(Semaphores)
     firstSem = vcSemCreate(2);
 }
 
-// create_first - 10 assertions.
+// create_first - 9 assertions.
 //                Ensure that the test semaphore was properly made.
 Ensure(Semaphores, create_first)
 {
@@ -29,12 +27,9 @@ Ensure(Semaphores, create_first)
     // The "next" property should be null since there are no others.
     assert_that(firstSem->next, is_null);
 
-    // The ID should be 0, and the name should be "Semaphore 0".
-    assert_that(firstSem->num, is_equal_to(0));
-    assert_that(firstSem->name, is_equal_to_string("Semaphore 0"));
-
-    // The semaphore value should be the provided value (2).
+    // The semaphore value and maximum value should be the provided value (2).
     assert_that(firstSem->count, is_equal_to(2));
+    assert_that(firstSem->maxCount, is_equal_to(2));
 
     // Platform-dependent check that the internal semaphore
     // has exactly the predefined value (2).
@@ -56,7 +51,7 @@ Ensure(Semaphores, create_first)
     assert_that(vizconSemList, is_equal_to(firstSem));
 }
 
-// create_second - 7 assertions.
+// create_second - 5 assertions.
 //                 Create a second mutex. Ensure the name and ID are correct
 //                 and that the list variables are properly updated.
 Ensure(Semaphores, create_second)
@@ -66,10 +61,6 @@ Ensure(Semaphores, create_second)
 
     // The mutex should not be null.
     assert_that(secondSem, is_not_null);
-
-    // The ID should be 1, and the name should be "Semaphore 1".
-    assert_that(secondSem->num, is_equal_to(1));
-    assert_that(secondSem->name, is_equal_to_string("Semaphore 1"));
 
     // The "next" for firstSem should be secondSem.
     // The "next" for secondSem should be null since there are no others.
@@ -81,54 +72,43 @@ Ensure(Semaphores, create_second)
     assert_that(vizconSemList, is_equal_to(secondSem));
 }
 
-// create_named - 12 assertions.
-//                Create a named mutex. Ensure that everything works
-//                like a normal vcMutexCreate and
-//                that the list variables are properly updated.
-Ensure(Semaphores, create_named)
+// create_initial - 9 assertions.
+//                  Ensure that the initial and max are properly set.
+Ensure(Semaphores, create_initial)
 {
-    // Create a random string of the specified length.
-    // The for loop can generate all ASCII characters except a null char.
-    char str[CREATE_NAMED_TEST_SIZE + 1];
-    int i;
-    for(int i = 0; i < CREATE_NAMED_TEST_SIZE; i++)
-        str[i] = rand() % 126 + 1;
-    str[CREATE_NAMED_TEST_SIZE] = '\0';
-
     // Create the mutex.
-    vcSem secondSem = vcSemCreateNamed(2, str);
+    vcSem initialSem = vcSemCreateInitial(2, 1);
 
     // The mutex should not be null.
-    assert_that(secondSem, is_not_null);
+    assert_that(initialSem, is_not_null);
 
-    // The ID should be 1, and the name should be "Mutex 1".
-    assert_that(secondSem->num, is_equal_to(1));
-    assert_that(secondSem->name, is_equal_to_string(str));
+    // The "next" for firstSem should be initialSem.
+    // The "next" for initialSem should be null since there are no others.
+    assert_that(firstSem->next, is_equal_to(initialSem));
+    assert_that(initialSem->next, is_null);
 
-    // The internal struct should be built in the same way as a vcMutexCreate.
-    assert_that(secondSem->sem, is_not_null);
-    assert_that(secondSem->count, is_equal_to(2));
+    // Make sure the head and tail pointers point to the correct wrappers.
+    assert_that(vizconSemListHead, is_equal_to(firstSem));
+    assert_that(vizconSemList, is_equal_to(initialSem));
+
+    // The semaphore value should be the initial value,
+    // and the max value should be the given one.
+    assert_that(initialSem->count, is_equal_to(1));
+    assert_that(initialSem->maxCount, is_equal_to(2));
 
     // Platform-dependent check that the internal semaphore
-    // has exactly the predefined value (2).
+    // has exactly the predefined value (1).
     // Use the system trylock function instead of the VC version
     // because the VC version hasn't been checked yet.
+    // The max count will not be checked since we aren't relying on OS-level detection.
     #ifdef _WIN32 // Windows version
-        assert_that(WaitForSingleObject(firstSem->sem, 0), is_equal_to(WAIT_OBJECT_0));
-        assert_that(WaitForSingleObject(firstSem->sem, 0), is_equal_to(WAIT_OBJECT_0));
-        assert_that(WaitForSingleObject(firstSem->sem, 0), is_equal_to(WAIT_TIMEOUT));
+        assert_that(WaitForSingleObject(initialSem->sem, 0), is_equal_to(WAIT_OBJECT_0));
+        assert_that(WaitForSingleObject(initialSem->sem, 0), is_equal_to(WAIT_TIMEOUT));
     #elif __linux__ || __APPLE__ // POSIX version
-        assert_that(sem_trywait(firstSem->sem), is_equal_to(0));
-        assert_that(sem_trywait(firstSem->sem), is_equal_to(0));
-        sem_trywait(firstSem->sem);
+        assert_that(sem_trywait(initialSem->sem), is_equal_to(0));
+        sem_trywait(initialSem->sem);
         assert_that(errno, is_equal_to(EAGAIN));
     #endif
-
-    // The nexts and lists should be set in the same way as a vcMutexCreate.
-    assert_that(firstSem->next, is_equal_to(secondSem));
-    assert_that(secondSem->next, is_null);
-    assert_that(vizconSemListHead, is_equal_to(firstSem));
-    assert_that(vizconSemList, is_equal_to(secondSem));
 }
 
 // bad_count - 1 skipped assertion, 1 exception.
@@ -147,16 +127,55 @@ Ensure(Semaphores, bad_count)
     assert_that(0, is_true);
 }
 
-// bad_count_named - 1 skipped assertion, 1 exception.
-//                   Attempt to create a named semaphore with an invalid permit count.
-//                   This will result in an a vizcon error, code 502.
-Ensure(Semaphores, bad_count_named)
+// bad_initial_count - 1 skipped assertion, 1 exception.
+//                     Attempt to create a semaphore with an invalid initial permit count.
+//                     This will result in an a vizcon error, code 502.
+Ensure(Semaphores, bad_initial_count)
+{
+    // Pick a random number between -1 and -100.
+    int numPermits = (-1) - (rand() % 100);
+
+    // Attempt to make the permit.
+    vcSem badSem = vcSemCreateInitial(1, numPermits);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
+// bad_max_count - 1 skipped assertion, 1 exception.
+//                 Attempt to create a semaphore with an invalid max permit count.
+//                 This will result in an a vizcon error, code 502.
+Ensure(Semaphores, bad_max_count)
 {
     // Pick a random number between 0 and -100.
     int numPermits = 0 - (rand() % 101);
 
     // Attempt to make the permit.
-    vcSem badSem = vcSemCreateNamed(numPermits, "Bad Semaphore");
+    vcSem badSem = vcSemCreateInitial(numPermits, 1);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
+// small_max_count - 1 skipped assertion, 1 exception.
+//                   Attempt to create a semaphore with a max count smaller than the initial count.
+//                   This will result in an a vizcon error, code 502.
+Ensure(Semaphores, small_max_count)
+{
+    // Pick two random numbers between 1 and 100.
+    int rand1 = rand() % 100 + 1;
+    int rand2 = rand() % 100 + 1;
+
+    // Attempt to make the permit so the smaller number is the max.
+    vcSem badSem;
+    if(rand1 == rand2)
+        badSem = vcSemCreateInitial(rand1, rand1 + rand2);
+    else if(rand1 > rand2)
+        badSem = vcSemCreateInitial(rand2, rand1);
+    else
+        badSem = vcSemCreateInitial(rand1, rand2);
 
     // Tautological falsehood.
     // If it's reported, then the program didn't close correctly.
@@ -500,6 +519,40 @@ Ensure(Semaphores, signal_mult)
     assert_that(permitTarget, is_equal_to(15));
 }
 
+// signal_over - 1 assertion, 1 skipped assertion, 1 exception.
+//               Attempt to signal a semaphore beyond the max.
+//               This will result in an a vizcon error, code 513.
+Ensure(Semaphores, signal_over)
+{
+    // Verify that the semaphore is at max value.
+    assert_that(firstSem->count, is_equal_to(firstSem->maxCount));
+
+    // Signal the semaphore. This should throw an error 513.
+    vcSemSignal(firstSem);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
+// signal_mult_over - 1 assertion, 1 skipped assertion, 1 exception.
+//                    Attempt to signal a semaphore beyond the max with vcSemSignalMult.
+//                    This will result in an a vizcon error, code 513.
+Ensure(Semaphores, signal_mult_over)
+{
+    // Take the semaphore once so it's one away from max value.
+    // Then verify that the wait was successful.
+    vcSemWait(firstSem);
+    assert_that(firstSem->count, is_equal_to(firstSem->maxCount - 1));
+
+    // Signal the semaphore twice. This should throw an error 513.
+    vcSemSignalMult(firstSem, 2);
+
+    // Tautological falsehood.
+    // If it's reported, then the program didn't close correctly.
+    assert_that(0, is_true);
+}
+
 // value - 6 assertions.
 //         Ensure that vcSemValue works.
 Ensure(Semaphores, value)
@@ -565,8 +618,9 @@ AfterEach(Semaphores)
 }
 
 // End of the suite.
-// Total number of assertions: 65
-// Total number of exceptions: 2  (bad_count: 502, bad_count_named: 502)
+// Total number of assertions: 61
+// Total number of exceptions: 6  (bad_count: 502, bad_initial_count: 502, bad_max_count: 502, small_max_count: 502
+//                                 signal_over: 513, signal_mult_over: 513)
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
@@ -574,14 +628,18 @@ int main() {
     TestSuite *suite = create_test_suite();
     add_test_with_context(suite, Semaphores, create_first);
     add_test_with_context(suite, Semaphores, create_second);
-    add_test_with_context(suite, Semaphores, create_named);
+    add_test_with_context(suite, Semaphores, create_initial);
     add_test_with_context(suite, Semaphores, bad_count);
-    add_test_with_context(suite, Semaphores, bad_count_named);
+    add_test_with_context(suite, Semaphores, bad_initial_count);
+    add_test_with_context(suite, Semaphores, bad_max_count);
+    add_test_with_context(suite, Semaphores, small_max_count);
     add_test_with_context(suite, Semaphores, wait);
     add_test_with_context(suite, Semaphores, wait_mult);
     add_test_with_context(suite, Semaphores, wait_two);
     add_test_with_context(suite, Semaphores, signal);
     add_test_with_context(suite, Semaphores, signal_mult);
+    add_test_with_context(suite, Semaphores, signal_over);
+    add_test_with_context(suite, Semaphores, signal_mult_over);
     add_test_with_context(suite, Semaphores, value);
     add_test_with_context(suite, Semaphores, trywait);
     return run_test_suite(suite, create_text_reporter());
