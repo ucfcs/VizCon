@@ -70,6 +70,10 @@ function App(): React.ReactElement {
     window.platform.openExampleFileDialog().then(handleNewFiles);
   }
 
+  function openUserGuide(): void {
+    window.platform.openUserGuide();
+  }
+
   function openBlankFile(): void {
     const blank: OpenFileData = {
       path: 'tracking://Untitled-' + untitledCount,
@@ -257,6 +261,7 @@ function App(): React.ReactElement {
         landingPath={defaultCurrent.path}
         openFile={openFile}
         openExampleFile={openExampleFile}
+        openUserGuide={openUserGuide}
         openBlankFile={openBlankFile}
         saveFile={saveFile}
         saveAll={saveAll}
@@ -283,6 +288,7 @@ function App(): React.ReactElement {
         newFile={openBlankFile}
         openFile={openFile}
         openExampleFile={openExampleFile}
+        openUserGuide={openUserGuide}
         compileAndRunFile={() => compile(true)}
       />
       <Visualizer inVisualizer={inVisualizer} current={current} goBack={() => setInVisualizer(false)} />

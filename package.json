@@ -26,7 +26,8 @@
         "extraResource": [
           "./concurrency",
           "./platform",
-          "./examples"
+          "./examples",
+          "./VizCon_Documentation.pdf"
         ],
         "icon": "./icons/icon"
       },

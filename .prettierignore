@@ -20,3 +20,6 @@ README.md
 
 # Ignore files from seti-ui
 /src/imgs/seti-ui
+
+# Ignore platform files
+/platform
