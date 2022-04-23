@@ -120,11 +120,18 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
 ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [`"${path}"`, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
-  let gcc = 'gcc';
+  let compiler = 'gcc';
   if (process.platform === 'win32') {
-    gcc = '"' + resourcesDir + pathSep + 'platform' + pathSep + 'mingw64' + pathSep + 'bin' + pathSep + 'gcc' + '"';
+    compiler = '"' + resourcesDir + pathSep + 'platform' + pathSep + 'mingw64' + pathSep + 'bin' + pathSep + 'gcc' + '"';
+  } else {
+    const zig_cc = '"' + resourcesDir + pathSep + 'platform' + pathSep + 'zig' + pathSep + 'zig' + '" cc';
+    // zig cc uses its own handling for the optimization flag.
+    // In debug mode, as here, that would be -Og, which optimizes out unused variables in a way that doesn't feel nice for a visualizer user
+    // We can sneak the flag past zig using -Xclang -O0.
+    // zig cc also enables sanitization options, so disable those too
+    compiler = `${zig_cc} -fno-sanitize=undefined -fno-stack-protector -Xclang -O0`;
   }
-  const commandString = `${gcc} -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
+  const commandString = `${compiler} -gdwarf-4 -O0 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
   console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
@@ -209,6 +216,8 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   child.stderr.on('data', (data: string) => {
     console.log(`child process stderr: "${data}"`);
     const str = data + '';
+    // Silence LLDB warning
+    if (str.startsWith('warning: (x86_64) /lib64/libpthread.so.0')) return;
     if (!haveSeenLldbMessage && str.startsWith('(lldb) script import sys;')) {
       haveSeenLldbMessage = true;
       return;

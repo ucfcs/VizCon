@@ -41,22 +41,36 @@ const platforms = {
   //Not supported yet: "ia32-win32": "codelldb-x86_64-windows.vsix",
 };
 
+const zigDownloads = {
+  'x64-linux': {
+    packageName: 'zig-linux-x86_64-0.10.0-dev.1888+e3cbea934',
+    hash: 'ead05e35cc58f93e8ddf6a0feca3f5dfaa5a232d175edee88ae6ef96fa0bfada',
+  },
+  'x64-darwin': {
+    packageName: 'zig-macos-x86_64-0.10.0-dev.1888+e3cbea934',
+    hash: 'a897bf8809d4ef95385580437eb7e37dfbf7f1dbb36adb599e24bc566ca8d49d',
+  },
+};
+
 function downloadFile(url, file) {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, res => {
-      if (res.statusCode !== 302) {
-        console.error(`Failed to download LLDB platform file. Expected redirect. (status code: ${res.statusCode})`);
-        process.exit(2);
+    function handleDownload(res) {
+      if (res.statusCode !== 200) {
+        console.error(`Failed to download LLDB platform file (status code: ${res.statusCode})`);
+        process.exit(3);
       }
-      https.get(res.headers.location, res => {
-        if (res.statusCode !== 200) {
-          console.error(`Failed to download LLDB platform file (status code: ${res.statusCode})`);
-          process.exit(3);
-        }
-        res.pipe(fs.createWriteStream(file)).on('finish', () => {
-          resolve();
-        });
+      res.pipe(fs.createWriteStream(file)).on('finish', () => {
+        resolve();
       });
+    }
+    const req = https.get(url, res => {
+      if (res.statusCode === 302) {
+        https.get(res.headers.location, res => {
+          handleDownload(res);
+        });
+      } else {
+        handleDownload(res);
+      }
     });
   });
 }
@@ -128,7 +142,22 @@ async function unzipFile(file, destDir) {
       });
   });
 }
-
+async function compareHash(file, expectedHash) {
+  const actualHash = await hashFile(file);
+  if (expectedHash !== actualHash) {
+    console.error(`Hash mismatch. Expected: ${expectedHash} Actual: ${actualHash}`);
+    process.exit(4);
+  }
+}
+async function deleteDirectoryIfPresent(dir) {
+  try {
+    await fs.promises.rm(dir, { recursive: true });
+  } catch (e) {
+    if (e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
+      throw e;
+    }
+  }
+}
 async function run() {
   const platformId = `${os.arch()}-${os.platform()}`;
   if (!platforms[platformId]) {
@@ -144,24 +173,28 @@ async function run() {
   console.log('Downloading file...');
   await downloadFile(url, file);
   console.log('Download complete.');
-  const actualHash = await hashFile(file);
-  if (expectedHash !== actualHash) {
-    console.error(`Hash mismatch. Expected: ${expectedHash} Actual: ${actualHash}`);
-    process.exit(4);
-  }
+  await compareHash(file, expectedHash);
   console.log('Removing old files');
-  try {
-    await fs.promises.rm('platform/lldb', { recursive: true });
-    await fs.promises.rm('platform/mingw64', { recursive: true });
-  } catch (e) {
-    if (e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
-      throw e;
-    }
-  }
+  // Clear old packages
+  await deleteDirectoryIfPresent('platform/lldb');
+  await deleteDirectoryIfPresent('platform/mingw64');
+  await deleteDirectoryIfPresent('platform/zig');
+
   console.log('Extracting package...');
   await unzipFile(file, 'platform');
   console.log('Finished extracting files.');
-  await new Promise((resolve, reject) => {
+  await removeFile(file);
+  console.log('Deleted lldb zip file.');
+
+  if (platformId === 'x64-win32') {
+    await downloadMingw();
+  } else {
+    await downloadZig(platformId);
+  }
+}
+
+function removeFile(file) {
+  return new Promise((resolve, reject) => {
     fs.unlink(file, err => {
       if (err) {
         reject(err);
@@ -170,44 +203,71 @@ async function run() {
       }
     });
   });
-  console.log('Deleted lldb zip file.');
-
-  if (platformId === 'x64-win32') {
-    console.log('Downloading mingw-w64');
-    await downloadFile(
-      'https://github.com/RyanG10/mingw-w64/releases/download/x86_64-8.1.0-release-posix-sjlj-rt_v6-rev0.7z/mingw64.exe',
-      'mingw64.exe'
-    );
-    console.log('Download complete');
-    const actualHash = await hashFile('mingw64.exe');
-    const mingwHash = '67a7e4a7f08218893f5d5e9ca395bb13ec52e7f4beecc19a19a08114472299d0';
-    if (actualHash !== mingwHash) {
-      console.error(`Hash mismatch. Expected: ${mingwHash} Actual: ${actualHash}`);
-      process.exit(4);
-    }
-    await new Promise(resolve => {
-      child_process.exec(`start /w mingw64.exe -o"platform" -y`, (err, stdout, stderr) => {
-        if (err && err.code !== 0) {
-          resolve({ out: stdout, err: stderr });
-          return;
-        }
-        resolve({ out: stdout, err: stderr });
-      });
+}
+function runCommand(cmd) {
+  return new Promise((resolve, reject) => {
+    const proc = child_process.exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      }
+      console.log(stdout);
+      console.log(stderr);
+      resolve(proc.exitCode);
     });
-    console.log('Finished extracting mingw64.');
-    console.log('Deleting mingw64.exe...');
-    await new Promise((resolve, reject) => {
-      fs.unlink('mingw64.exe', err => {
-        console.log('callback');
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
-    });
-    console.log('Deleted mingw64.exe');
+  });
+}
+async function downloadZig(platformId) {
+  if (!zigDownloads[platformId]) {
+    console.error(`Unknown platform ("${platformId}"). Add it to .system/download_tools.js`);
+    process.exit(1);
   }
+  const { packageName, hash: expectedHash } = zigDownloads[platformId];
+  const url = `https://ziglang.org/builds/${packageName}.tar.xz`;
+  console.log(`Downloading zig from ${url}`);
+  await downloadFile(url, 'zig.tar.xz');
+  console.log('Zig download complete. Comparing hash');
+  await compareHash('zig.tar.xz', expectedHash);
+  console.log('Extracting zig');
+  const res = await runCommand(`tar -xf zig.tar.xz --directory platform`);
+  console.log(`Extraction finished. Exit code ${res}`);
+  fs.promises.rename(`platform/${packageName}`, 'platform/zig');
+  console.log('Deleting zig.tar.xz');
+  await removeFile('zig.tar.xz');
+  console.log('Deleted zig.tar.xz');
+}
+
+async function downloadMingw() {
+  console.log('Downloading mingw-w64');
+  await downloadFile(
+    'https://github.com/RyanG10/mingw-w64/releases/download/x86_64-8.1.0-release-posix-sjlj-rt_v6-rev0.7z/mingw64.exe',
+    'mingw64.exe'
+  );
+  console.log('Mingw download complete');
+  const mingwHash = '67a7e4a7f08218893f5d5e9ca395bb13ec52e7f4beecc19a19a08114472299d0';
+  await compareHash('mingw64.exe', mingwHash);
+  await new Promise(resolve => {
+    child_process.exec(`start /w mingw64.exe -o"platform" -y`, (err, stdout, stderr) => {
+      if (err && err.code !== 0) {
+        resolve({ out: stdout, err: stderr });
+        return;
+      }
+      resolve({ out: stdout, err: stderr });
+    });
+  });
+  console.log('Finished extracting mingw64.');
+  // Sometimes Windows will fail to delete the file. Add a delay in case that helps.
+  await delay(2000);
+  console.log('Deleting mingw64.exe...');
+  await removeFile('mingw64.exe');
+  console.log('Deleted mingw64.exe');
+}
+
+function delay(millis) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, millis);
+  });
 }
 
 run();
