@@ -2,6 +2,7 @@
 #include "lldb_lib.h"
 
 extern int isLldbActive;
+extern void vizconError(char* func, int err);
 
 // mutexCreate - Create a mutex struct.
 //               Returns: a pointer to the mutex struct.

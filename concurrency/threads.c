@@ -3,7 +3,7 @@
 #include "lldb_lib.h"
 
 extern int isLldbActive;
-
+extern void vizconError(char* func, int err);
 
 // On Windows only, define the thread runner.
 #ifdef _WIN32

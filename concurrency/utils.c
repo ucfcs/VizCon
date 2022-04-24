@@ -1,5 +1,8 @@
 #include "utils.h"
 
+extern void vcHalt(int exitCode);
+#define MAX_ERROR_MESSAGE_LENGTH 200
+
 // Reference to external function vcHalt (in vcuserlibrary.c)
 extern void vcHalt(int exitCode);
 
@@ -16,7 +19,7 @@ void vizconError(char* func, int err)
     // Then print, close everything, and leave.
     #ifdef _WIN32 // Windows version
         LPSTR errorMessage;
-        if(err < 500)
+        if(err >= 0)
         {
             FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD) err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR) &errorMessage, 0, NULL);
             sprintf(message, "\nError from %s.\nsystem error %d: %s", func, err, errorMessage);
@@ -26,7 +29,7 @@ void vizconError(char* func, int err)
         }
     #elif __linux__ || __APPLE__ // POSIX version
         char* errorMessage = NULL;
-        if(err < 500)
+        if(err >= 0)
         {
             sprintf(message, "\nError from %s.\nerrno code %d", func, err);
             errno = err;
@@ -37,7 +40,7 @@ void vizconError(char* func, int err)
 
     // If the error is 500 or greater, it's a VizCon-specific error.
     // Select the string related to the error.
-    if(err >= 500)
+    if(err < 0)
     {
         switch(err)
         {
@@ -59,11 +62,6 @@ void vizconError(char* func, int err)
             case VC_ERROR_BADCOUNT:
             {
                 errorMessage = "A semaphore was created with an invalid maximum permit value.";
-                break;
-            }
-            case VC_ERROR_NAMEERROR:
-            {
-                errorMessage = "There was an error saving the internal mutex name.";
                 break;
             }
             case VC_ERROR_DOUBLEUNLOCK:
@@ -100,6 +98,11 @@ void vizconError(char* func, int err)
                 errorMessage = "An unknown error has occurred.";
         }
     }
+    else
+    {
+        errorMessage = "An unknown error has occurred.";
+    }
+    err = err * -1;
 
     // Print the message and leave.
     sprintf(message, "\nError from %s.\nvizcon error code %d: %s\n", func, err, errorMessage);

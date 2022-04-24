@@ -1,6 +1,7 @@
 #include "vcuserlibrary.h"
 
 extern int isLldbActive;
+extern void vizconError(char* func, int err);
 
 // Pointers used to track all concurrency objects.
 CSThread *vizconThreadListHead, *vizconThreadList;

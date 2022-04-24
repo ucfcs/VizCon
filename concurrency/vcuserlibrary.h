@@ -58,6 +58,3 @@ void vcMutexLock(vcMutex mutex);        // Waits for availability, then locks.
 int vcMutexTrylock(vcMutex mutex);      // Attempts to lock without waiting.
 void vcMutexUnlock(vcMutex mutex);      // Unlocks the mutex.
 int vcMutexStatus(vcMutex mutex);       // Returns whether mutex is available.
-
-// Other user functions
-void vcHalt(int exitCode); // Immediately frees all concurrency objects and exits.

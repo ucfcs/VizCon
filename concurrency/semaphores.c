@@ -2,6 +2,7 @@
 #include "lldb_lib.h"
 
 extern int isLldbActive;
+extern void vizconError(char* func, int err);
 
 //Semaphore used to keep semaphore count values accurate
 CSSem *vizconSem;
