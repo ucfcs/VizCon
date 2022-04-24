@@ -13,6 +13,8 @@
 #elif __linux__ || __APPLE__ 
     #include <pthread.h>
     #include <errno.h>
+    #include <sys/syscall.h>
+    #define gettid() syscall(SYS_gettid)
 #endif
 
 // VizCon error codes

@@ -29,7 +29,7 @@ void vizconError(char* func, int err)
     char message[MAX_ERROR_MESSAGE_LENGTH];
 
     // Platform-dependent error decoding.
-    // If the error is less than 500, it's not from our library.
+    // If the error is greater than or equal to 0, it's not from our library.
     // Get the corresponding string from the system's error descriptions.
     // Then print, close everything, and leave.
     #ifdef _WIN32 // Windows version
@@ -53,7 +53,7 @@ void vizconError(char* func, int err)
         }
     #endif
 
-    // If the error is 500 or greater, it's a VizCon-specific error.
+    // If the error is less than 0, it's a VizCon-specific error.
     // Select the string related to the error.
     if(err < 0)
     {
