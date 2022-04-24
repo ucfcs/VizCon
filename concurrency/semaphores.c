@@ -5,26 +5,12 @@ extern int isLldbActive;
 extern void vizconError(char* func, int err);
 
 //Semaphore used to keep semaphore count values accurate
-CSSem *vizconSem;
-
-void vizconSemCheck()
-{
-    if(vizconSem != NULL)
-        return;
-    vizconSem = (void*)-1;
-    vizconSem = semCreate(1);
-}
+extern CSSem *vizconSem;
 
 // semCreate - Create a semaphore with a given max value.
 //             Returns: a pointer to the semaphore struct.
 CSSem* semCreate(SEM_VALUE maxValue)
-{
-    //Ensure the semaphore checker has been created
-    if(vizconSem == NULL)
-    {
-        vizconSemCheck();
-    }
-    
+{    
     // Attempt to allocate the struct. Error out on failure.
     CSSem* sem = (CSSem*) malloc(sizeof(CSSem));
     if (sem == NULL) 

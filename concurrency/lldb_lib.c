@@ -5,6 +5,7 @@
 #include "lldb_lib.h"
 
 extern int userMain();
+extern void vizconSemCheck();
 CSSem *sem_wait_create_thread;
 int isLldbActive; 
 
@@ -132,5 +133,8 @@ void lldb_hook_mutexClose(CSMutex *mutex)
 int main()
 {
     vc_internal_init();
-    return userMain();
+    vizconSemCheck();
+    int ret = userMain();
+    vizconSemCheck();
+    return ret;
 }

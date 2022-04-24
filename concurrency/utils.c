@@ -1,15 +1,30 @@
 #include "utils.h"
+#include "semaphores.h"
 
-extern void vcHalt(int exitCode);
 #define MAX_ERROR_MESSAGE_LENGTH 200
 
 // Reference to external function vcHalt (in vcuserlibrary.c)
 extern void vcHalt(int exitCode);
 
+//Used to manage sem value changes, and for error handler
+CSSem *vizconSem;
+
+//Used to create a semaphore that manages sem value changes, and errors
+void vizconSemCheck()
+{
+    if(vizconSem != NULL)
+        semClose(vizconSem);
+    vizconSem = (void*)-1;
+    vizconSem = semCreate(1);
+}
+
 // vizconError - Prints errors encountered by the user library.
 //               The program closes after this method finishes.
 void vizconError(char* func, int err)
 {
+    //Prevent multiple functions from entering error handler
+    semWait(vizconSem);
+    
     // Start building the message string.
     char message[MAX_ERROR_MESSAGE_LENGTH];
 
