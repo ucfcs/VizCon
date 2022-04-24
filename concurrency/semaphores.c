@@ -227,6 +227,8 @@ void platform_semSignal(CSSem* sem)
 {
     // Platform-dependent senaphore release.
     #ifdef _WIN32 // Windows version
+        if(sem != vizconSem && (sem->count + 1) > sem->maxCount)
+            vizconError("vcSemSignal/vcSemSignalMult", VC_ERROR_SEMVALUELIMIT);
         if(!ReleaseSemaphore(sem->sem, 1, NULL))
             vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
         if(sem == vizconSem)
@@ -264,11 +266,11 @@ void semClose(CSSem* sem)
     // Platform-dependent closure and memory management.
     #ifdef _WIN32 // Windows version.
         if(!CloseHandle(sem->sem))
-            vizconError("vcThreadStart/vcThreadReturn/vcThreadHalt", GetLastError());
+            vizconError("vcThreadStart/vcThreadReturn/vcHalt", GetLastError());
         free(sem);
     #elif __linux__ || __APPLE__ // POSIX version.
         if(sem_close(sem->sem))
-            vizconError("vcThreadStart/vcThreadReturn/vcThreadHalt", errno);
+            vizconError("vcThreadStart/vcThreadReturn/vcHalt", errno);
         free(sem);
     #endif
 }
