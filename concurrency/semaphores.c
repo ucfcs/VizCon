@@ -248,7 +248,10 @@ void platform_semSignal(CSSem* sem)
         platform_semWait(vizconSem);
         sem->count = sem->count + 1;
         if(sem->count > sem->maxCount)
+        {
+            platform_semSignal(vizconSem);
             vizconError("vcSemSignal/vcSemSignalMult", VC_ERROR_SEMVALUELIMIT);
+        }
         platform_semSignal(vizconSem);
     #endif
 }

@@ -63,7 +63,7 @@ void* MergeSort(void* param)
 
     if(mid == end)
     {
-        return 1;
+        return (void*)1;
     }
     thisParam[0] = begin;
     thisParam[1] = mid;

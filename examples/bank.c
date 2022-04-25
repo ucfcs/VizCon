@@ -46,7 +46,7 @@ void* Teller(void* param)
 {
     int accountNum, amount, teller = (int)param;
     srand(vcThreadId());
-    while(TRUE)
+    while(1)
     {
         vcSemWait(tellerSem);
         accountNum = rand() % accountCount;
@@ -75,7 +75,7 @@ void* MainBranch(void* param)
 {
     int accountNum, amount;
     srand(vcThreadId());
-    while(TRUE)
+    while(1)
     {
         accountNum = rand() % accountCount;
         amount = rand() % 100;
@@ -100,8 +100,8 @@ int main()
         accountArray[i] = rand() % 100;
     }
     vcThreadQueue(MainBranch, NULL);
-    vcThreadQueue(Teller, 1);
-    vcThreadQueue(Teller, 2);
+    vcThreadQueue(Teller, (void*)1);
+    vcThreadQueue(Teller, (void*)2);
     vcThreadStart();
     return 0;
 }
