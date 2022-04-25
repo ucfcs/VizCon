@@ -32,6 +32,9 @@ interface DebuggerHandle {
   doStep: () => Promise<any>;
   stop: () => Promise<any>;
 }
+interface DebuggerError {
+  err: string;
+}
 
 type VisualizerRunState =
   | 'not_started'

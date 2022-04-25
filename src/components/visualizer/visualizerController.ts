@@ -58,10 +58,17 @@ export default class VisualizerController {
   }
 
   private async startAsync() {
-    this.debuggerHandle = await window.platform.launchProgram(this.exeFile, data => {
+    const handle = await window.platform.launchProgram(this.exeFile, data => {
       //console.log("Console stdout output", data);
       this.onConsoleOutput([data]);
     });
+    if ('err' in handle) {
+      this.status = 'error';
+      this.onRunStateChange('error');
+      this.onConsoleOutput(['Error starting application. Perhaps you forgot to compile it?\n']);
+      return;
+    }
+    this.debuggerHandle = handle;
     await this.startLoop();
   }
   private async startLoop() {
@@ -83,9 +90,11 @@ export default class VisualizerController {
         if (msg.error === 'deadlock') {
           this.status = 'deadlock';
           this.onRunStateChange('deadlock');
+          this.onConsoleOutput(['All threads are waiting. Deadlock?\n']);
         } else {
           this.status = 'error';
           this.onRunStateChange('error');
+          this.onConsoleOutput([`Error: ${msg.error}`]);
         }
         //TODO: this.onStateChange(msg);
         return;

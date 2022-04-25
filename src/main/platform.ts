@@ -77,7 +77,7 @@ ipcMain.handle('openFileDialog', e => {
 
 ipcMain.handle('openExampleFileDialog', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
-  console.log("default example path: ", resourcesDir + pathSep + 'examples');
+  console.log('default example path: ', resourcesDir + pathSep + 'examples');
   const results = dialog.showOpenDialogSync(window, {
     filters: [{ name: 'C Language Files', extensions: ['c'] }],
     properties: ['openFile', 'multiSelections'],
@@ -168,6 +168,7 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   child.on('close', code => {
     if (term) term.destroy();
     console.log(`child process exited with code ${code}`);
+    port.postMessage({ type: 'controller_process_exit', exitCode: code });
   });
 
   port.on('message', evt => {

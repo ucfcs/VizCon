@@ -35,14 +35,32 @@ contextBridge.exposeInMainWorld('platform', {
   compileFile: async (path: string): Promise<{ out: string; err: string }> => {
     return await ipcRenderer.invoke('compileFile', path);
   },
-  launchProgram: (path: string, stdoutHandler: (data: string) => void): Promise<DebuggerHandle> => {
+  launchProgram: (path: string, stdoutHandler: (data: string) => void): Promise<DebuggerHandle | DebuggerError> => {
     return new Promise(resolve => {
       const channel = new MessageChannel();
       let hasStarted = false;
       let waitingHandler: (state: any) => void = null;
-
+      let err: string = null;
       channel.port1.onmessage = e => {
         const msg = e.data;
+        if (msg.type === 'start_error') {
+          resolve({ err: msg.error });
+          return;
+        }
+        if (msg.type === 'controller_process_exit') {
+          console.log('Controller process exited');
+          if (!hasStarted) {
+            resolve({ err: 'controller exited' });
+          } else {
+            console.log(`Simulation crashed after startup. Exit code: ${msg.exitCode}`);
+            err = `Simulation crashed. Exit code: ${msg.exitCode}`;
+            if (waitingHandler !== null) {
+              waitingHandler({ type: 'error', error: err });
+              waitingHandler = null;
+            }
+          }
+          return;
+        }
         if (msg.type === 'hello') {
           if (hasStarted) {
             throw new Error('Already started');
@@ -51,9 +69,13 @@ contextBridge.exposeInMainWorld('platform', {
           hasStarted = true;
           resolve({
             doStep: () => {
-              return new Promise(resolveStep => {
+              return new Promise((resolveStep, rejectStep) => {
                 if (waitingHandler !== null) {
                   throw new Error('Attempted to step again before previous step completed');
+                }
+                if (err !== null) {
+                  resolveStep({ type: 'error', error: err });
+                  return;
                 }
 
                 channel.port1.postMessage({ type: 'request' });

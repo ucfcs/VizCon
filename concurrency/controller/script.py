@@ -152,7 +152,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
     verbose = False
 
     if not target:
-        debug_print("Error creating target")
+        respondToVisualizer({'type': 'start_error', 'error': 'start_error'})
         sys.exit(2)
 
     # If the target is valid set a breakpoint at main
