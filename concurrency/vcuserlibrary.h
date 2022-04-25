@@ -14,50 +14,39 @@ int userMain();
 #define vcMutex CSMutex*
 
 // Alternate function names
-//Semaphore short-hand functions
-#define vcWait vcSemWait
-#define vcWaitMult vcSemWaitMult
-#define vcTryWait vcSemTryWait
-#define vcTryWaitMult vcSemTryWaitMult
-#define vcSignal vcSemSignal
-#define vcSignalMult vcSemSignalMult
-//Semaphore keyword aquire for wait/trywait
+//Semaphore keyword init for create (linux)
+#define vcSemInit vcSemCreate
+#define vcSemInitInitial vcSemCreateInitial
+//Semaphore keyword aquire for wait/trywait (java)
 #define vcSemAcquire vcSemWait
-#define vcAcquire vcSemWait
 #define vcSemAcquireMult vcSemWaitMult
-#define vcAcquireMult vcSemWaitMult
 #define vcSemTryAcquire vcSemTryWait
-#define vcTryAcquire vcSemTryWait
 #define vcSemTryAcquireMult vcSemTryWaitMult
-#define vcTryAcquireMult vcSemTryWaitMult
-//Semaphore keyword P for wait
+//Semaphore keyword P for wait/trywait (Dijkstra)
 #define vcSemP vcSemWait
-#define vcP vcSemWait
 #define vcSemPMult vcSemWaitMult
-#define vcPMult vcSemWaitMult
 #define vcSemTryP vcSemTryWait
-#define vcTryP vcSemTryWait
 #define vcSemTryPMult vcSemTryWaitMult
-#define vcTryPMult vcSemTryWaitMult
-//Semaphore keyword post for signal
+//Semaphore keyword post for signal (linux)
 #define vcSemPost vcSemSignal
-#define vcPost vcSemSignal
 #define vcSemPostMult vcSemSignalMult
-#define vcPostMult vcSemSignalMult
-//Semaphore keyword release for signal
+//Semaphore keyword release for signal (windows/java)
 #define vcSemRelease vcSemSignal
-#define vcRelease vcSemSignal
 #define vcSemReleaseMult vcSemSignalMult
-#define vcReleaseMult vcSemSignalMult
-//Semaphore keyword V for signal
+//Semaphore keyword V for signal (Dijkstra)
 #define vcSemV vcSemSignal
-#define vcV vcSemSignal
 #define vcSemVMult vcSemSignalMult
-#define vcVMult vcSemSignalMult
-//Mutex short-hand functions
-#define vcLock vcMutexLock
-#define vcTryLock vcMutexTrylock
-#define vcUnlock vcMutexUnlock
+//Semaphore keyword GetValue for value (linux)
+#define vcSemGetValue vcSemValue
+//Mutex keyword init for create (linux)
+#define vcMutexInit vcMutexCreate
+//Mutex keyword wait for lock/trylock (windows)
+#define vcMutexWait vcMutexLock
+#define vcMutexTryWait vcMutexTrylock
+//Mutex keyword release for unlock (windows)
+#define vcMutexRelease vcMutexUnlock
+//Mutex keyword available for status
+#define vcMutexAvailable vcMutexStatus
 
 // User thread functions
 void vcThreadQueue(threadFunc func, void *arg);                  // Queues a thread.

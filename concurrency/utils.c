@@ -14,6 +14,7 @@ void vizconSemCheck()
 {
     if(vizconSem != NULL)
         semClose(vizconSem);
+        vizconSem = NULL;
     vizconSem = (void*)-1;
     vizconSem = semCreate(1);
 }
