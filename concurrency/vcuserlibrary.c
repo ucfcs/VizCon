@@ -2,7 +2,6 @@
 
 extern int isLldbActive;
 extern void vizconError(char* func, int err);
-extern void vizconSemCheck();
 
 // Pointers used to track all concurrency objects.
 CSThread *vizconThreadListHead, *vizconThreadList;
@@ -466,6 +465,4 @@ void vcHalt(int exitCode)
     closeAllThreads();
     closeAllSemaphores();
     closeAllMutexes();
-    vizconSemCheck();
-    exit(exitCode);
 }

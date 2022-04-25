@@ -24,7 +24,7 @@ void vizconSemCheck()
 void vizconError(char* func, int err)
 {
     //Prevent multiple functions from entering error handler
-    semWait(vizconSem);
+    platform_semWait(vizconSem);
     
     // Start building the message string.
     char message[MAX_ERROR_MESSAGE_LENGTH];
@@ -42,6 +42,8 @@ void vizconError(char* func, int err)
             message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
             printf("%s", message);
             vcHalt(err);
+            vizconSemCheck();
+            exit(err);
         }
     #elif __linux__ || __APPLE__ // POSIX version
         char* errorMessage = NULL;
@@ -51,6 +53,8 @@ void vizconError(char* func, int err)
             errno = err;
             perror(message);
             vcHalt(err);
+            vizconSemCheck();
+            exit(err);
         }
     #endif
 
@@ -125,4 +129,6 @@ void vizconError(char* func, int err)
     message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
     printf("%s", message);
     vcHalt(err);
+    vizconSemCheck();
+    exit(err);
 }
