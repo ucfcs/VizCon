@@ -4,7 +4,6 @@
 
 #include "unit_test.h"
 
-#define CREATE_NAMED_TEST_SIZE 5
 #define ISOLATION_TEST_SIZE 5
 
 vcMutex firstMutex;
@@ -22,7 +21,7 @@ BeforeEach(Mutexes)
     srand(time(NULL));
 }
 
-// create_first - 9 assertions.
+// create_first - 7 assertions.
 //                Ensure that the test mutex was properly made.
 Ensure(Mutexes, create_first)
 {
@@ -31,10 +30,6 @@ Ensure(Mutexes, create_first)
 
     // The "next" property should be null since there are no others.
     assert_that(firstMutex->next, is_null);
-
-    // The ID should be 0, and the name should be "Mutex 0".
-    assert_that(firstMutex->num, is_equal_to(0));
-    assert_that(firstMutex->name, is_equal_to_string("Mutex 0"));
 
     // The mutex should be available (true) and have a holderID of 0.
     assert_that(firstMutex->available, is_true);
@@ -54,7 +49,7 @@ Ensure(Mutexes, create_first)
     assert_that(vizconMutexList, is_equal_to(firstMutex));
 }
 
-// create_second - 7 assertions.
+// create_second - 5 assertions.
 //                 Create a second mutex. Ensure the name and ID are correct
 //                 and that the list variables are properly updated.
 Ensure(Mutexes, create_second)
@@ -65,61 +60,12 @@ Ensure(Mutexes, create_second)
     // The mutex should not be null.
     assert_that(secondMutex, is_not_null);
 
-    // The ID should be 1, and the name should be "Mutex 1".
-    assert_that(secondMutex->num, is_equal_to(1));
-    assert_that(secondMutex->name, is_equal_to_string("Mutex 1"));
-
     // The "next" for firstMutex should be secondMutex.
     // The "next" for secondMutex should be null since there are no others.
     assert_that(firstMutex->next, is_equal_to(secondMutex));
     assert_that(secondMutex->next, is_null);
 
     // Make sure the head and tail pointers point to the correct wrappers.
-    assert_that(vizconMutexListHead, is_equal_to(firstMutex));
-    assert_that(vizconMutexList, is_equal_to(secondMutex));
-}
-
-// create_named - 11 assertions.
-//                Create a named mutex. Ensure that everything works
-//                like a normal vcMutexCreate and
-//                that the list variables are properly updated.
-Ensure(Mutexes, create_named)
-{
-    // Create a random string of the specified length.
-    // The for loop can generate all ASCII characters except a null char.
-    char str[CREATE_NAMED_TEST_SIZE + 1];
-    int i;
-    for(int i = 0; i < CREATE_NAMED_TEST_SIZE; i++)
-        str[i] = rand() % 126 + 1;
-    str[CREATE_NAMED_TEST_SIZE] = '\0';
-
-    // Create the mutex.
-    vcMutex secondMutex = vcMutexCreateNamed(str);
-
-    // The mutex should not be null.
-    assert_that(secondMutex, is_not_null);
-
-    // The ID should be 1, and the name should be "Mutex 1".
-    assert_that(secondMutex->num, is_equal_to(1));
-    assert_that(secondMutex->name, is_equal_to_string(str));
-
-    // The internal struct should be built in the same way as a vcMutexCreate.
-    assert_that(secondMutex->mutex, is_not_null);
-    assert_that(secondMutex->available, is_true);
-    assert_that(secondMutex->holderID, is_equal_to(0));
-
-    // Platform-dependent check that the internal mutex is available.
-    // Use the system trylock function instead of the VC version
-    // because the VC version hasn't been checked yet.
-    #ifdef _WIN32 // Windows version
-        assert_that(WaitForSingleObject(firstMutex->mutex, 0), is_equal_to(WAIT_OBJECT_0));
-    #elif __linux__ || __APPLE__ // POSIX version
-        assert_that(pthread_mutex_trylock(firstMutex->mutex), is_equal_to(0));
-    #endif
-
-    // The nexts and lists should be set in the same way as a vcMutexCreate.
-    assert_that(firstMutex->next, is_equal_to(secondMutex));
-    assert_that(secondMutex->next, is_null);
     assert_that(vizconMutexListHead, is_equal_to(firstMutex));
     assert_that(vizconMutexList, is_equal_to(secondMutex));
 }
@@ -398,7 +344,7 @@ AfterEach(Mutexes)
 }
 
 // End of the suite.
-// Total number of assertions: 50 (45 + ISOLATION_TEST_SIZE)
+// Total number of assertions: 35 (30 + ISOLATION_TEST_SIZE)
 // Total number of exceptions: 3  (double_lock: 511, double_unlock: 510, cross_unlock: 512)
 
 // main - Initialize and run the suite.
@@ -407,7 +353,6 @@ int main() {
     TestSuite *suite = create_test_suite();
     add_test_with_context(suite, Mutexes, create_first);
     add_test_with_context(suite, Mutexes, create_second);
-    add_test_with_context(suite, Mutexes, create_named);
     add_test_with_context(suite, Mutexes, lock);
     add_test_with_context(suite, Mutexes, unlock);
     add_test_with_context(suite, Mutexes, status);

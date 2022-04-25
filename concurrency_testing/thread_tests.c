@@ -48,18 +48,13 @@ Ensure(Threads, queue_first)
     // The thread tail should be the same as the saved head.
     assert_that(vizconThreadList, is_equal_to(queued));
 
-    // The thread name should be "Thread 0" and the num should be 0.
-    assert_that(queued->name, is_equal_to_string("Thread 0"));
-    assert_that(queued->num, is_equal_to(0));
+    // The thread name should be "Thread 1" and the num should be 1.
+    assert_that(queued->name, is_equal_to_string("Thread 1"));
+    assert_that(queued->num, is_equal_to(1));
 
-    // Platform-dependent thread property test.
-    // A Windows thread is made but suspended, while
-    // a Linux thread is not built until it is started.
-    #ifdef _WIN32 // Windows version
-        assert_that(queued->thread, is_not_null);
-    #elif __linux__ || __APPLE__ // POSIX version
-        assert_that(queued->thread, is_null);    
-    #endif
+    // The actual thread is created null regardless of platform.
+    // It is started by vcThreadStart or vcThreadReturn.
+    assert_that(queued->thread, is_null);    
     
     // Check that the function and argument are saved correctly.
     assert_that(queued->func, is_equal_to(startTestThread));
@@ -86,9 +81,9 @@ Ensure(Threads, queue_second)
     // The mutex should not be null.
     assert_that(queued, is_not_null);
 
-    // The ID should be 1, and the name should be "Thread 1".
-    assert_that(queued->num, is_equal_to(1));
-    assert_that(queued->name, is_equal_to_string("Thread 1"));
+    // The ID should be 2, and the name should be "Thread 2".
+    assert_that(queued->num, is_equal_to(2));
+    assert_that(queued->name, is_equal_to_string("Thread 2"));
 
     // The "next" for the thread should be null since there are no others.
     assert_that(queued->next, is_null);
