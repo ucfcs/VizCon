@@ -11,6 +11,7 @@ interface NavProps {
   landingPath: string;
   openFile: () => void;
   openExampleFile: () => void;
+  openUserGuide: () => void;
   openBlankFile: () => void;
   saveFile: () => void;
   saveAll: () => void;
@@ -31,6 +32,7 @@ export default function Nav({
   landingPath,
   openFile,
   openExampleFile,
+  openUserGuide,
   openBlankFile,
   saveFile,
   saveAll,
@@ -95,6 +97,7 @@ export default function Nav({
             },
             { name: 'Open File', action: openFile, disable: inVisualizer, keybind: 'Ctrl+!Shift+O' },
             { name: 'Open Example File', action: openExampleFile, disable: inVisualizer, keybind: 'Ctrl+Shift+O' },
+            { name: "Open User's Guide", action: openUserGuide },
             {
               name: 'b',
               action: () => {

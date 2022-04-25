@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, dialog, app } from 'electron';
+import { BrowserWindow, ipcMain, dialog, app, shell } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
@@ -83,6 +83,17 @@ ipcMain.handle('openExampleFileDialog', e => {
   }
   updateLastSuccessfulFile(results);
   return results;
+});
+
+ipcMain.handle('openUserGuide', e => {
+  shell
+    .openPath(resourcesDir + pathSep + 'VizCon_Documentation.pdf')
+    .catch(err => console.error('openUserGuide error:', err))
+    .then(err => {
+      if (err) {
+        console.error('openUserGuide error:', err);
+      }
+    });
 });
 
 ipcMain.handle('readFilesSync', (e, files: string[]) => {
