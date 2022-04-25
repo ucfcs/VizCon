@@ -619,8 +619,8 @@ AfterEach(Semaphores)
 
 // End of the suite.
 // Total number of assertions: 61
-// Total number of exceptions: 6  (bad_count: 502, bad_initial_count: 502, bad_max_count: 502, small_max_count: 502
-//                                 signal_over: 513, signal_mult_over: 513)
+// Total number of exceptions: 6  (bad_count: 02, bad_initial_count: 02, bad_max_count: 02, small_max_count: 02
+//                                 signal_over: 14, signal_mult_over: 14)
 
 // main - Initialize and run the suite.
 //        Everything else will be handled in the suite itself.
