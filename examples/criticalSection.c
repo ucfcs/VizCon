@@ -29,7 +29,7 @@ void* P3(void* param)
     return (void*)0;
 }
 
-int main(  ) 
+int main() 
 {
     s = vcSemCreate(1);
     vcThreadQueue(P1, NULL);

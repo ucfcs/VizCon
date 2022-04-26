@@ -6,7 +6,7 @@ int m = 20;
 void* Phil1(void* param)
 {
     int i;
-    for(i=0; i<m; i++)
+    for (i = 0; i < m; i++)
     {
         vcSemWait(room);
         vcSemWait(fork1);
@@ -22,7 +22,7 @@ void* Phil1(void* param)
 void* Phil2(void* param)
 {
     int i;
-    for(i=0; i<m; i++)
+    for (i = 0; i < m; i++)
     {
         vcSemWait(room);
         vcSemWait(fork2);
@@ -38,7 +38,7 @@ void* Phil2(void* param)
 void* Phil3(void* param)
 {
     int i;
-    for(i=0; i<m; i++)
+    for (i = 0; i < m; i++)
     {
         vcSemWait(room);
         vcSemWait(fork3);
@@ -54,7 +54,7 @@ void* Phil3(void* param)
 void* Phil4(void* param)
 {
     int i;
-    for(i=0; i<m; i++)
+    for (i = 0; i < m; i++)
     {
         vcSemWait(room);
         vcSemWait(fork4);
@@ -70,7 +70,7 @@ void* Phil4(void* param)
 void* Phil5(void* param)
 {
     int i;
-    for(i=0; i<m; i++)
+    for (i = 0; i < m; i++)
     {
         vcSemWait(room);
         vcSemWait(fork5);

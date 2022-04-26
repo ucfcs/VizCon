@@ -20,7 +20,7 @@ void* P2(void* param)
 int main() 
 {
     int i, trials = 10;
-    for(i=0; i<trials; i++)
+    for (i = 0; i < trials; i++)
     {
         n = 0;
         b = 1;
