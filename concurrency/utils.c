@@ -13,10 +13,15 @@ CSSem *vizconSem;
 void vizconSemCheck()
 {
     if(vizconSem != NULL)
+    {
         semClose(vizconSem);
         vizconSem = NULL;
-    vizconSem = (void*)-1;
-    vizconSem = semCreate(1);
+    }
+    else
+    {
+        vizconSem = (void*)-1;
+        vizconSem = semCreate(1);
+    }
 }
 
 // vizconError - Prints errors encountered by the user library.
