@@ -32,7 +32,7 @@ void AddSalary(int accountNum, int amount)
 int Withdraw(int accountNum, int amount)
 {
     vcSemWait(accountSemArray[accountNum]);
-    if(amount <= accountArray[accountNum])
+    if (amount <= accountArray[accountNum])
     {
         accountArray[accountNum] = accountArray[accountNum] - amount;
         vcSemSignal(accountSemArray[accountNum]);
@@ -46,14 +46,14 @@ void* Teller(void* param)
 {
     int accountNum, amount, teller = (int)param;
     srand(vcThreadId());
-    while(1)
+    while (1)
     {
         vcSemWait(tellerSem);
         accountNum = rand() % accountCount;
-        if(rand() % 2)
+        if (rand() % 2)
         {
             amount = rand() % 300;
-            if(Withdraw(accountNum, amount))
+            if (Withdraw(accountNum, amount))
             {
                 DisplayBalance(teller, accountNum, accountArray[accountNum]);
             }
@@ -75,7 +75,7 @@ void* MainBranch(void* param)
 {
     int accountNum, amount;
     srand(vcThreadId());
-    while(1)
+    while (1)
     {
         accountNum = rand() % accountCount;
         amount = rand() % 100;
@@ -94,7 +94,7 @@ int main()
     semPrint = vcSemCreate(1);
     tellerSem = vcSemCreateInitial(1, 0);
     mainSem = vcSemCreateInitial(1, 0);
-    for(i=0; i<accountCount; i++)
+    for (i = 0; i < accountCount; i++)
     {
         accountSemArray[i] = vcSemCreate(1);
         accountArray[i] = rand() % 100;
