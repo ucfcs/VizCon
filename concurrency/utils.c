@@ -1,43 +1,71 @@
 #include "utils.h"
+#include "semaphores.h"
+
+#define MAX_ERROR_MESSAGE_LENGTH 200
 
 // Reference to external function vcHalt (in vcuserlibrary.c)
 extern void vcHalt(int exitCode);
+
+//Used to manage sem value changes, and for error handler
+CSSem *vizconSem;
+
+//Used to create a semaphore that manages sem value changes, and errors
+void vizconSemCheck()
+{
+    if(vizconSem != NULL)
+    {
+        semClose(vizconSem);
+        vizconSem = NULL;
+    }
+    else
+    {
+        vizconSem = (void*)-1;
+        vizconSem = semCreate(1);
+    }
+}
 
 // vizconError - Prints errors encountered by the user library.
 //               The program closes after this method finishes.
 void vizconError(char* func, int err)
 {
+    //Prevent multiple functions from entering error handler
+    platform_semWait(vizconSem);
+    
     // Start building the message string.
     char message[MAX_ERROR_MESSAGE_LENGTH];
 
     // Platform-dependent error decoding.
-    // If the error is less than 500, it's not from our library.
+    // If the error is greater than or equal to 0, it's not from our library.
     // Get the corresponding string from the system's error descriptions.
     // Then print, close everything, and leave.
     #ifdef _WIN32 // Windows version
         LPSTR errorMessage;
-        if(err < 500)
+        if(err >= 0)
         {
             FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD) err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR) &errorMessage, 0, NULL);
             sprintf(message, "\nError from %s.\nsystem error %d: %s", func, err, errorMessage);
             message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
             printf("%s", message);
             vcHalt(err);
+            vizconSemCheck();
+            exit(err);
         }
     #elif __linux__ || __APPLE__ // POSIX version
         char* errorMessage = NULL;
-        if(err < 500)
+        if(err >= 0)
         {
             sprintf(message, "\nError from %s.\nerrno code %d", func, err);
             errno = err;
             perror(message);
             vcHalt(err);
+            vizconSemCheck();
+            exit(err);
         }
     #endif
 
-    // If the error is 500 or greater, it's a VizCon-specific error.
+    // If the error is less than 0, it's a VizCon-specific error.
     // Select the string related to the error.
-    if(err >= 500)
+    if(err < 0)
     {
         switch(err)
         {
@@ -59,11 +87,6 @@ void vizconError(char* func, int err)
             case VC_ERROR_BADCOUNT:
             {
                 errorMessage = "A semaphore was created with an invalid maximum permit value.";
-                break;
-            }
-            case VC_ERROR_NAMEERROR:
-            {
-                errorMessage = "There was an error saving the internal mutex name.";
                 break;
             }
             case VC_ERROR_DOUBLEUNLOCK:
@@ -100,10 +123,17 @@ void vizconError(char* func, int err)
                 errorMessage = "An unknown error has occurred.";
         }
     }
+    else
+    {
+        errorMessage = "An unknown error has occurred.";
+    }
+    err = err * -1;
 
     // Print the message and leave.
     sprintf(message, "\nError from %s.\nvizcon error code %d: %s\n", func, err, errorMessage);
     message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
     printf("%s", message);
     vcHalt(err);
+    vizconSemCheck();
+    exit(err);
 }

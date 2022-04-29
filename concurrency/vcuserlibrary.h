@@ -14,24 +14,39 @@ int userMain();
 #define vcMutex CSMutex*
 
 // Alternate function names
+//Semaphore keyword init for create (linux)
+#define vcSemInit vcSemCreate
+#define vcSemInitInitial vcSemCreateInitial
+//Semaphore keyword aquire for wait/trywait (java)
 #define vcSemAcquire vcSemWait
-#define vcAcquire vcSemWait
 #define vcSemAcquireMult vcSemWaitMult
-#define vcAcquireMult vcSemWaitMult
-#define vcP vcSemWait
-#define vcPMult vcSemWaitMult
+#define vcSemTryAcquire vcSemTryWait
+#define vcSemTryAcquireMult vcSemTryWaitMult
+//Semaphore keyword P for wait/trywait (Dijkstra)
+#define vcSemP vcSemWait
+#define vcSemPMult vcSemWaitMult
+#define vcSemTryP vcSemTryWait
+#define vcSemTryPMult vcSemTryWaitMult
+//Semaphore keyword post for signal (linux)
 #define vcSemPost vcSemSignal
-#define vcSemRelease vcSemSignal
-#define vcRelease vcSemSignal
 #define vcSemPostMult vcSemSignalMult
+//Semaphore keyword release for signal (windows/java)
+#define vcSemRelease vcSemSignal
 #define vcSemReleaseMult vcSemSignalMult
-#define vcReleaseMult vcSemSignalMult
-#define vcV vcSemSignal
-#define vcVMult vcSemSignalMult
-#define vcMutexLockCreate vcMutexCreate
-#define vcLock vcMutexLock
-#define vcUnlock vcMutexUnlock
-#define vcLockAvailable vcMutexStatus
+//Semaphore keyword V for signal (Dijkstra)
+#define vcSemV vcSemSignal
+#define vcSemVMult vcSemSignalMult
+//Semaphore keyword GetValue for value (linux)
+#define vcSemGetValue vcSemValue
+//Mutex keyword init for create (linux)
+#define vcMutexInit vcMutexCreate
+//Mutex keyword wait for lock/trylock (windows)
+#define vcMutexWait vcMutexLock
+#define vcMutexTryWait vcMutexTrylock
+//Mutex keyword release for unlock (windows)
+#define vcMutexRelease vcMutexUnlock
+//Mutex keyword available for status
+#define vcMutexAvailable vcMutexStatus
 
 // User thread functions
 void vcThreadQueue(threadFunc func, void *arg);                  // Queues a thread.
@@ -58,6 +73,3 @@ void vcMutexLock(vcMutex mutex);        // Waits for availability, then locks.
 int vcMutexTrylock(vcMutex mutex);      // Attempts to lock without waiting.
 void vcMutexUnlock(vcMutex mutex);      // Unlocks the mutex.
 int vcMutexStatus(vcMutex mutex);       // Returns whether mutex is available.
-
-// Other user functions
-void vcHalt(int exitCode); // Immediately frees all concurrency objects and exits.

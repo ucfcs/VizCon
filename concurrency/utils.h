@@ -13,28 +13,23 @@
 #elif __linux__ || __APPLE__ 
     #include <pthread.h>
     #include <errno.h>
+    #include <sys/syscall.h>
+    #define gettid() syscall(SYS_gettid)
 #endif
 
 // VizCon error codes
-// 50X - Error with object creation
-#define VC_ERROR_MEMORY 500
-#define VC_ERROR_NAMEERROR 501
-#define VC_ERROR_BADCOUNT 502
+// X - Error with object creation
+#define VC_ERROR_MEMORY -1
+#define VC_ERROR_BADCOUNT -2
 
-// 51X - Error with permissions
-#define VC_ERROR_DOUBLEUNLOCK 510
-#define VC_ERROR_DOUBLELOCK 511
-#define VC_ERROR_CROSSTHREADUNLOCK 512
-#define VC_ERROR_SEMVALUELIMIT 513
-#define VC_ERROR_CREATEDISABLED 514
-#define VC_ERROR_THREADSACTIVE 515
+// 1X - Error with permissions
+#define VC_ERROR_DOUBLEUNLOCK -11
+#define VC_ERROR_DOUBLELOCK -12
+#define VC_ERROR_CROSSTHREADUNLOCK -13
+#define VC_ERROR_SEMVALUELIMIT -14
+#define VC_ERROR_CREATEDISABLED -15
+#define VC_ERROR_THREADSACTIVE -16
 
-// 52X - Unexpected system response (Windows only)
-#define VC_ERROR_ABANDONED 520
-#define VC_ERROR_TIMEOUT 521
-
-// Other constants
-#define MAX_ERROR_MESSAGE_LENGTH 200
-
-// Function prototypes
-void vizconError(char* func, int err);       // Reports an error and then closes the program
+// 2X - Unexpected system response (Windows only)
+#define VC_ERROR_ABANDONED -21
+#define VC_ERROR_TIMEOUT -22

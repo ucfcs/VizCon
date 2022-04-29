@@ -49,7 +49,7 @@ test.describe('Visualizer', async () => {
 
   // Thread Status - All thread statuses are correct and up-to-date.
   test('Thread Status', async () => {
-    // Open a testing file that generates a set of threads with random names.
+    // Open the test file, which creates a set of threads that take turns being active.
     console.log('Please select "threadstatus.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
@@ -123,7 +123,7 @@ test.describe('Visualizer', async () => {
 
   // Variable List - All in-scope variables are listed with the correct type.
   test('Variable List', async () => {
-    // Open a testing file that generates a set of threads with random names.
+    // Open the test file, which creates a set of threads that take turns locking a mutex.
     console.log('Please select "varlist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
@@ -177,7 +177,7 @@ test.describe('Visualizer', async () => {
 
   // Variable Thread List - All in-scope variables are listed under the correct thread.
   test('Variable Thread List', async () => {
-    // Open a testing file that generates a set of threads with random names.
+    // Open the test file, which creates a set of threads with specific contained variables.
     console.log('Please select "varthreadlist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
@@ -250,7 +250,7 @@ test.describe('Visualizer', async () => {
 
   // Variable List Values - All in-scope variables list the correct values.
   test('Variable List Values', async () => {
-    // Open a testing file that generates a set of threads with random names.
+    // Open the test file, which creates a set of variables and randomly changes their values.
     console.log('Please select "varvaluelist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
@@ -310,7 +310,7 @@ test.describe('Visualizer', async () => {
     // Set the timeout to 45 seconds because waiting and signaling multiple times is slow.
     test.setTimeout(45000);
 
-    // Open a testing file that generates a set of threads with random names.
+    // Open the test file, which regularly waits on and signals random amounts of permits.
     console.log('Please select "semvaluelist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
@@ -360,7 +360,7 @@ test.describe('Visualizer', async () => {
 
   // Mutex List Values - Check that the value of a mutex is correctly viewed and updated.
   test('Mutex List Values', async () => {
-    // Open a testing file that generates a set of threads with random names.
+    // Open the test file, which randomly locks and unlocks a mutex.
     console.log('Please select "mutexvaluelist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();
@@ -404,7 +404,7 @@ test.describe('Visualizer', async () => {
 
   // Mutex List Owners - Check that the listed owner of a mutex is correctly viewed and updated.
   test('Mutex List Owners', async () => {
-    // Open a testing file that generates a set of threads with random names.
+    // Open the test file, which creates a set of threads that take turns locking a mutex.
     console.log('Please select "mutexownerlist.c".');
     await window.locator('div.menu-item:has-text("FileNew File")').click();
     await window.locator('span.action-label:text("Open File")').click();

@@ -23,13 +23,13 @@ void* P2(void* param)
 void* P3(void* param)
 {
     vcSemWait(s);
-    printf("P3 is in critical section 3 seconds\n");
+    printf("P3 is in critical section for 3 seconds\n");
     vcThreadSleep(3000);
     vcSemSignal(s);
     return (void*)0;
 }
 
-int main(  ) 
+int main() 
 {
     s = vcSemCreate(1);
     vcThreadQueue(P1, NULL);

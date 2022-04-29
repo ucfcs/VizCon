@@ -1,7 +1,7 @@
 #include "vcuserlibrary.h"
 
 int len = 5;
-int BigInSmall = 20000, SmallInBig = -20000;
+int BigInSmall = 20000, SmallInBig = -20000, exitFlag = 0;
 vcSem freeBinS, *freeSinB, *readyBinS, *readySinB;
 
 void printArray(char* state, int* list1, int* list2)
@@ -54,6 +54,10 @@ void* SmallSet(void* param)
     {
         index = GetMax(list, len);
         vcSemWait(freeBinS);
+        if(exitFlag)
+        {
+            break;
+        }
         BigInSmall = list[index];
         vcSemSignal(readyBinS);
         vcSemWait(readySinB);
@@ -63,6 +67,8 @@ void* SmallSet(void* param)
         }
         vcSemSignal(freeSinB);
     }
+    vcSemWait(freeBinS);
+    exitFlag = 1;
     vcSemSignal(readyBinS);
     return (void*)0;
 }
@@ -75,6 +81,10 @@ void* BigSet(void* param)
     {
         index = GetMin(list, len);
         vcSemWait(freeSinB);
+        if(exitFlag)
+        {
+            break;
+        }
         SmallInBig = list[index];
         vcSemSignal(readySinB);
         vcSemWait(readyBinS);
@@ -84,6 +94,8 @@ void* BigSet(void* param)
         }
         vcSemSignal(freeBinS);
     }
+    vcSemWait(freeSinB);
+    exitFlag = 1;
     vcSemSignal(readySinB);
     return (void*)0;
 }
