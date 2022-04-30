@@ -97,7 +97,6 @@ export default function Nav({
             },
             { name: 'Open File', action: openFile, disable: inVisualizer, keybind: 'Ctrl+!Shift+O' },
             { name: 'Open Example File', action: openExampleFile, disable: inVisualizer, keybind: 'Ctrl+Shift+O' },
-            { name: "Open User's Guide", action: openUserGuide },
             {
               name: 'b',
               action: () => {
@@ -132,6 +131,14 @@ export default function Nav({
             { name: 'Show Compile Output', action: showCompileOutput, disable: inVisualizer },
             { name: 'Show Editor', action: showEditor, disable: inEditor },
             { name: 'Show Visualizer', action: showVisualizer, disable: inVisualizer },
+            {
+              name: 'b',
+              action: () => {
+                return;
+              },
+              seperator: true,
+            },
+            { name: "Show User's Guide", action: openUserGuide },
             {
               name: 'b',
               action: () => {

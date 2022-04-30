@@ -19,6 +19,7 @@ if (app.isPackaged) {
 resourcesDir = resourcesDir.replace(/\\/g, pathSep);
 
 const concurrencyFolder = resourcesDir + pathSep + 'concurrency' + pathSep;
+const docsFolder = resourcesDir + pathSep + 'docs' + pathSep;
 
 const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
@@ -90,9 +91,9 @@ ipcMain.handle('openExampleFileDialog', e => {
   return results;
 });
 
-ipcMain.handle('openUserGuide', e => {
+ipcMain.handle('openUserGuide', () => {
   shell
-    .openPath(resourcesDir + pathSep + 'VizCon_Documentation.pdf')
+    .openPath(docsFolder + 'VizCon-User-Guide.pdf')
     .catch(err => console.error('openUserGuide error:', err))
     .then(err => {
       if (err) {
