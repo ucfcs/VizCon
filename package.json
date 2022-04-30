@@ -27,7 +27,7 @@
           "./concurrency",
           "./platform",
           "./examples",
-          "./VizCon_Documentation.pdf"
+          "./docs/VizCon-User-Guide.pdf"
         ],
         "icon": "./icons/icon"
       },
