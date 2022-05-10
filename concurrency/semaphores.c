@@ -2,28 +2,15 @@
 #include "lldb_lib.h"
 
 extern int isLldbActive;
+extern void vizconError(char* func, int err);
 
 //Semaphore used to keep semaphore count values accurate
-CSSem *vizconSem;
-
-void vizconSemCheck()
-{
-    if(vizconSem != NULL)
-        return;
-    vizconSem = (void*)-1;
-    vizconSem = semCreate(1);
-}
+extern CSSem *vizconSem;
 
 // semCreate - Create a semaphore with a given max value.
 //             Returns: a pointer to the semaphore struct.
 CSSem* semCreate(SEM_VALUE maxValue)
-{
-    //Ensure the semaphore checker has been created
-    if(vizconSem == NULL)
-    {
-        vizconSemCheck();
-    }
-    
+{    
     // Attempt to allocate the struct. Error out on failure.
     CSSem* sem = (CSSem*) malloc(sizeof(CSSem));
     if (sem == NULL) 
@@ -240,6 +227,8 @@ void platform_semSignal(CSSem* sem)
 {
     // Platform-dependent senaphore release.
     #ifdef _WIN32 // Windows version
+        if(sem != vizconSem && (sem->count + 1) > sem->maxCount)
+            vizconError("vcSemSignal/vcSemSignalMult", VC_ERROR_SEMVALUELIMIT);
         if(!ReleaseSemaphore(sem->sem, 1, NULL))
             vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
         if(sem == vizconSem)
@@ -259,7 +248,10 @@ void platform_semSignal(CSSem* sem)
         platform_semWait(vizconSem);
         sem->count = sem->count + 1;
         if(sem->count > sem->maxCount)
+        {
+            platform_semSignal(vizconSem);
             vizconError("vcSemSignal/vcSemSignalMult", VC_ERROR_SEMVALUELIMIT);
+        }
         platform_semSignal(vizconSem);
     #endif
 }
@@ -277,11 +269,11 @@ void semClose(CSSem* sem)
     // Platform-dependent closure and memory management.
     #ifdef _WIN32 // Windows version.
         if(!CloseHandle(sem->sem))
-            vizconError("vcThreadStart/vcThreadReturn/vcThreadHalt", GetLastError());
+            vizconError("vcThreadStart/vcThreadReturn/vcHalt", GetLastError());
         free(sem);
     #elif __linux__ || __APPLE__ // POSIX version.
         if(sem_close(sem->sem))
-            vizconError("vcThreadStart/vcThreadReturn/vcThreadHalt", errno);
+            vizconError("vcThreadStart/vcThreadReturn/vcHalt", errno);
         free(sem);
     #endif
 }

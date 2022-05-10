@@ -5,6 +5,7 @@
 #include "lldb_lib.h"
 
 extern int userMain();
+extern void vizconSemCheck();
 CSSem *sem_wait_create_thread;
 int isLldbActive; 
 
@@ -12,10 +13,12 @@ void do_post(void)
 {
     platform_semSignal(sem_wait_create_thread);
 }
+
 void lldb_waitForThreadStart(void)
 {
     platform_semWait(sem_wait_create_thread);
 }
+
 void *vc_internal_thread_wrapper(void *parameter)
 {
     CSThread *thread = parameter;
@@ -25,6 +28,7 @@ void *vc_internal_thread_wrapper(void *parameter)
     thread->returnVal = retval;
     return retval;
 }
+
 void lldb_hook_createThread(CSThread *thread, char *name)
 {
     // LLDB
@@ -67,7 +71,6 @@ void vc_internal_init()
         isLldbActive = 1;
     }
 }
-
 
 // Semaphores
 void vc_internal_registerSem(CSSem *sem, int initialValue, int maxValue)
@@ -132,5 +135,8 @@ void lldb_hook_mutexClose(CSMutex *mutex)
 int main()
 {
     vc_internal_init();
-    return userMain();
+    vizconSemCheck();
+    int ret = userMain();
+    vizconSemCheck();
+    return ret;
 }

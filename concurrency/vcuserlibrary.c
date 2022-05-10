@@ -1,12 +1,15 @@
 #include "vcuserlibrary.h"
 
 extern int isLldbActive;
+extern void vizconError(char* func, int err);
 
 // Pointers used to track all concurrency objects.
 CSThread *vizconThreadListHead, *vizconThreadList;
 CSSem *vizconSemListHead, *vizconSemList;
 CSMutex *vizconMutexListHead, *vizconMutexList;
 int vizconCreateFlag = 0;
+
+extern void lldb_hook_threadSleep(int milliseconds);
 
 // Definitions for methods that close objects.
 // They are defined here because a user doesn't need to access them directly.
@@ -214,7 +217,7 @@ int vcThreadId()
     #ifdef _WIN32
     return GetCurrentThreadId();
     #else
-    return pthread_self();
+    return (int)gettid();
     #endif
 }
 
@@ -233,14 +236,7 @@ void closeAllThreads()
 // vcSemCreate - Create a semaphore with the specified maximum permit count.
 //               Returns: a pointer to the new semaphore.
 CSSem* vcSemCreate(int maxCount)
-{
-    // If called while threads are already running, throw error
-    if(vizconCreateFlag)
-    {
-        vizconError("vcSemCreate", VC_ERROR_CREATEDISABLED);
-        return NULL;
-    }
-    
+{   
     // Make sure the count is valid.
     if(maxCount <= 0)
         vizconError("vcSemCreate", VC_ERROR_BADCOUNT);
@@ -264,14 +260,7 @@ CSSem* vcSemCreate(int maxCount)
 // vcSemCreateInitial - Create a semaphore with the specified initial and maximum permit count.
 //                      Returns: a pointer to the new semaphore.
 CSSem* vcSemCreateInitial(int maxCount, int initialCount)
-{
-    // If called while threads are already running, throw error
-    if(vizconCreateFlag)
-    {
-        vizconError("vcSemCreateInitial", VC_ERROR_CREATEDISABLED);
-        return NULL;
-    }
-    
+{   
     // Make sure the counts are valid.
     if(initialCount < 0 || maxCount <= 0 || initialCount > maxCount)
         vizconError("vcSemCreateInitial", VC_ERROR_BADCOUNT);
@@ -408,13 +397,6 @@ void closeAllSemaphores()
 //                 Returns: a pointer to the mutex list entry.
 CSMutex* vcMutexCreate()
 {
-    // If called while threads are already running, throw error
-    if(vizconCreateFlag)
-    {
-        vizconError("vcMutexCreate", VC_ERROR_CREATEDISABLED);
-        return NULL;
-    }
-    
     // Define the mutex.
     CSMutex* mutex = mutexCreate();
 
@@ -483,5 +465,4 @@ void vcHalt(int exitCode)
     closeAllThreads();
     closeAllSemaphores();
     closeAllMutexes();
-    exit(exitCode);
 }

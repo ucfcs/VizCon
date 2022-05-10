@@ -2,6 +2,7 @@
 #include "lldb_lib.h"
 
 extern int isLldbActive;
+extern void vizconError(char* func, int err);
 
 // mutexCreate - Create a mutex struct.
 //               Returns: a pointer to the mutex struct.
@@ -107,7 +108,7 @@ void mutexLock(CSMutex* mutex)
                 vizconError("vcMutexLock", VC_ERROR_TIMEOUT);
         }
     #elif __linux__ || __APPLE__ // POSIX version
-        if(mutex->holderID == pthread_self())
+        if(mutex->holderID == gettid())
         {
             vizconError("vcMutexLock", VC_ERROR_DOUBLELOCK);
             return;
@@ -128,7 +129,7 @@ void mutexLock(CSMutex* mutex)
         if(!ret)
         {
             mutex->available = 0;
-            mutex->holderID = pthread_self();
+            mutex->holderID = gettid();
         }
         else
         {
@@ -200,7 +201,7 @@ int mutexTryLock(CSMutex* mutex)
         }
         else
         {
-            int success = lldb_hook_mutexTryWait(mutex);
+            int success = lldb_hook_mutexTryLock(mutex);
             ret = success ? 0 : EBUSY;
         }
         switch(ret)
@@ -209,7 +210,7 @@ int mutexTryLock(CSMutex* mutex)
             case 0:
             {
                 mutex->available = 0;
-                mutex->holderID = pthread_self();
+                mutex->holderID = gettid();
                 return 1;
             }
 
@@ -267,7 +268,7 @@ void mutexUnlock(CSMutex* mutex)
             vizconError("vcMutexUnlock", GetLastError());
         }
     #elif __linux__ || __APPLE__ // POSIX version
-        if(mutex->holderID != pthread_self())
+        if(mutex->holderID != gettid())
         {
             vizconError("vcMutexUnlock", VC_ERROR_CROSSTHREADUNLOCK);
             return;

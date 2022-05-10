@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
-import { sep as pathSep, resolve as resolvePath } from 'path';
+import { sep as pathSep, join, resolve as resolvePath } from 'path';
 import split2 from 'split2';
 import * as pty from 'node-pty';
 import { filePathToFileName } from '../util/utils';
@@ -10,9 +10,13 @@ import { filePathToFileName } from '../util/utils';
 // determine where the concurrency folder is
 let resourcesDir = '.';
 if (app.isPackaged) {
-  // replace \\\\ (two escaped \\) with / to simplify things
-  resourcesDir = process.resourcesPath.replace(/\\\\/g, pathSep);
+  resourcesDir = process.resourcesPath;
+} else {
+  resourcesDir = join(__dirname, '/../..');
 }
+
+// replace \\ with / to simplify things
+resourcesDir = resourcesDir.replace(/\\/g, pathSep);
 
 const concurrencyFolder = resourcesDir + pathSep + 'concurrency' + pathSep;
 
@@ -60,7 +64,7 @@ ipcMain.handle('isMaximized', e => {
 ipcMain.handle('openFileDialog', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
   const results = dialog.showOpenDialogSync(window, {
-    filters: [{ name: 'C Language File', extensions: ['c'] }],
+    filters: [{ name: 'C Language Files', extensions: ['c'] }],
     properties: ['openFile', 'multiSelections'],
     defaultPath: lastSuccessfulFile,
   });
@@ -73,8 +77,9 @@ ipcMain.handle('openFileDialog', e => {
 
 ipcMain.handle('openExampleFileDialog', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
+  console.log("default example path: ", resourcesDir + pathSep + 'examples');
   const results = dialog.showOpenDialogSync(window, {
-    filters: [{ name: 'C Language File', extensions: ['c'] }],
+    filters: [{ name: 'C Language Files', extensions: ['c'] }],
     properties: ['openFile', 'multiSelections'],
     defaultPath: resourcesDir + pathSep + 'examples',
   });
@@ -105,7 +110,7 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
   if (forceDialog || path.includes('tracking://')) {
     const window = BrowserWindow.fromWebContents(e.sender);
     const newPath = dialog.showSaveDialogSync(window, {
-      filters: [{ name: 'C Language File', extensions: ['c'] }],
+      filters: [{ name: 'C Language Files', extensions: ['c'] }],
       properties: ['createDirectory', 'showOverwriteConfirmation'],
     });
 

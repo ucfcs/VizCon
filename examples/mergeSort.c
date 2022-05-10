@@ -12,11 +12,11 @@ void Merge(int begin, int mid, int end)
     int array1[length1];
     int array2[length2];
 
-    for(i=0; i<length1; i++)
+    for (i = 0; i < length1; i++)
     {
         array1[i] = array[begin+i];
     }
-    for(j=0; j<length2; j++)
+    for (j = 0; j < length2; j++)
     {
         array2[j] = array[mid+j];
     }
@@ -24,9 +24,9 @@ void Merge(int begin, int mid, int end)
     i = 0;
     j = 0;
     k = begin;
-    while(i < length1 && j < length2)
+    while (i < length1 && j < length2)
     {
-        if(array1[i] <= array2[j])
+        if (array1[i] <= array2[j])
         {
             array[k] = array1[i];
             i++;
@@ -39,14 +39,14 @@ void Merge(int begin, int mid, int end)
         k++;
     }
 
-    while(i < length1)
+    while (i < length1)
     {
         array[k] = array1[i];
         i++;
         k++;
     }
 
-    while(j < length2)
+    while (j < length2)
     {
         array[k] = array2[j];
         j++;
@@ -61,9 +61,9 @@ void* MergeSort(void* param)
     int end = thisParam[1];
     int mid = begin + (end - begin) / 2 + (end - begin) % 2;
 
-    if(mid == end)
+    if (mid == end)
     {
-        return 1;
+        return (void*)1;
     }
     thisParam[0] = begin;
     thisParam[1] = mid;
@@ -80,7 +80,7 @@ void printArray(char* state)
 {
     int i;
     printf("Array:");
-    for(i=0; i<size; i++)
+    for (i = 0; i < size; i++)
     {
         printf(" %d", array[i]);
     }
@@ -91,12 +91,12 @@ int main()
 {
     int i;
     int begin = 0;
-    int mid = size/2 + size%2;
+    int mid = size / 2 + size % 2;
     int end = size;
     int param1[2] = {begin, mid};
     int param2[2] = {mid, end};
     srand(vcThreadId());
-    for(i=0; i<size; i++)
+    for (i = 0; i < size; i++)
     {
         array[i] = rand() % 100;
     }
