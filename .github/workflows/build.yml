@@ -55,13 +55,6 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: cp -r ./.system/macos ./platform
 
-      # build the latex doc
-      - name: Build Documentation
-        uses: xu-cheng/latex-action@v2
-        with:
-          root_file: main.text
-          work_in_root_file_dir: true
-
       # DEBUG
       - name: Print working directory to see where things are
         if: matrix.os == 'ubuntu-latest'
