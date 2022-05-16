@@ -1,7 +1,7 @@
 # Makefile for testing files.
 
 # Change the name of the variable below to change the test suite run.
-testfile = assignment.c
+testfile = memory/error_test
 
 # Set the flag below to 1 in order to compile Cgreen.
 # Note that this cannot be run on vanilla Windows.
