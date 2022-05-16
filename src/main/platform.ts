@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, dialog, app } from 'electron';
+import { BrowserWindow, ipcMain, dialog, app, shell } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
@@ -19,6 +19,7 @@ if (app.isPackaged) {
 resourcesDir = resourcesDir.replace(/\\/g, pathSep);
 
 const concurrencyFolder = resourcesDir + pathSep + 'concurrency' + pathSep;
+const docsFolder = resourcesDir + pathSep + 'docs' + pathSep;
 
 const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
@@ -88,6 +89,17 @@ ipcMain.handle('openExampleFileDialog', e => {
   }
   updateLastSuccessfulFile(results);
   return results;
+});
+
+ipcMain.handle('openUserGuide', () => {
+  shell
+    .openPath(docsFolder + 'VizCon-User-Guide.pdf')
+    .catch(err => console.error('openUserGuide error:', err))
+    .then(err => {
+      if (err) {
+        console.error('openUserGuide error:', err);
+      }
+    });
 });
 
 ipcMain.handle('readFilesSync', (e, files: string[]) => {
