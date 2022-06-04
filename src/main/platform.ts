@@ -1,8 +1,8 @@
-import { BrowserWindow, ipcMain, dialog, app } from 'electron';
+import { BrowserWindow, ipcMain, dialog, app, shell } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
-import { sep as pathSep, join } from 'path';
+import { sep as pathSep, join, resolve as resolvePath } from 'path';
 import split2 from 'split2';
 import * as pty from 'node-pty';
 import { filePathToFileName } from '../util/utils';
@@ -19,6 +19,7 @@ if (app.isPackaged) {
 resourcesDir = resourcesDir.replace(/\\/g, pathSep);
 
 const concurrencyFolder = resourcesDir + pathSep + 'concurrency' + pathSep;
+const docsFolder = resourcesDir + pathSep + 'docs' + pathSep;
 
 const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
@@ -90,6 +91,17 @@ ipcMain.handle('openExampleFileDialog', e => {
   return results;
 });
 
+ipcMain.handle('openUserGuide', () => {
+  shell
+    .openPath(docsFolder + 'VizCon-User-Guide.pdf')
+    .catch(err => console.error('openUserGuide error:', err))
+    .then(err => {
+      if (err) {
+        console.error('openUserGuide error:', err);
+      }
+    });
+});
+
 ipcMain.handle('readFilesSync', (e, files: string[]) => {
   return files.map(file => {
     try {
@@ -102,6 +114,11 @@ ipcMain.handle('readFilesSync', (e, files: string[]) => {
 });
 
 ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?: boolean) => {
+  // Disallow overwriting install files (namely the examples)
+  // Before removing this check, please be aware that on some platform, write access to install files is disabled
+  if (path.startsWith(resolvePath(resourcesDir))) {
+    forceDialog = true;
+  }
   if (forceDialog || path.includes('tracking://')) {
     const window = BrowserWindow.fromWebContents(e.sender);
     const newPath = dialog.showSaveDialogSync(window, {

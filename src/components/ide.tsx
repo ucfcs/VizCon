@@ -20,6 +20,7 @@ interface IDEProps {
   openFile: () => void;
   openExampleFile: () => void;
   compileAndRunFile: () => void;
+  openUserGuide: () => void;
 }
 
 export default function IDE({
@@ -36,6 +37,7 @@ export default function IDE({
   openFile,
   openExampleFile,
   compileAndRunFile,
+  openUserGuide,
 }: IDEProps): React.ReactElement {
   const [tabination, setTabination] = useState(<div className="tabination"></div>);
   const [className, setClassName] = useState('');
@@ -85,7 +87,9 @@ export default function IDE({
         </div>
       </div>
       <div className="active-editor">
-        {files.length == 0 && <Landing newFile={newFile} openFile={openFile} openExampleFile={openExampleFile} />}
+        {files.length == 0 && (
+          <Landing newFile={newFile} openFile={openFile} openExampleFile={openExampleFile} openUserGuide={openUserGuide} />
+        )}
         {files.length >= 1 && <Editor current={current} regenTabination={regenTabination} setDirty={setDirty} />}
       </div>
       {showOutput && <Output current={current} text={compileResults} closePanel={closeOutput} />}

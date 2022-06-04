@@ -12,6 +12,7 @@ declare global {
       readFilesSync: (files: string[]) => Promise<string[]>;
       openFileDialog: () => Promise<string[]>;
       openExampleFileDialog: () => Promise<string[]>;
+      openUserGuide: () => void;
       saveFileToDisk: (path: string, content: string, forceDialog?: boolean) => Promise<string>;
       compileFile: (path: string) => Promise<{ out: string; err: string }>;
       launchProgram: (path: string, stdoutHandler: (data: string) => void) => Promise<DebuggerHandle | DebuggerError>;

@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('platform', {
   openExampleFileDialog: async (): Promise<string[]> => {
     return await ipcRenderer.invoke('openExampleFileDialog');
   },
+  openUserGuide: () => {
+    ipcRenderer.invoke('openUserGuide');
+  },
   saveFileToDisk: async (path: string, content: string, forceDialog?: boolean): Promise<string> => {
     return await ipcRenderer.invoke('saveFileToDisk', path, content, forceDialog);
   },
