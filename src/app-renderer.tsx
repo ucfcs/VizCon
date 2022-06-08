@@ -233,7 +233,7 @@ function App(): React.ReactElement {
 
     document.body.classList.remove('compiling');
 
-    if (results.err !== '' && results.err.includes('error: ')) {
+    if (results.exitCode !== 0) {
       setOutputVisible(true);
       setCompileResult(results.err);
       return;

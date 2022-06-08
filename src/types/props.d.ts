@@ -29,9 +29,25 @@ interface VisualizerState {
 }
 
 interface DebuggerHandle {
-  doStep: () => Promise<any>;
+  doStep: () => Promise<DebuggerResponse>;
   stop: () => Promise<any>;
 }
+
+type DebuggerResponse =
+  | { type: 'controller_error'; error: string }
+  | { type: 'vc_error'; errCode: VC_ErrorCode }
+  | ({ type: 'res' } & VisualizerState)
+  | { type: 'process_killed' }
+  | { type: 'process_end'; code: number };
+
+type VC_ErrorMap = {
+  VC_ERROR_DOUBLELOCK: -12;
+  VC_ERROR_CROSSTHREADUNLOCK: -13;
+  VC_ERROR_SEMVALUELIMIT: -14;
+  VC_ERROR_DEADLOCK: 15;
+};
+type VC_ErrorCode = VC_ErrorMap[keyof VC_ErrorMap];
+
 interface DebuggerError {
   err: string;
 }
@@ -40,7 +56,6 @@ type VisualizerRunState =
   | 'not_started'
   | 'starting'
   | 'error'
-  | 'deadlock'
   | 'pausing'
   | 'paused'
   | 'terminating'

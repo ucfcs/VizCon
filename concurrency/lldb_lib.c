@@ -134,8 +134,8 @@ void lldb_hook_mutexClose(CSMutex *mutex)
 
 int main()
 {
-    vc_internal_init();
     vizconSemCheck();
+    vc_internal_init();
     int ret = userMain();
     vizconSemCheck();
     return ret;

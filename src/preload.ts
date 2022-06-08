@@ -42,7 +42,7 @@ contextBridge.exposeInMainWorld('platform', {
     return new Promise(resolve => {
       const channel = new MessageChannel();
       let hasStarted = false;
-      let waitingHandler: (state: any) => void = null;
+      let waitingHandler: (state: DebuggerResponse) => void = null;
       let err: string = null;
       channel.port1.onmessage = e => {
         const msg = e.data;
@@ -58,7 +58,7 @@ contextBridge.exposeInMainWorld('platform', {
             console.log(`Simulation crashed after startup. Exit code: ${msg.exitCode}`);
             err = `Simulation crashed. Exit code: ${msg.exitCode}`;
             if (waitingHandler !== null) {
-              waitingHandler({ type: 'error', error: err });
+              waitingHandler({ type: 'controller_error', error: err });
               waitingHandler = null;
             }
           }
@@ -77,7 +77,7 @@ contextBridge.exposeInMainWorld('platform', {
                   throw new Error('Attempted to step again before previous step completed');
                 }
                 if (err !== null) {
-                  resolveStep({ type: 'error', error: err });
+                  resolveStep({ type: 'controller_error', error: err });
                   return;
                 }
 

@@ -1,9 +1,10 @@
 from random import Random, randint
-import sys
 from dataclasses import dataclass, field
 from typing import Any
 import time
 import heapq
+
+from concurrency.controller.utils import CrossThreadUnlockError, DoubleLockError, SemValueLimitError
 
 @dataclass(order=True)
 class SleepEntry:
@@ -111,8 +112,9 @@ class ThreadManager:
         sem_obj = self.semaphoreMap[sem]
         old_val = sem_obj['value']
         if old_val >= sem_obj['max_value']:
-            debug_print("Unimplemented error handling: semaphore max value reached")
-            sys.exit(1)
+            #debug_print("Unimplemented error handling: semaphore max value reached")
+            raise SemValueLimitError
+            #sys.exit(1)
         sem_obj['value'] += 1
         #tid = self.__getThreadID(c_thread)
         #if tid not in sem_obj['threads']:
@@ -220,7 +222,8 @@ class ThreadManager:
             return
         if mutex_obj['locked_by'] == c_thread:
             debug_print("A thread attempted to lock a mutex that it already owns")
-            sys.exit(1)
+            raise DoubleLockError
+            #sys.exit(1)
         mutex_obj['waiting'].append(c_thread)
         self.ready_list2.remove(c_thread)
         c_thread['state'] = 'waiting (mutex)'
@@ -229,7 +232,8 @@ class ThreadManager:
         mutex_obj = self.mutexMap[mutex]
         if mutex_obj['locked_by'] != c_thread:
             debug_print("A thread attempted to unlock a mutex that it does not own")
-            sys.exit(1)
+            #sys.exit(1)
+            raise CrossThreadUnlockError
         debug_print("unlockMutex: Mutex unlocked")
         mutex_obj['locked_by'] = None
         if len(mutex_obj['waiting']) >= 1:

@@ -148,11 +148,7 @@ ipcMain.handle('compileFile', async (e, path: string) => {
 
   const prom = new Promise(resolve => {
     exec(commandString, (err, stdout, stderr) => {
-      if (err && err.code !== 0) {
-        resolve({ out: stdout, err: stderr });
-        return;
-      }
-      resolve({ out: stdout, err: stderr });
+      resolve({ out: stdout, err: stderr, exitCode: err?.code ?? 0 });
     });
   });
 
