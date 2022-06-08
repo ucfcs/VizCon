@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain, dialog, app } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
-import { sep as pathSep } from 'path';
+import { sep as pathSep, join as pathJoin } from 'path';
 import split2 from 'split2';
 import * as pty from 'node-pty';
 import { filePathToFileName } from '../util/utils';
@@ -120,18 +120,16 @@ ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?
 ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [`"${path}"`, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
-  let compiler = 'gcc';
-  if (process.platform === 'win32') {
-    compiler = '"' + resourcesDir + pathSep + 'platform' + pathSep + 'mingw64' + pathSep + 'bin' + pathSep + 'gcc' + '"';
-  } else {
-    const zig_cc = '"' + resourcesDir + pathSep + 'platform' + pathSep + 'zig' + pathSep + 'zig' + '" cc';
-    // zig cc uses its own handling for the optimization flag.
-    // In debug mode, as here, that would be -Og, which optimizes out unused variables in a way that doesn't feel nice for a visualizer user
-    // We can sneak the flag past zig using -Xclang -O0.
-    // zig cc also enables sanitization options, so disable those too
-    compiler = `${zig_cc} -fno-sanitize=undefined -fno-stack-protector -Xclang -O0`;
-  }
-  const commandString = `${compiler} -gdwarf-4 -O0 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
+
+  const zig_executable = pathJoin(resourcesDir, 'platform', 'zig', 'zig');
+  // zig cc uses its own handling for the optimization flag.
+  // In debug mode, as here, that would be -Og, which optimizes out unused variables in a way that doesn't feel nice for a visualizer user
+  // We can sneak the flag past zig using -Xclang -O0.
+  // zig cc also enables sanitization options, so disable those too
+  const zig_cc = `"${zig_executable}" cc -fno-sanitize=undefined -fno-stack-protector -Xclang -O0`;
+
+
+  const commandString = `${zig_cc} -gdwarf-4 -O0 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
   console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {

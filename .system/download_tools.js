@@ -43,12 +43,16 @@ const platforms = {
 
 const zigDownloads = {
   'x64-linux': {
-    packageName: 'zig-linux-x86_64-0.10.0-dev.1888+e3cbea934',
+    fileName: 'zig-linux-x86_64-0.10.0-dev.1888+e3cbea934.tar.xz',
     hash: 'ead05e35cc58f93e8ddf6a0feca3f5dfaa5a232d175edee88ae6ef96fa0bfada',
   },
   'x64-darwin': {
-    packageName: 'zig-macos-x86_64-0.10.0-dev.1888+e3cbea934',
+    fileName: 'zig-macos-x86_64-0.10.0-dev.1888+e3cbea934.tar.xz',
     hash: 'a897bf8809d4ef95385580437eb7e37dfbf7f1dbb36adb599e24bc566ca8d49d',
+  },
+  'x64-win32': {
+    fileName: 'zig-windows-x86_64-0.10.0-dev.2561+70dc91008.zip',
+    hash: '6987946ee15fe875181178530c9868f74cff967d72ebd60056dab41831f8223e',
   },
 };
 
@@ -90,7 +94,8 @@ function hashFile(file) {
 
 // Note: this function is not safe to use with unknown zips
 // Among other things, it hasn't been scrutinized for vulnerabilities like directory traversal
-async function unzipFile(file, destDir) {
+async function unzipFile(file, destDir, func) {
+  destDir = path.normalize(destDir);
   return new Promise((resolve, reject) => {
     fs.createReadStream(file)
       .pipe(unzipper.Parse())
@@ -99,11 +104,11 @@ async function unzipFile(file, destDir) {
           entry.autodrain();
           return;
         }
-        if (!entry.path.startsWith('extension/lldb')) {
+        const filePath = func(entry.path);
+        if (filePath == null) {
           entry.autodrain();
           return;
         }
-        const filePath = entry.path.substring('extension/'.length);
         if (filePath.includes('..') || filePath.includes('\0')) {
           console.error(`File filed name requirement in unzipFile: ${filePath}`);
           process.exit(5);
@@ -177,20 +182,18 @@ async function run() {
   console.log('Removing old files');
   // Clear old packages
   await deleteDirectoryIfPresent('platform/lldb');
-  await deleteDirectoryIfPresent('platform/mingw64');
   await deleteDirectoryIfPresent('platform/zig');
 
   console.log('Extracting package...');
-  await unzipFile(file, 'platform');
+  await unzipFile(file, 'platform', path => {
+    if (!path.startsWith('extension/lldb')) return null;
+    return path.substring('extension/'.length);
+  });
   console.log('Finished extracting files.');
   await removeFile(file);
   console.log('Deleted lldb zip file.');
 
-  if (platformId === 'x64-win32') {
-    await downloadMingw();
-  } else {
-    await downloadZig(platformId);
-  }
+  await downloadZig(platformId);
 }
 
 function removeFile(file) {
@@ -221,53 +224,40 @@ async function downloadZig(platformId) {
     console.error(`Unknown platform ("${platformId}"). Add it to .system/download_tools.js`);
     process.exit(1);
   }
-  const { packageName, hash: expectedHash } = zigDownloads[platformId];
-  const url = `https://ziglang.org/builds/${packageName}.tar.xz`;
+  const { fileName, hash: expectedHash } = zigDownloads[platformId];
+  let ext;
+  let name;
+  if (fileName.endsWith('.tar.xz')) {
+    ext = 'tar.xz';
+    name = fileName.substring(0, fileName.length - '.tar.xz'.length);
+  } else if (fileName.endsWith('.zip')) {
+    ext = 'zip';
+    name = fileName.substring(0, fileName.length - '.zip'.length);
+  } else {
+    throw new Error(`Cannot identify archive type from file name: ${fileName}`);
+  }
+
+  const url = `https://ziglang.org/builds/${fileName}`;
   console.log(`Downloading zig from ${url}`);
-  await downloadFile(url, 'zig.tar.xz');
+
+  const downloadedFile = 'zig_archive.' + ext;
+  await downloadFile(url, downloadedFile);
   console.log('Zig download complete. Comparing hash');
-  await compareHash('zig.tar.xz', expectedHash);
+  await compareHash(downloadedFile, expectedHash);
   console.log('Extracting zig');
-  const res = await runCommand(`tar -xf zig.tar.xz --directory platform`);
-  console.log(`Extraction finished. Exit code ${res}`);
-  fs.promises.rename(`platform/${packageName}`, 'platform/zig');
-  console.log('Deleting zig.tar.xz');
-  await removeFile('zig.tar.xz');
-  console.log('Deleted zig.tar.xz');
-}
-
-async function downloadMingw() {
-  console.log('Downloading mingw-w64');
-  await downloadFile(
-    'https://github.com/RyanG10/mingw-w64/releases/download/x86_64-8.1.0-release-posix-sjlj-rt_v6-rev0.7z/mingw64.exe',
-    'mingw64.exe'
-  );
-  console.log('Mingw download complete');
-  const mingwHash = '67a7e4a7f08218893f5d5e9ca395bb13ec52e7f4beecc19a19a08114472299d0';
-  await compareHash('mingw64.exe', mingwHash);
-  await new Promise(resolve => {
-    child_process.exec(`start /w mingw64.exe -o"platform" -y`, (err, stdout, stderr) => {
-      if (err && err.code !== 0) {
-        resolve({ out: stdout, err: stderr });
-        return;
-      }
-      resolve({ out: stdout, err: stderr });
+  if (ext === 'tar.xz') {
+    const res = await runCommand(`tar -xf ${downloadedFile} --directory platform`);
+    console.log(`Extraction finished. Exit code ${res}`);
+    fs.promises.rename(`platform/${name}`, 'platform/zig');
+  } else if (ext === 'zip') {
+    await unzipFile(downloadedFile, 'platform/zig', path => {
+      return path.substring((name + '/').length);
     });
-  });
-  console.log('Finished extracting mingw64.');
-  // Sometimes Windows will fail to delete the file. Add a delay in case that helps.
-  await delay(2000);
-  console.log('Deleting mingw64.exe...');
-  await removeFile('mingw64.exe');
-  console.log('Deleted mingw64.exe');
-}
-
-function delay(millis) {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve();
-    }, millis);
-  });
+    console.log('Extraction finished.');
+  }
+  console.log(`Deleting ${downloadedFile}`);
+  await removeFile(downloadedFile);
+  console.log(`Deleted ${downloadedFile}`);
 }
 
 run();
