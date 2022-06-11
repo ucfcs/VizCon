@@ -4,6 +4,7 @@ const https = require('https');
 const os = require('os');
 const path = require('path');
 const process = require('process');
+const child_process = require('child_process');
 const unzipper = require('unzipper');
 
 // The platform packages themselves and the packageName mappings are from the CodeLLDB project
@@ -40,22 +41,40 @@ const platforms = {
   //Not supported yet: "ia32-win32": "codelldb-x86_64-windows.vsix",
 };
 
+const zigDownloads = {
+  'x64-linux': {
+    fileName: 'zig-linux-x86_64-0.10.0-dev.1888+e3cbea934.tar.xz',
+    hash: 'ead05e35cc58f93e8ddf6a0feca3f5dfaa5a232d175edee88ae6ef96fa0bfada',
+  },
+  'x64-darwin': {
+    fileName: 'zig-macos-x86_64-0.10.0-dev.1888+e3cbea934.tar.xz',
+    hash: 'a897bf8809d4ef95385580437eb7e37dfbf7f1dbb36adb599e24bc566ca8d49d',
+  },
+  'x64-win32': {
+    fileName: 'zig-windows-x86_64-0.10.0-dev.2561+70dc91008.zip',
+    hash: '6987946ee15fe875181178530c9868f74cff967d72ebd60056dab41831f8223e',
+  },
+};
+
 function downloadFile(url, file) {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, res => {
-      if (res.statusCode !== 302) {
-        console.error(`Failed to download LLDB platform file. Expected redirect. (status code: ${res.statusCode})`);
-        process.exit(2);
+    function handleDownload(res) {
+      if (res.statusCode !== 200) {
+        console.error(`Failed to download LLDB platform file (status code: ${res.statusCode})`);
+        process.exit(3);
       }
-      https.get(res.headers.location, res => {
-        if (res.statusCode !== 200) {
-          console.error(`Failed to download LLDB platform file (status code: ${res.statusCode})`);
-          process.exit(3);
-        }
-        res.pipe(fs.createWriteStream(file)).on('finish', () => {
-          resolve();
-        });
+      res.pipe(fs.createWriteStream(file)).on('finish', () => {
+        resolve();
       });
+    }
+    const req = https.get(url, res => {
+      if (res.statusCode === 302) {
+        https.get(res.headers.location, res => {
+          handleDownload(res);
+        });
+      } else {
+        handleDownload(res);
+      }
     });
   });
 }
@@ -75,7 +94,8 @@ function hashFile(file) {
 
 // Note: this function is not safe to use with unknown zips
 // Among other things, it hasn't been scrutinized for vulnerabilities like directory traversal
-async function unzipFile(file, destDir) {
+async function unzipFile(file, destDir, func) {
+  destDir = path.normalize(destDir);
   return new Promise((resolve, reject) => {
     fs.createReadStream(file)
       .pipe(unzipper.Parse())
@@ -84,11 +104,11 @@ async function unzipFile(file, destDir) {
           entry.autodrain();
           return;
         }
-        if (!entry.path.startsWith('extension/lldb')) {
+        const filePath = func(entry.path);
+        if (filePath == null) {
           entry.autodrain();
           return;
         }
-        const filePath = entry.path.substring('extension/'.length);
         if (filePath.includes('..') || filePath.includes('\0')) {
           console.error(`File filed name requirement in unzipFile: ${filePath}`);
           process.exit(5);
@@ -127,7 +147,22 @@ async function unzipFile(file, destDir) {
       });
   });
 }
-
+async function compareHash(file, expectedHash) {
+  const actualHash = await hashFile(file);
+  if (expectedHash !== actualHash) {
+    console.error(`Hash mismatch. Expected: ${expectedHash} Actual: ${actualHash}`);
+    process.exit(4);
+  }
+}
+async function deleteDirectoryIfPresent(dir) {
+  try {
+    await fs.promises.rm(dir, { recursive: true });
+  } catch (e) {
+    if (e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
+      throw e;
+    }
+  }
+}
 async function run() {
   const platformId = `${os.arch()}-${os.platform()}`;
   if (!platforms[platformId]) {
@@ -143,28 +178,86 @@ async function run() {
   console.log('Downloading file...');
   await downloadFile(url, file);
   console.log('Download complete.');
-  const actualHash = await hashFile(file);
-  if (expectedHash !== actualHash) {
-    console.error(`Hash mismatch. Expected: ${expectedHash} Actual: ${actualHash}`);
-    process.exit(4);
-  }
+  await compareHash(file, expectedHash);
   console.log('Removing old files');
-  try {
-    await fs.promises.rm('platform/lldb', { recursive: true });
-  } catch (e) {
-    if (e.code !== 'ENOENT' && e.code !== 'ENOTDIR') {
-      throw e;
-    }
-  }
+  // Clear old packages
+  await deleteDirectoryIfPresent('platform/lldb');
+  await deleteDirectoryIfPresent('platform/zig');
+
   console.log('Extracting package...');
-  await unzipFile(file, 'platform');
-  console.log('Finished extracting files.');
-  fs.unlink(file, err => {
-    if (err) {
-      throw err;
-    }
-    console.log('Deleted zip file.');
+  await unzipFile(file, 'platform', path => {
+    if (!path.startsWith('extension/lldb')) return null;
+    return path.substring('extension/'.length);
   });
+  console.log('Finished extracting files.');
+  await removeFile(file);
+  console.log('Deleted lldb zip file.');
+
+  await downloadZig(platformId);
+}
+
+function removeFile(file) {
+  return new Promise((resolve, reject) => {
+    fs.unlink(file, err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+function runCommand(cmd) {
+  return new Promise((resolve, reject) => {
+    const proc = child_process.exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      }
+      console.log(stdout);
+      console.log(stderr);
+      resolve(proc.exitCode);
+    });
+  });
+}
+async function downloadZig(platformId) {
+  if (!zigDownloads[platformId]) {
+    console.error(`Unknown platform ("${platformId}"). Add it to .system/download_tools.js`);
+    process.exit(1);
+  }
+  const { fileName, hash: expectedHash } = zigDownloads[platformId];
+  let ext;
+  let name;
+  if (fileName.endsWith('.tar.xz')) {
+    ext = 'tar.xz';
+    name = fileName.substring(0, fileName.length - '.tar.xz'.length);
+  } else if (fileName.endsWith('.zip')) {
+    ext = 'zip';
+    name = fileName.substring(0, fileName.length - '.zip'.length);
+  } else {
+    throw new Error(`Cannot identify archive type from file name: ${fileName}`);
+  }
+
+  const url = `https://ziglang.org/builds/${fileName}`;
+  console.log(`Downloading zig from ${url}`);
+
+  const downloadedFile = 'zig_archive.' + ext;
+  await downloadFile(url, downloadedFile);
+  console.log('Zig download complete. Comparing hash');
+  await compareHash(downloadedFile, expectedHash);
+  console.log('Extracting zig');
+  if (ext === 'tar.xz') {
+    const res = await runCommand(`tar -xf ${downloadedFile} --directory platform`);
+    console.log(`Extraction finished. Exit code ${res}`);
+    fs.promises.rename(`platform/${name}`, 'platform/zig');
+  } else if (ext === 'zip') {
+    await unzipFile(downloadedFile, 'platform/zig', path => {
+      return path.substring((name + '/').length);
+    });
+    console.log('Extraction finished.');
+  }
+  console.log(`Deleting ${downloadedFile}`);
+  await removeFile(downloadedFile);
+  console.log(`Deleted ${downloadedFile}`);
 }
 
 run();
