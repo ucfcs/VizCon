@@ -216,8 +216,12 @@ int vcThreadId()
 {
     #ifdef _WIN32
     return GetCurrentThreadId();
-    #else
-    return (int)gettid();
+    #elif __linux__
+    return (int)syscall(SYS_gettid);
+    #elif __APPLE__
+    uint64_t id;
+    pthread_threadid_np(NULL, &tid);
+    return (int)id;
     #endif
 }
 

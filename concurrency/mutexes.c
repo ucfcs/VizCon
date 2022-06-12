@@ -3,6 +3,7 @@
 
 extern int isLldbActive;
 extern void vizconError(char* func, int err);
+extern int vcThreadId();
 
 // mutexCreate - Create a mutex struct.
 //               Returns: a pointer to the mutex struct.
@@ -108,7 +109,7 @@ void mutexLock(CSMutex* mutex)
                 vizconError("vcMutexLock", VC_ERROR_TIMEOUT);
         }
     #elif __linux__ || __APPLE__ // POSIX version
-        if(mutex->holderID == gettid())
+        if(mutex->holderID == vcThreadId())
         {
             vizconError("vcMutexLock", VC_ERROR_DOUBLELOCK);
             return;
@@ -129,7 +130,7 @@ void mutexLock(CSMutex* mutex)
         if(!ret)
         {
             mutex->available = 0;
-            mutex->holderID = gettid();
+            mutex->holderID = vcThreadId();
         }
         else
         {
@@ -210,7 +211,7 @@ int mutexTryLock(CSMutex* mutex)
             case 0:
             {
                 mutex->available = 0;
-                mutex->holderID = gettid();
+                mutex->holderID = vcThreadId();
                 return 1;
             }
 
@@ -268,7 +269,7 @@ void mutexUnlock(CSMutex* mutex)
             vizconError("vcMutexUnlock", GetLastError());
         }
     #elif __linux__ || __APPLE__ // POSIX version
-        if(mutex->holderID != gettid())
+        if(mutex->holderID != vcThreadId())
         {
             vizconError("vcMutexUnlock", VC_ERROR_CROSSTHREADUNLOCK);
             return;
