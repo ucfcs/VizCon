@@ -138,6 +138,8 @@ def _start(exe, terminalOutputFile, visualizerMode):
         full_file = str(line.GetFileSpec())
         if "mingw-w64" in full_file or "mingw64" in full_file:
             return False
+        if "platform/zig" in full_file or "platform\zig" in full_file:
+            return False
         if "vcuserlibrary" in file:
             return False
         if "threads.c" in file or "semaphore.c" in file or "mutexes.c" in file:
@@ -193,8 +195,8 @@ def _start(exe, terminalOutputFile, visualizerMode):
     error = lldb.SBError()
     #print(launch_info.AddOpenFileAction(0, "CONIN$", True, False))
     if terminalOutputFile is not None:
-        print(launch_info.AddOpenFileAction(1, terminalOutputFile, False, True))
-        print(launch_info.AddOpenFileAction(2, terminalOutputFile, False, True))
+        launch_info.AddOpenFileAction(1, terminalOutputFile, False, True)
+        launch_info.AddOpenFileAction(2, terminalOutputFile, False, True)
     launch_info.SetEnvironmentEntries(["lldbMode=1"], True)
     process = target.Launch(launch_info, error)
     debug_print("Launch info:", error.Success(), error, error.GetCString())

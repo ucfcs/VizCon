@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain, dialog, app, shell } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
-import { sep as pathSep, join, resolve as resolvePath } from 'path';
+import { sep as pathSep, join as pathJoin, resolve as pathResolve } from 'path';
 import split2 from 'split2';
 import * as pty from 'node-pty';
 import { filePathToFileName } from '../util/utils';
@@ -12,7 +12,7 @@ let resourcesDir = '.';
 if (app.isPackaged) {
   resourcesDir = process.resourcesPath;
 } else {
-  resourcesDir = join(__dirname, '/../..');
+  resourcesDir = pathJoin(__dirname, '/../..');
 }
 
 // replace \\ with / to simplify things
@@ -116,7 +116,7 @@ ipcMain.handle('readFilesSync', (e, files: string[]) => {
 ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?: boolean) => {
   // Disallow overwriting install files (namely the examples)
   // Before removing this check, please be aware that on some platform, write access to install files is disabled
-  if (path.startsWith(resolvePath(resourcesDir))) {
+  if (path.startsWith(pathResolve(resourcesDir))) {
     forceDialog = true;
   }
   if (forceDialog || path.includes('tracking://')) {
@@ -143,7 +143,14 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [`"${path}"`, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
-  const commandString = `gcc -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
+  const zigExecutable = pathJoin(resourcesDir, 'platform', 'zig', 'zig');
+  // zig cc uses its own handling for the optimization flag.
+  // In debug mode, as here, that would be -Og, which optimizes out unused variables in a way that doesn't feel nice for a visualizer user
+  // We can sneak the flag past zig using -Xclang -O0.
+  // zig cc also enables sanitization options, so disable those too
+  const zigCc = `"${zigExecutable}" cc -fno-sanitize=undefined -fno-stack-protector -Xclang -O0`;
+
+  const commandString = `${zigCc} -gdwarf-4 -O0 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
   console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
@@ -170,8 +177,12 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
     });
   }
   const terminalOutputFile = term == null ? 'None' : `'${btoa(term._pty)}'`;
+  const env = Object.assign({}, process.env);
+  delete env.PYTHONPATH;
+  delete env.PYTHONHOME;
   const child = spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
+    env,
   });
   child.stdin.write(
     `script import sys; import base64; sys.path.append(base64.b64decode('${btoa(
@@ -221,6 +232,8 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   child.stderr.on('data', (data: string) => {
     console.log(`child process stderr: "${data}"`);
     const str = data + '';
+    // Silence LLDB warning
+    if (str.startsWith('warning: (x86_64) /lib64/libpthread.so.0')) return;
     if (!haveSeenLldbMessage && str.startsWith('(lldb) script import sys;')) {
       haveSeenLldbMessage = true;
       return;
