@@ -90,11 +90,9 @@ void vcSignal(CSSem *sem)
 
 int lldb_hook_semTryWait(CSSem *sem)
 {
-    int res;
     // LLDB
     fprintf(stderr, "Error\n");
-    res = -9;
-    return res;
+    return -9;
 }
 
 void lldb_hook_semClose(CSSem *sem)
@@ -120,11 +118,9 @@ void lldb_hook_unlockMutex(CSMutex *mutex)
 
 int lldb_hook_mutexTryLock(CSMutex *mutex)
 {
-    int res;
     // LLDB
     fprintf(stderr, "Error\n");
-    res = -9;
-    return res;
+    return -9;
 }
 
 void lldb_hook_mutexClose(CSMutex *mutex)

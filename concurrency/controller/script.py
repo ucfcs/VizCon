@@ -241,6 +241,15 @@ def _start(exe, terminalOutputFile, visualizerMode):
             loc = desc.index(" = ")
             var_value = desc[loc + len(" = "):]
         return {'name': lldb_var.GetName(), 'type': type_name, 'value': var_value}
+    def returnIntFromFrame(thread, frame, int_val):
+        # CreateValueFromData is an instance method, so we need a valid SBValue to start with.
+        # There's probably another way to do this, but this is easy
+        lldbActiveValue = thread.GetFrameAtIndex(0).GetModule().FindFirstGlobalVariable(target, "isLldbActive")
+        assert lldbActiveValue.IsValid()
+        
+        result_sbdata = lldb.SBData.CreateDataFromSInt32Array(lldb.eByteOrderLittle, 8, [int_val])
+        result_sbvalue = lldbActiveValue.CreateValueFromData("retval", result_sbdata, target.GetBasicType(lldb.eBasicTypeInt))
+        thread.ReturnFromFrame(frame, result_sbvalue)
 
     ignore_set = set()
     respondToVisualizer({'type': 'hello'})
@@ -291,6 +300,8 @@ def _start(exe, terminalOutputFile, visualizerMode):
             for t in process:
                 t.Resume()
             process.Continue()
+            while process.state != lldb.eStateExited:
+                process.Continue()
             respondToVisualizer({'type': 'process_end', 'code': process.GetExitStatus()})
             sys.exit(0)
         else:
@@ -331,15 +342,8 @@ def _start(exe, terminalOutputFile, visualizerMode):
                         continue
                     if isStoppedForBreakpoint(t, hook_semTryWait_bp):
                         sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                        while True:
-                            val = t.GetFrameAtIndex(0).FindVariable("res")
-                            if val.IsValid():
-                                break
-                            t.StepInstruction(False)
-                        
                         result = thread_man.onTryWaitSem(t, str(sem))
-                        val.SetValueFromCString("1" if result else "0")
-                        t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
+                        returnIntFromFrame(t, t.GetFrameAtIndex(0), 1 if result else 0)
                         t.StepOut()
                         handledBreakpoint = True
                         continue
@@ -370,14 +374,8 @@ def _start(exe, terminalOutputFile, visualizerMode):
                         continue
                     if isStoppedForBreakpoint(t, hook_mutexTryLock_bp):
                         mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                        while True:
-                            val = t.GetFrameAtIndex(0).FindVariable("res")
-                            if val.IsValid():
-                                break
-                            t.StepInstruction(False)
                         result = thread_man.onTryLockMutex(t, str(mutex))
-                        val.SetValueFromCString("1" if result else "0")
-                        t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
+                        returnIntFromFrame(t, t.GetFrameAtIndex(0), 1 if result else 0)
                         t.StepOut()
                         handledBreakpoint = True
                         continue
