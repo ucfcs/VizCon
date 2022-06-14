@@ -1,7 +1,7 @@
 {
   "name": "vizcon",
   "productName": "vizcon",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "description": "A software tool used for education and demonstration of the concept of concurrency in operating systems.",
   "main": ".webpack/main",
   "scripts": {
@@ -12,7 +12,7 @@
     "lint": "eslint --ext .ts,.tsx .",
     "format": "prettier --write .",
     "test": "npx playwright test",
-    "downloadLldb": "node .system/download_tools.js"
+    "downloadPlatformTools": "node .system/download_tools.js"
   },
   "keywords": [],
   "author": {
@@ -26,7 +26,8 @@
         "extraResource": [
           "./concurrency",
           "./platform",
-          "./examples"
+          "./examples",
+          "./docs/VizCon-User-Guide.pdf"
         ],
         "icon": "./icons/icon"
       },

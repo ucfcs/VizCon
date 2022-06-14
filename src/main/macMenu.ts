@@ -3,7 +3,7 @@ import Electron, { app, shell, Menu, BrowserWindow, dialog, ipcMain } from 'elec
 function clickCallback(title: string, optName: string) {
   BrowserWindow.getAllWindows()[0].webContents.executeJavaScript(`
 (function() {
-  let event = new Event('Nav-${title}-${optName}');
+  let event = new Event("Nav-${title}-${optName}");
   console.log(event);
   window.dispatchEvent(event);
 })();
@@ -142,6 +142,14 @@ const template: Electron.MenuItemConstructorOptions[] = [
         accelerator: '',
         click: () => {
           clickCallback('View', 'Show Visualizer');
+        },
+      },
+      { type: 'separator' },
+      {
+        label: "Show User's Guide",
+        accelerator: '',
+        click: () => {
+          clickCallback('View', "Show User's Guide");
         },
       },
       { type: 'separator' },

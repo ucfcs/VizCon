@@ -4,9 +4,10 @@ interface LandingProps {
   newFile: () => void;
   openFile: () => void;
   openExampleFile: () => void;
+  openUserGuide: () => void;
 }
 
-export default function Landing({ newFile, openFile, openExampleFile }: LandingProps): React.ReactElement {
+export default function Landing({ newFile, openFile, openExampleFile, openUserGuide }: LandingProps): React.ReactElement {
   return (
     <div className="landing">
       <h2>Welcome to VizCon!</h2>
@@ -19,6 +20,9 @@ export default function Landing({ newFile, openFile, openExampleFile }: LandingP
       <br />
       <h4>
         To see an example, <a onClick={openExampleFile}>open an example file</a>.
+      </h4>
+      <h4>
+        Or <a onClick={openUserGuide}>view the user's guide</a>
       </h4>
 
       {/* TODO: dispay recent files */}

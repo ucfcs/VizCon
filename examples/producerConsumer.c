@@ -7,9 +7,10 @@ vcSem empty1, *empty2, *empty3, *full1, *full2, *full3;
 
 void* Producer(void* param)
 {
-    int r, i;
+    int r;
+    int i;
     srand(vcThreadId());
-    for(i=0; i<loop; i++)
+    for (i = 0; i < loop; i++)
     {
         r = rand() % 99 + 1;
         vcSemWait(empty1);
@@ -25,10 +26,10 @@ void* Producer(void* param)
 void* CheckEven(void* param)
 {
     int n;
-    while(1)
+    while (1)
     {
         vcSemWait(full1);
-        if(exitStatus == 1)
+        if (exitStatus == 1)
         {
             break;
         }
@@ -37,7 +38,7 @@ void* CheckEven(void* param)
         vcSemWait(empty2);
         b2 = n;
         vcSemSignal(full2);
-        if(n % 2 == 0)
+        if (n % 2 == 0)
         {
             vcSemWait(empty2);
             b2 = 0;
@@ -52,11 +53,12 @@ void* CheckEven(void* param)
 
 void* CheckLine(void* param)
 {
-    int n, count = 1;
-    while(1)
+    int n;
+    int count = 1;
+    while (1)
     {
         vcSemWait(full2);
-        if(exitStatus == 2)
+        if (exitStatus == 2)
         {
             break;
         }
@@ -65,7 +67,7 @@ void* CheckLine(void* param)
         vcSemWait(empty3);
         b3 = n;
         vcSemSignal(full3);
-        if(count % 5 == 0)
+        if (count % 5 == 0)
         {
             vcSemWait(empty3);
             b3 = -1;
@@ -82,16 +84,16 @@ void* CheckLine(void* param)
 void* Consumer(void* param)
 {
     int k;
-    while(1)
+    while (1)
     {
         vcSemWait(full3);
-        if(exitStatus == 3)
+        if (exitStatus == 3)
         {
             break;
         }
         k = b3;
         vcSemSignal(empty3);
-        if(k < 0)
+        if (k < 0)
         {
             printf("\n");
         }
@@ -112,6 +114,7 @@ int main()
     full1 = vcSemCreateInitial(1, 0);
     full2 = vcSemCreateInitial(1, 0);
     full3 = vcSemCreateInitial(1, 0);
+    
     vcThreadQueue(Producer, NULL);
     vcThreadQueue(CheckEven, NULL);
     vcThreadQueue(CheckLine, NULL);

@@ -1,8 +1,8 @@
-import { BrowserWindow, ipcMain, dialog, app } from 'electron';
+import { BrowserWindow, ipcMain, dialog, app, shell } from 'electron';
 import { readFileSync, writeFileSync } from 'fs';
 import { exec, spawn } from 'child_process';
 import { cwd } from 'process';
-import { sep as pathSep } from 'path';
+import { sep as pathSep, join as pathJoin, resolve as pathResolve } from 'path';
 import split2 from 'split2';
 import * as pty from 'node-pty';
 import { filePathToFileName } from '../util/utils';
@@ -10,11 +10,16 @@ import { filePathToFileName } from '../util/utils';
 // determine where the concurrency folder is
 let resourcesDir = '.';
 if (app.isPackaged) {
-  // replace \\\\ (two escaped \\) with / to simplify things
-  resourcesDir = process.resourcesPath.replace(/\\\\/g, pathSep);
+  resourcesDir = process.resourcesPath;
+} else {
+  resourcesDir = pathJoin(__dirname, '/../..');
 }
 
+// replace \\ with / to simplify things
+resourcesDir = resourcesDir.replace(/\\/g, pathSep);
+
 const concurrencyFolder = resourcesDir + pathSep + 'concurrency' + pathSep;
+const docsFolder = resourcesDir + pathSep + 'docs' + pathSep;
 
 const library = ['vcuserlibrary.c', 'lldb_lib.c', 'utils.c', 'mutexes.c', 'semaphores.c', 'threads.c'];
 const libraryPaths = library.map(file => {
@@ -60,7 +65,7 @@ ipcMain.handle('isMaximized', e => {
 ipcMain.handle('openFileDialog', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
   const results = dialog.showOpenDialogSync(window, {
-    filters: [{ name: 'C Language File', extensions: ['c'] }],
+    filters: [{ name: 'C Language Files', extensions: ['c'] }],
     properties: ['openFile', 'multiSelections'],
     defaultPath: lastSuccessfulFile,
   });
@@ -73,8 +78,9 @@ ipcMain.handle('openFileDialog', e => {
 
 ipcMain.handle('openExampleFileDialog', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
+  console.log("default example path: ", resourcesDir + pathSep + 'examples');
   const results = dialog.showOpenDialogSync(window, {
-    filters: [{ name: 'C Language File', extensions: ['c'] }],
+    filters: [{ name: 'C Language Files', extensions: ['c'] }],
     properties: ['openFile', 'multiSelections'],
     defaultPath: resourcesDir + pathSep + 'examples',
   });
@@ -83,6 +89,17 @@ ipcMain.handle('openExampleFileDialog', e => {
   }
   updateLastSuccessfulFile(results);
   return results;
+});
+
+ipcMain.handle('openUserGuide', () => {
+  shell
+    .openPath(docsFolder + 'VizCon-User-Guide.pdf')
+    .catch(err => console.error('openUserGuide error:', err))
+    .then(err => {
+      if (err) {
+        console.error('openUserGuide error:', err);
+      }
+    });
 });
 
 ipcMain.handle('readFilesSync', (e, files: string[]) => {
@@ -97,10 +114,15 @@ ipcMain.handle('readFilesSync', (e, files: string[]) => {
 });
 
 ipcMain.handle('saveFileToDisk', (e, path: string, content: string, forceDialog?: boolean) => {
+  // Disallow overwriting install files (namely the examples)
+  // Before removing this check, please be aware that on some platform, write access to install files is disabled
+  if (path.startsWith(pathResolve(resourcesDir))) {
+    forceDialog = true;
+  }
   if (forceDialog || path.includes('tracking://')) {
     const window = BrowserWindow.fromWebContents(e.sender);
     const newPath = dialog.showSaveDialogSync(window, {
-      filters: [{ name: 'C Language File', extensions: ['c'] }],
+      filters: [{ name: 'C Language Files', extensions: ['c'] }],
       properties: ['createDirectory', 'showOverwriteConfirmation'],
     });
 
@@ -121,7 +143,14 @@ ipcMain.handle('compileFile', async (e, path: string) => {
   const files = [`"${path}"`, ...libraryPaths];
   const outputFile = app.getPath('temp') + pathSep + filePathToFileName(path) + (process.platform === 'win32' ? '.exe' : '');
 
-  const commandString = `gcc -gdwarf-4 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
+  const zigExecutable = pathJoin(resourcesDir, 'platform', 'zig', 'zig');
+  // zig cc uses its own handling for the optimization flag.
+  // In debug mode, as here, that would be -Og, which optimizes out unused variables in a way that doesn't feel nice for a visualizer user
+  // We can sneak the flag past zig using -Xclang -O0.
+  // zig cc also enables sanitization options, so disable those too
+  const zigCc = `"${zigExecutable}" cc -fno-sanitize=undefined -fno-stack-protector -Xclang -O0`;
+
+  const commandString = `${zigCc} -gdwarf-4 -O0 ${files.join(' ')} -I ${concurrencyFolder} -o "${outputFile}" -Wall`;
   console.log('CompileString:', commandString);
 
   const prom = new Promise(resolve => {
@@ -152,8 +181,12 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
     });
   }
   const terminalOutputFile = term == null ? 'None' : `'${btoa(term._pty)}'`;
+  const env = Object.assign({}, process.env);
+  delete env.PYTHONPATH;
+  delete env.PYTHONHOME;
   const child = spawn(lldb, {
     stdio: ['pipe', 'pipe', 'pipe', 'pipe'],
+    env,
   });
   child.stdin.write(
     `script import sys; import base64; sys.path.append(base64.b64decode('${btoa(
@@ -202,6 +235,8 @@ function launchProgram(path: string, port: Electron.MessagePortMain): void {
   child.stderr.on('data', (data: string) => {
     console.log(`child process stderr: "${data}"`);
     const str = data + '';
+    // Silence LLDB warning
+    if (str.startsWith('warning: (x86_64) /lib64/libpthread.so.0')) return;
     if (!haveSeenLldbMessage && str.startsWith('(lldb) script import sys;')) {
       haveSeenLldbMessage = true;
       return;
