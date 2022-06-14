@@ -10,11 +10,13 @@
 // Platform-dependent libraries
 #ifdef _WIN32 
     #include <windows.h>
-#elif __linux__ || __APPLE__ 
+#elif __linux__
     #include <pthread.h>
     #include <errno.h>
     #include <sys/syscall.h>
-    #define gettid() syscall(SYS_gettid)
+#elif __APPLE__
+    #include <pthread.h>
+    #include <errno.h>
 #endif
 
 // VizCon error codes
