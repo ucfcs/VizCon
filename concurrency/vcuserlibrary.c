@@ -220,7 +220,7 @@ int vcThreadId()
     return (int)syscall(SYS_gettid);
     #elif __APPLE__
     uint64_t id;
-    pthread_threadid_np(NULL, &tid);
+    pthread_threadid_np(NULL, &id);
     return (int)id;
     #endif
 }
