@@ -20,6 +20,7 @@
 #endif
 
 // VizCon error codes
+#define VC_SUCCESS 0
 // X - Error with object creation
 #define VC_ERROR_MEMORY -1
 #define VC_ERROR_BADCOUNT -2
@@ -35,3 +36,7 @@
 // 2X - Unexpected system response (Windows only)
 #define VC_ERROR_ABANDONED -21
 #define VC_ERROR_TIMEOUT -22
+
+void initVizconSem(void);
+void closeVizconSem(void);
+void vizconError(char* func, int err);

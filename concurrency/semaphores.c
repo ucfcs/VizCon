@@ -10,23 +10,44 @@ extern CSSem *vizconSem;
 // semCreate - Create a semaphore with a given max value.
 //             Returns: a pointer to the semaphore struct.
 CSSem* semCreate(SEM_VALUE maxValue)
-{    
+{
+    if (isLldbActive)
+    {
+        return lldb_semCreate(maxValue);
+    }
+    else
+    {
+        return platform_semCreate(maxValue);
+    }
+}
+
+CSSem* allocSem(SEM_VALUE maxValue)
+{
     // Attempt to allocate the struct. Error out on failure.
     CSSem* sem = (CSSem*) malloc(sizeof(CSSem));
     if (sem == NULL) 
         vizconError("vcSemCreate/vcSemCreateNamed", VC_ERROR_MEMORY);
     
-    // Set non-semaphore properties.
+    // Initialize properties.
+    sem->sem = NULL;
     sem->count = maxValue;
     sem->maxCount = maxValue;
     sem->next = NULL;
-    sem->count = maxValue;
-    if (isLldbActive && vizconSem != (void*)-1)
-    {
-        sem->sem = NULL;
-        lldb_hook_registerSem(sem, sem->count, maxValue);
-        return sem;
-    }
+    return sem;
+}
+
+CSSem* lldb_semCreate(SEM_VALUE maxValue)
+{
+    CSSem* sem = allocSem(maxValue);
+    sem->sem = NULL;
+    lldb_hook_registerSem(sem, sem->count, sem->maxCount);
+    return sem;
+}
+    
+CSSem* platform_semCreate(SEM_VALUE maxValue)
+{
+    CSSem* sem = allocSem(maxValue);
+
     // Platform-dependent semaphore creation.
     // Create a mutex with default settings. Error out where needed.
     #ifdef _WIN32 // Windows version
@@ -60,7 +81,7 @@ CSSem* semCreate(SEM_VALUE maxValue)
 //           When it is, attain 1 permit and decrement its count
 void semWait(CSSem* sem)
 {
-    if (isLldbActive)
+    if (isLldbActive && sem->sem == NULL)
     {
         lldb_hook_semWait(sem);
         // The simulation controller should ensure this executes uninterrupted
@@ -88,7 +109,7 @@ void platform_semWait(CSSem* sem)
             // WAIT_OBJECT_0: Success. Decrement the count.
             case WAIT_OBJECT_0:
             {
-                if(sem == vizconSem)
+                if(sem == vizconSem || vizconSem == NULL)
                 {
                     break;
                 }
@@ -118,7 +139,7 @@ void platform_semWait(CSSem* sem)
     #elif __linux__ || __APPLE__ // POSIX version
         if(sem_wait(sem->sem))
             vizconError("vcSemWait/vcSemWaitMult", errno);
-        if(sem == vizconSem)
+        if(sem == vizconSem || vizconSem == NULL)
         {
             return;
         }
@@ -133,7 +154,7 @@ void platform_semWait(CSSem* sem)
 //              Returns: 1 if permit was available, 0 otherwise.
 int semTryWait(CSSem* sem)
 {
-    if (isLldbActive)
+    if (isLldbActive && sem->sem == NULL)
     {
         int success = lldb_hook_semTryWait(sem);
         if (success)
@@ -150,7 +171,7 @@ int semTryWait(CSSem* sem)
             // WAIT_OBJECT_0 - No error. Decrement the counter.
             case WAIT_OBJECT_0:
             {
-                if(sem == vizconSem)
+                if(sem == vizconSem || vizconSem == NULL)
                 {
                     break;
                 }
@@ -186,6 +207,10 @@ int semTryWait(CSSem* sem)
         // 0 - Success. Mark mutex as unavailable.
         if(!ret)
         {
+            if (sem == vizconSem || vizconSem == NULL)
+            {
+                return 1;
+            }
             platform_semWait(vizconSem);
             sem->count = sem->count - 1;
             platform_semSignal(vizconSem);
@@ -212,10 +237,11 @@ int semTryWait(CSSem* sem)
 // semSignal - Release 1 permit from sem and increment its count.
 void semSignal(CSSem* sem)
 {
-    if (isLldbActive)
+    if (isLldbActive && sem->sem == NULL)
     {
         int res = lldb_hook_semSignal(sem);
-        printf("vcerror %d\n", res);
+        if (res != VC_SUCCESS)
+            vizconError("vcSemSignal/vcSemSignalMult", res);
         // The simulation controller should ensure this executes uninterrupted
         // but the other usages might need attention
         sem->count = sem->count + 1;
@@ -228,11 +254,11 @@ void platform_semSignal(CSSem* sem)
 {
     // Platform-dependent senaphore release.
     #ifdef _WIN32 // Windows version
-        if(sem != vizconSem && (sem->count + 1) > sem->maxCount)
+        if(sem != vizconSem && vizconSem != NULL && (sem->count + 1) > sem->maxCount)
             vizconError("vcSemSignal/vcSemSignalMult", VC_ERROR_SEMVALUELIMIT);
         if(!ReleaseSemaphore(sem->sem, 1, NULL))
             vizconError("vcSemSignal/vcSemSignalMult", GetLastError());
-        if(sem == vizconSem)
+        if(sem == vizconSem || vizconSem == NULL)
         {
             return;
         }
@@ -242,7 +268,7 @@ void platform_semSignal(CSSem* sem)
     #elif __linux__ || __APPLE__ // POSIX version
         if(sem_post(sem->sem))
             vizconError("vcSemSignal/vcSemSignalMult", errno);
-        if(sem == vizconSem)
+        if(sem == vizconSem || vizconSem == NULL)
         {
             return;
         }

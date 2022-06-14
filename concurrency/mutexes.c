@@ -72,7 +72,8 @@ void mutexLock(CSMutex* mutex)
         if (isLldbActive)
         {
             int res = lldb_hook_lockMutex(mutex);
-            printf("vcerror %d\n", res);
+            if (res != VC_SUCCESS)
+                vizconError("vcMutexLock", res);
             ret = WAIT_OBJECT_0;
         }
         else
@@ -120,7 +121,8 @@ void mutexLock(CSMutex* mutex)
         if (isLldbActive)
         {
             int res = lldb_hook_lockMutex(mutex);
-            printf("vcerror %d\n", res);
+            if (res != VC_SUCCESS)
+                vizconError("vcMutexLock", res);
             ret = 0;
         }
         else
@@ -262,7 +264,8 @@ void mutexUnlock(CSMutex* mutex)
         if (isLldbActive)
         {
             int res = lldb_hook_unlockMutex(mutex);
-            printf("vcerror %d\n", res);
+            if (res != VC_SUCCESS)
+                vizconError("vcMutexUnlock", res);
             return;
         }
         if(!ReleaseMutex(mutex->mutex))
@@ -282,7 +285,8 @@ void mutexUnlock(CSMutex* mutex)
         if (isLldbActive)
         {
             int res = lldb_hook_unlockMutex(mutex);
-            printf("vcerror %d\n", res);
+            if (res != VC_SUCCESS)
+                vizconError("vcMutexUnlock", res);
             ret = 0;
         }
         else

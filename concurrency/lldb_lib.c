@@ -3,9 +3,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include "lldb_lib.h"
+#include "utils.h"
 
 extern int userMain();
-extern void vizconSemCheck();
+
 CSSem *sem_wait_create_thread;
 int isLldbActive; 
 
@@ -49,7 +50,7 @@ void lldb_hook_threadSleep(int milliseconds)
     // LLDB
 }
 
-void vc_internal_init()
+void vc_internal_lldb_init(void)
 {
     char *lldbMode = getenv("lldbMode");
     isLldbActive = lldbMode != NULL && strcmp(lldbMode, "1") == 0;
@@ -66,10 +67,8 @@ void vc_internal_init()
 
     if (isLldbActive)
     {
-        isLldbActive = 0; // Global state is bad
-        sem_wait_create_thread = semCreate(1);
+        sem_wait_create_thread = platform_semCreate(1);
         platform_semWait(sem_wait_create_thread);
-        isLldbActive = 1;
     }
 }
 
@@ -137,9 +136,19 @@ void lldb_hook_mutexClose(CSMutex *mutex)
 
 int main()
 {
-    vizconSemCheck();
-    vc_internal_init();
+    vc_internal_lldb_init();
+
+    if (!isLldbActive)
+    {
+        initVizconSem();
+    }
+
     int ret = userMain();
-    vizconSemCheck();
+
+    if (!isLldbActive)
+    {
+        closeVizconSem();
+    }
+    
     return ret;
 }

@@ -135,8 +135,6 @@ def _start(exe, terminalOutputFile, visualizerMode):
         if "threads.c" in file:
             return False
         full_file = str(line.GetFileSpec())
-        if "mingw-w64" in full_file or "mingw64" in full_file:
-            return False
         if "platform/zig" in full_file or "platform\zig" in full_file:
             return False
         if "vcuserlibrary" in file:
