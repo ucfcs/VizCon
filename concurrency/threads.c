@@ -99,7 +99,7 @@ void joinThread(CSThread *thread)
     // Platform-dependent thread joining.
     // Wait for the thread to finish.
     if (isLldbActive) {
-        vcJoin(thread, NULL);
+        lldb_hook_joinThread(thread);
         return;
     }
     #ifdef _WIN32 // Windows version

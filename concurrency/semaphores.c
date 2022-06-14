@@ -24,7 +24,7 @@ CSSem* semCreate(SEM_VALUE maxValue)
     if (isLldbActive && vizconSem != (void*)-1)
     {
         sem->sem = NULL;
-        vc_internal_registerSem(sem, sem->count, maxValue);
+        lldb_hook_registerSem(sem, sem->count, maxValue);
         return sem;
     }
     // Platform-dependent semaphore creation.
@@ -62,7 +62,7 @@ void semWait(CSSem* sem)
 {
     if (isLldbActive)
     {
-        vcWait(sem);
+        lldb_hook_semWait(sem);
         // The simulation controller should ensure this executes uninterrupted
         // but the other usages might need attention
         sem->count = sem->count - 1;
@@ -214,7 +214,8 @@ void semSignal(CSSem* sem)
 {
     if (isLldbActive)
     {
-        vcSignal(sem);
+        int res = lldb_hook_semSignal(sem);
+        printf("vcerror %d\n", res);
         // The simulation controller should ensure this executes uninterrupted
         // but the other usages might need attention
         sem->count = sem->count + 1;

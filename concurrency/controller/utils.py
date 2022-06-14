@@ -7,12 +7,4 @@ class VizconErrorCode(Enum):
     VC_ERROR_SEMVALUELIMIT = -14
     # This error only exists in the visualizer.
     VC_ERROR_DEADLOCK = 15
-
-class SemValueLimitError(Exception):
-    pass
-
-class DoubleLockError(Exception):
-    pass
-
-class CrossThreadUnlockError(Exception):
-    pass
+    VC_SUCCESS = 0

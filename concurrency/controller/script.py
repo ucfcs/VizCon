@@ -1,5 +1,4 @@
 from time import sleep
-from concurrency.controller.utils import CrossThreadUnlockError, DoubleLockError, SemValueLimitError
 from utils import VizconErrorCode
 from thread_manager import ThreadManager
 import lldb
@@ -168,27 +167,34 @@ def _start(exe, terminalOutputFile, visualizerMode):
         respondToVisualizer({'type': 'start_error', 'error': 'Visualizer launch error: Failed to create target process'})
         sys.exit(2)
 
+    def createBreakpoint(name):
+        bp = target.BreakpointCreateByName(name, target.GetExecutable().GetFilename())
+        assert bp
+        assert bp.IsValid()
+        assert bp.IsEnabled()
+        assert bp.GetNumLocations() == 1
+        return bp
     # If the target is valid set a breakpoint at main
-    main_bp = target.BreakpointCreateByName("userMain", target.GetExecutable().GetFilename())
-    thread_bp = target.BreakpointCreateByName("do_post", target.GetExecutable().GetFilename())
-    hook_createThread_bp = target.BreakpointCreateByName("lldb_hook_createThread", target.GetExecutable().GetFilename())
-    vcJoin_bp = target.BreakpointCreateByName("vcJoin", target.GetExecutable().GetFilename())
-    hook_freeThread_bp = target.BreakpointCreateByName("lldb_hook_freeThread", target.GetExecutable().GetFilename())
-    hook_threadSleep_bp = target.BreakpointCreateByName("lldb_hook_threadSleep", target.GetExecutable().GetFilename())
+    main_bp = createBreakpoint("userMain")
+    thread_bp = createBreakpoint("do_post")
+    hook_createThread_bp = createBreakpoint("lldb_hook_createThread")
+    vcJoin_bp = createBreakpoint("lldb_hook_joinThread")
+    hook_freeThread_bp = createBreakpoint("lldb_hook_freeThread")
+    hook_threadSleep_bp = createBreakpoint("lldb_hook_threadSleep")
 
     # Semaphore breakpoints
-    vc_internal_registerSem_bp = target.BreakpointCreateByName("vc_internal_registerSem", target.GetExecutable().GetFilename())
-    vcWait_bp = target.BreakpointCreateByName("vcWait", target.GetExecutable().GetFilename())
-    vcSignal_bp = target.BreakpointCreateByName("vcSignal", target.GetExecutable().GetFilename())
-    hook_semTryWait_bp = target.BreakpointCreateByName("lldb_hook_semTryWait", target.GetExecutable().GetFilename())
-    hook_semClose_bp = target.BreakpointCreateByName("lldb_hook_semClose", target.GetExecutable().GetFilename())
+    vc_internal_registerSem_bp = createBreakpoint("lldb_hook_registerSem")
+    vcWait_bp = createBreakpoint("lldb_hook_semWait")
+    vcSignal_bp = createBreakpoint("lldb_hook_semSignal")
+    hook_semTryWait_bp = createBreakpoint("lldb_hook_semTryWait")
+    hook_semClose_bp = createBreakpoint("lldb_hook_semClose")
 
     # Mutex breakpoints
-    registerMutex_bp = target.BreakpointCreateByName ("lldb_hook_registerMutex", target.GetExecutable().GetFilename())
-    lockMutex_bp = target.BreakpointCreateByName ("lldb_hook_lockMutex", target.GetExecutable().GetFilename())
-    unlockMutex_bp = target.BreakpointCreateByName ("lldb_hook_unlockMutex", target.GetExecutable().GetFilename())
-    hook_mutexTryLock_bp = target.BreakpointCreateByName ("lldb_hook_mutexTryLock", target.GetExecutable().GetFilename())
-    hook_mutexClose_bp = target.BreakpointCreateByName("lldb_hook_mutexClose", target.GetExecutable().GetFilename())
+    registerMutex_bp = createBreakpoint("lldb_hook_registerMutex")
+    lockMutex_bp = createBreakpoint("lldb_hook_lockMutex")
+    unlockMutex_bp = createBreakpoint("lldb_hook_unlockMutex")
+    hook_mutexTryLock_bp = createBreakpoint("lldb_hook_mutexTryLock")
+    hook_mutexClose_bp = createBreakpoint("lldb_hook_mutexClose")
 
     launch_info = target.GetLaunchInfo()
 
@@ -203,7 +209,6 @@ def _start(exe, terminalOutputFile, visualizerMode):
 
     main_thread = None
     for t in process:
-        debug_now(t, process)
         if isStoppedForBreakpoint(t, main_bp):
             debug_print("Main thread:", t)
             # TODO: probably get an ID for the thread
@@ -318,146 +323,142 @@ def _start(exe, terminalOutputFile, visualizerMode):
             handledBreakpoint = False
             for t in process:
                 # Semaphores:
-                try:
-                    if isStoppedForBreakpoint(t, vc_internal_registerSem_bp):
-                        new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                        new_sem_initial_value = t.GetFrameAtIndex(0).FindVariable("initialValue").GetValueAsSigned()
-                        new_sem_max_value = t.GetFrameAtIndex(0).FindVariable("maxValue").GetValueAsSigned()
-                        #debug_print("Registering new semaphore:", new_sem, new_sem_name, new_sem_initial_value, new_sem_max_value)
-                        thread_man.registerSem(str(new_sem), new_sem_initial_value, new_sem_max_value)
-                        process.Continue()
-                        handledBreakpoint = True
+                if isStoppedForBreakpoint(t, vc_internal_registerSem_bp):
+                    new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    new_sem_initial_value = t.GetFrameAtIndex(0).FindVariable("initialValue").GetValueAsSigned()
+                    new_sem_max_value = t.GetFrameAtIndex(0).FindVariable("maxValue").GetValueAsSigned()
+                    #debug_print("Registering new semaphore:", new_sem, new_sem_name, new_sem_initial_value, new_sem_max_value)
+                    thread_man.registerSem(str(new_sem), new_sem_initial_value, new_sem_max_value)
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, vcWait_bp):
+                    new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    thread_man.onWaitSem(t, str(new_sem))
+                    t.StepInstruction(False)
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, vcSignal_bp):
+                    new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    vc_res = thread_man.onSignalSem(t, str(new_sem))
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), vc_res.value)
+                    t.StepOut()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_semTryWait_bp):
+                    sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    result = thread_man.onTryWaitSem(t, str(sem))
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), 1 if result else 0)
+                    t.StepOut()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_semClose_bp):
+                    new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
+                    thread_man.onCloseSem(t, str(new_sem))
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
+                # Mutexes:
+                if isStoppedForBreakpoint(t, registerMutex_bp):
+                    new_mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    thread_man.registerMutex(str(new_mutex))
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, lockMutex_bp):
+                    mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    vc_res = thread_man.onLockMutex(t, str(mutex_ptr))
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), vc_res.value)
+                    t.StepInstruction(False) # returnFromFrame doesn't reset the stop reason
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, unlockMutex_bp):
+                    mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    vc_res = thread_man.onUnlockMutex(t, str(mutex_ptr))
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), vc_res.value)
+                    t.StepOut()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_mutexTryLock_bp):
+                    mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    result = thread_man.onTryLockMutex(t, str(mutex))
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), 1 if result else 0)
+                    t.StepOut()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_mutexClose_bp):
+                    mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
+                    thread_man.onCloseMutex(t, str(mutex_ptr))
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
+                # Other:
+                if isStoppedForBreakpoint(t, vcJoin_bp):
+                    if t.GetThreadID() in ignore_set:
+                        if verbose:
+                            debug_print("Ignoring a thread")
                         continue
-                    if isStoppedForBreakpoint(t, vcWait_bp):
-                        new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                        thread_man.onWaitSem(t, str(new_sem))
-                        t.StepInstruction(False)
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, vcSignal_bp):
-                        new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                        thread_man.onSignalSem(t, str(new_sem))
-                        process.Continue()
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, hook_semTryWait_bp):
-                        sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                        result = thread_man.onTryWaitSem(t, str(sem))
-                        returnIntFromFrame(t, t.GetFrameAtIndex(0), 1 if result else 0)
-                        t.StepOut()
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, hook_semClose_bp):
-                        new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                        thread_man.onCloseSem(t, str(new_sem))
-                        process.Continue()
-                        handledBreakpoint = True
-                        continue
-                    # Mutexes:
-                    if isStoppedForBreakpoint(t, registerMutex_bp):
-                        new_mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                        thread_man.registerMutex(str(new_mutex))
-                        process.Continue()
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, lockMutex_bp):
-                        mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                        thread_man.onLockMutex(t, str(mutex_ptr))
-                        t.StepInstruction(False)
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, unlockMutex_bp):
-                        mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                        thread_man.onUnlockMutex(t, str(mutex_ptr))
-                        process.Continue()
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, hook_mutexTryLock_bp):
-                        mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                        result = thread_man.onTryLockMutex(t, str(mutex))
-                        returnIntFromFrame(t, t.GetFrameAtIndex(0), 1 if result else 0)
-                        t.StepOut()
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, hook_mutexClose_bp):
-                        mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                        thread_man.onCloseMutex(t, str(mutex_ptr))
-                        process.Continue()
-                        handledBreakpoint = True
-                        continue
-                    # Other:
-                    if isStoppedForBreakpoint(t, vcJoin_bp):
-                        if t.GetThreadID() in ignore_set:
+                    thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                    ignore_set.add(t.GetThreadID())
+                    thread_man.onJoin(t, thread_val)
+                    t.StepInstruction(False)
+                    continue
+                if isStoppedForBreakpoint(t, hook_createThread_bp):
+                    new_thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                    new_thread_name_ptr = t.GetFrameAtIndex(0).FindVariable("name")
+                    new_thread_name = process.ReadCStringFromMemory(new_thread_name_ptr.GetValueAsUnsigned(), 1024, lldb.SBError())
+                    #debug_print("New thread", new_thread_ptr)
+                    running_thread.Resume()
+                    process.Continue()
+                    new_thread_lldb = None
+                    for t2 in process:
+                        if isStoppedForBreakpoint(t2, thread_bp):
+                            if t.GetThreadID() in ignore_set:
+                                #debug_print("Ignoring a thread that already hit thread_bp (this should never happen)")
+                                continue
+                            new_thread_lldb = t2
+                            break
+                    if new_thread_lldb is None:
+                        debug_print("Couldn't locate new thread")
+                        sys.exit(10)
+                    
+                    for other_thread in getThreads():
+                        if other_thread != new_thread_lldb:
                             if verbose:
-                                debug_print("Ignoring a thread")
-                            continue
-                        thread_val = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
-                        ignore_set.add(t.GetThreadID())
-                        thread_man.onJoin(t, thread_val)
-                        t.StepInstruction(False)
-                        continue
-                    if isStoppedForBreakpoint(t, hook_createThread_bp):
-                        new_thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
-                        new_thread_name_ptr = t.GetFrameAtIndex(0).FindVariable("name")
-                        new_thread_name = process.ReadCStringFromMemory(new_thread_name_ptr.GetValueAsUnsigned(), 1024, lldb.SBError())
-                        #debug_print("New thread", new_thread_ptr)
-                        running_thread.Resume()
-                        process.Continue()
-                        new_thread_lldb = None
-                        for t2 in process:
-                            if isStoppedForBreakpoint(t2, thread_bp):
-                                if t.GetThreadID() in ignore_set:
-                                    #debug_print("Ignoring a thread that already hit thread_bp (this should never happen)")
-                                    continue
-                                new_thread_lldb = t2
-                                break
-                        if new_thread_lldb is None:
-                            debug_print("Couldn't locate new thread")
-                            sys.exit(10)
-                        
-                        for other_thread in getThreads():
-                            if other_thread != new_thread_lldb:
-                                if verbose:
-                                    debug_print("Temporarily suspending other thread", other_thread)
-                                other_thread.Suspend()
-                        thread_man.onCreateThread({'thread': new_thread_lldb, 'csthread_ptr': new_thread_ptr, 'name': new_thread_name})
-                        for fr in new_thread_lldb:
-                            debug_print(fr)
-                        new_thread_lldb.StepOut()
-                        while True:
-                            if isUserCode(new_thread_lldb):
-                                break
-                            new_thread_lldb.StepInstruction(False)
-                        for t2 in getThreads():
-                            t2.Suspend()
-                        
-                        #debug_print("Resume", main_thread.is_suspended, running_thread, chosen_cthread, chosen_cthread['thread'] == running_thread)
-                        running_thread.Resume()
-                        process.Continue()
-                        #debug_print("Finished resume", main_thread.GetFrameAtIndex(0))
-                        #debug_print(main_thread.stop_reason, main_thread.stop_reason == lldb.eStopReasonBreakpoint)
-                        #for fr in main_thread:
-                        #    debug_print("\t", fr)
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, hook_freeThread_bp):
-                        thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
-                        thread_man.onFreeThread(t, thread_ptr)
-                        process.Continue()
-                        handledBreakpoint = True
-                        continue
-                    if isStoppedForBreakpoint(t, hook_threadSleep_bp):
-                        milliseconds = t.GetFrameAtIndex(0).FindVariable("milliseconds").GetValueAsSigned()
-                        thread_man.onSleepThread(t, milliseconds)
-                        t.StepInstruction(False)
-                        handledBreakpoint = True
-                        continue
-                except SemValueLimitError:
-                    reportError(VizconErrorCode.VC_ERROR_SEMVALUELIMIT)
-                except DoubleLockError:
-                    reportError(VizconErrorCode.VC_ERROR_DOUBLELOCK)
-                except CrossThreadUnlockError:
-                    reportError(VizconErrorCode.VC_ERROR_CROSSTHREADUNLOCK)
+                                debug_print("Temporarily suspending other thread", other_thread)
+                            other_thread.Suspend()
+                    thread_man.onCreateThread({'thread': new_thread_lldb, 'csthread_ptr': new_thread_ptr, 'name': new_thread_name})
+                    for fr in new_thread_lldb:
+                        debug_print(fr)
+                    new_thread_lldb.StepOut()
+                    while True:
+                        if isUserCode(new_thread_lldb):
+                            break
+                        new_thread_lldb.StepInstruction(False)
+                    for t2 in getThreads():
+                        t2.Suspend()
+                    
+                    #debug_print("Resume", main_thread.is_suspended, running_thread, chosen_cthread, chosen_cthread['thread'] == running_thread)
+                    running_thread.Resume()
+                    process.Continue()
+                    #debug_print("Finished resume", main_thread.GetFrameAtIndex(0))
+                    #debug_print(main_thread.stop_reason, main_thread.stop_reason == lldb.eStopReasonBreakpoint)
+                    #for fr in main_thread:
+                    #    debug_print("\t", fr)
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_freeThread_bp):
+                    thread_ptr = t.GetFrameAtIndex(0).FindVariable("thread").GetValue()
+                    thread_man.onFreeThread(t, thread_ptr)
+                    process.Continue()
+                    handledBreakpoint = True
+                    continue
+                if isStoppedForBreakpoint(t, hook_threadSleep_bp):
+                    milliseconds = t.GetFrameAtIndex(0).FindVariable("milliseconds").GetValueAsSigned()
+                    thread_man.onSleepThread(t, milliseconds)
+                    t.StepInstruction(False)
+                    handledBreakpoint = True
+                    continue
                     
             handlingBreakpoints = handledBreakpoint
         # Send the program state to the visualizer

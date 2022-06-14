@@ -34,7 +34,7 @@ void lldb_hook_createThread(CSThread *thread, char *name)
     // LLDB
 }
 
-void vcJoin(CSThread *thread, void *ret)
+void lldb_hook_joinThread(CSThread *thread)
 {
     // pthread_join(thread, &ret);
 }
@@ -56,6 +56,7 @@ void vc_internal_init()
     if (isLldbActive)
     {
         setbuf(stdout, NULL);
+        setbuf(stderr, NULL);
         //fprintf(stderr, "LLDB is active\n");
     }
     else
@@ -73,26 +74,28 @@ void vc_internal_init()
 }
 
 // Semaphores
-void vc_internal_registerSem(CSSem *sem, int initialValue, int maxValue)
+void lldb_hook_registerSem(CSSem *sem, int initialValue, int maxValue)
 {
     // LLDB
 }
 
-void vcWait(CSSem *sem)
+void lldb_hook_semWait(CSSem *sem)
 {
     // LLDB
 }
 
-void vcSignal(CSSem *sem)
+int lldb_hook_semSignal(CSSem *sem)
 {
     // LLDB
+    fprintf(stderr, "lldb_hook_semSignal: Error\n");
+    exit(9);
 }
 
 int lldb_hook_semTryWait(CSSem *sem)
 {
     // LLDB
     fprintf(stderr, "Error\n");
-    return -9;
+    exit(9);
 }
 
 void lldb_hook_semClose(CSSem *sem)
@@ -106,21 +109,25 @@ void lldb_hook_registerMutex(CSMutex *mutex)
     // LLDB
 }
 
-void lldb_hook_lockMutex(CSMutex *mutex)
+int lldb_hook_lockMutex(CSMutex *mutex)
 {
     // LLDB
+    fprintf(stderr, "lldb_hook_lockMutex: Error\n");
+    exit(9);
 }
 
-void lldb_hook_unlockMutex(CSMutex *mutex)
+int lldb_hook_unlockMutex(CSMutex *mutex)
 {
     // LLDB
+    fprintf(stderr, "lldb_hook_unlockMutex: Error\n");
+    exit(9);
 }
 
 int lldb_hook_mutexTryLock(CSMutex *mutex)
 {
     // LLDB
-    fprintf(stderr, "Error\n");
-    return -9;
+    fprintf(stderr, "lldb_hook_mutexTryLock: Error\n");
+    exit(9);
 }
 
 void lldb_hook_mutexClose(CSMutex *mutex)
