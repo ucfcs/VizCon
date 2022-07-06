@@ -18,6 +18,7 @@ const vcErrorMap: VC_ErrorMap = {
 function assertUnreachable(e: never): never {
   throw new Error('Unhandled case detected (assertUnreachable)');
 }
+
 function getErrorMsg(state: VC_ErrorCode): string {
   if (state === vcErrorMap.VC_ERROR_DEADLOCK) return 'All threads are waiting. Deadlock?';
   if (state === vcErrorMap.VC_ERROR_CROSSTHREADUNLOCK) return 'A thread attempted to unlock an mutex that was locked by another thread.';
@@ -63,6 +64,7 @@ export default class VisualizerController {
     this.status = 'pausing';
     this.onRunStateChange('pausing');
   }
+
   resume(): void {
     if (this.status !== 'paused') {
       console.error('The visualizer can only be resumed of it is in the paused state.');
@@ -89,6 +91,7 @@ export default class VisualizerController {
     this.debuggerHandle = handle;
     await this.startLoop();
   }
+
   private async startLoop() {
     this.status = 'running';
     this.onRunStateChange('running');
