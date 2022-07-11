@@ -51,7 +51,7 @@ contextBridge.exposeInMainWorld('platform', {
           return;
         }
         if (msg.type === 'controller_process_exit') {
-          console.log('Controller process exited');
+          console.log('Controller process exited', msg);
           if (!hasStarted) {
             resolve({ err: 'controller exited' });
           } else {
