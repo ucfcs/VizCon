@@ -3,9 +3,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include "lldb_lib.h"
+#include "utils.h"
 
 extern int userMain();
-extern void vizconSemCheck();
+
 CSSem *sem_wait_create_thread;
 int isLldbActive; 
 
@@ -34,7 +35,7 @@ void lldb_hook_createThread(CSThread *thread, char *name)
     // LLDB
 }
 
-void vcJoin(CSThread *thread, void *ret)
+void lldb_hook_joinThread(CSThread *thread)
 {
     // pthread_join(thread, &ret);
 }
@@ -49,13 +50,14 @@ void lldb_hook_threadSleep(int milliseconds)
     // LLDB
 }
 
-void vc_internal_init()
+void vc_internal_lldb_init(void)
 {
     char *lldbMode = getenv("lldbMode");
     isLldbActive = lldbMode != NULL && strcmp(lldbMode, "1") == 0;
     if (isLldbActive)
     {
         setbuf(stdout, NULL);
+        setbuf(stderr, NULL);
         //fprintf(stderr, "LLDB is active\n");
     }
     else
@@ -65,36 +67,34 @@ void vc_internal_init()
 
     if (isLldbActive)
     {
-        isLldbActive = 0; // Global state is bad
-        sem_wait_create_thread = semCreate(1);
+        sem_wait_create_thread = platform_semCreate(1);
         platform_semWait(sem_wait_create_thread);
-        isLldbActive = 1;
     }
 }
 
 // Semaphores
-void vc_internal_registerSem(CSSem *sem, int initialValue, int maxValue)
+void lldb_hook_registerSem(CSSem *sem, int initialValue, int maxValue)
 {
     // LLDB
 }
 
-void vcWait(CSSem *sem)
+void lldb_hook_semWait(CSSem *sem)
 {
     // LLDB
 }
 
-void vcSignal(CSSem *sem)
+int lldb_hook_semSignal(CSSem *sem)
 {
     // LLDB
+    fprintf(stderr, "lldb_hook_semSignal: Error\n");
+    exit(9);
 }
 
 int lldb_hook_semTryWait(CSSem *sem)
 {
-    int res;
     // LLDB
     fprintf(stderr, "Error\n");
-    res = -9;
-    return res;
+    exit(9);
 }
 
 void lldb_hook_semClose(CSSem *sem)
@@ -108,23 +108,25 @@ void lldb_hook_registerMutex(CSMutex *mutex)
     // LLDB
 }
 
-void lldb_hook_lockMutex(CSMutex *mutex)
+int lldb_hook_lockMutex(CSMutex *mutex)
 {
     // LLDB
+    fprintf(stderr, "lldb_hook_lockMutex: Error\n");
+    exit(9);
 }
 
-void lldb_hook_unlockMutex(CSMutex *mutex)
+int lldb_hook_unlockMutex(CSMutex *mutex)
 {
     // LLDB
+    fprintf(stderr, "lldb_hook_unlockMutex: Error\n");
+    exit(9);
 }
 
 int lldb_hook_mutexTryLock(CSMutex *mutex)
 {
-    int res;
     // LLDB
-    fprintf(stderr, "Error\n");
-    res = -9;
-    return res;
+    fprintf(stderr, "lldb_hook_mutexTryLock: Error\n");
+    exit(9);
 }
 
 void lldb_hook_mutexClose(CSMutex *mutex)
@@ -134,9 +136,19 @@ void lldb_hook_mutexClose(CSMutex *mutex)
 
 int main()
 {
-    vizconSemCheck();
-    vc_internal_init();
+    vc_internal_lldb_init();
+
+    if (!isLldbActive)
+    {
+        initVizconSem();
+    }
+
     int ret = userMain();
-    vizconSemCheck();
+
+    if (!isLldbActive)
+    {
+        closeVizconSem();
+    }
+    
     return ret;
 }

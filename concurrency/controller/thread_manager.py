@@ -1,9 +1,10 @@
 from random import Random, randint
-import sys
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, List, Optional
 import time
 import heapq
+
+from utils import VizconErrorCode
 
 @dataclass(order=True)
 class SleepEntry:
@@ -27,7 +28,7 @@ class ThreadManager:
     semaphoreMap = {}
     semWaitLists = {}
     mutexMap = {}
-    sleeping_threads = []
+    sleeping_threads: List[SleepEntry] = []
     def __init__(self, main_lldb_thread):
         main_thread = {'thread': main_lldb_thread, 'name': 'Main Thread', 'state': 'ready', 'csthread_ptr': 'N/A'}
         self.ready_list2 = [main_thread]
@@ -46,7 +47,7 @@ class ThreadManager:
                 return thread
         debug_print("Thread lookup by pointer failed!", csthread_ptr, self.managed_threads)
         return None
-    def onJoin(self, lldb_thread, joined_on_ptr):
+    def onJoin(self, lldb_thread, joined_on_ptr) -> None:
         c_thread = self.__lookupFromLLDB(lldb_thread)
         c_thread_joined_on = self.__lookupFromCSThreadPtr(joined_on_ptr)
         joined_on_id = self.__getThreadID(c_thread_joined_on)
@@ -75,21 +76,17 @@ class ThreadManager:
     #        else:
     #            data += "\n\"" + c_thread['name']+"\": " + str(val)
     #    return data
-    def getSemaphoreValue(self, sem):
+    def getSemaphoreValue(self, sem) -> Optional[int]:
         if sem not in self.semaphoreMap:
             return None
         return self.semaphoreMap[sem]['value']
-    def onWaitSem(self, lldb_thread, sem):
+    def onWaitSem(self, lldb_thread, sem) -> None:
         c_thread = self.__lookupFromLLDB(lldb_thread)
         debug_print("Semaphore wait:", c_thread['name'], "waited on", sem)
         sem_obj = self.semaphoreMap[sem]
         old_val = sem_obj['value']
         if old_val > 0:
             sem_obj['value'] -= 1
-            #tid = self.__getThreadID(c_thread)
-            #if tid not in sem_obj['threads']:
-            #    sem_obj['threads'][tid] = 0
-            #sem_obj['threads'][tid] -= 1
             debug_print("\tWait: sem value updated (no wait) from", old_val, "to", sem_obj['value'])
             return
         if not sem in self.semWaitLists:
@@ -97,7 +94,7 @@ class ThreadManager:
         self.semWaitLists[sem].append(c_thread)
         self.ready_list2.remove(c_thread)
         c_thread['state'] = 'waiting (sempahore)'
-    def onTryWaitSem(self, lldb_thread, sem):
+    def onTryWaitSem(self, lldb_thread, sem) -> bool:
         c_thread = self.__lookupFromLLDB(lldb_thread)
         debug_print("Semaphore wait:", c_thread['name'], "try waited on", sem)
         sem_obj = self.semaphoreMap[sem]
@@ -106,51 +103,43 @@ class ThreadManager:
             sem_obj['value'] -= 1
             return True
         return False
-    def onSignalSem(self, lldb_thread, sem):
+    def onSignalSem(self, lldb_thread, sem) -> VizconErrorCode:
         c_thread = self.__lookupFromLLDB(lldb_thread)
         sem_obj = self.semaphoreMap[sem]
         old_val = sem_obj['value']
         if old_val >= sem_obj['max_value']:
-            debug_print("Unimplemented error handling: semaphore max value reached")
-            sys.exit(1)
+            return VizconErrorCode.VC_ERROR_SEMVALUELIMIT
         sem_obj['value'] += 1
-        #tid = self.__getThreadID(c_thread)
-        #if tid not in sem_obj['threads']:
-        #    sem_obj['threads'][tid] = 0
-        #sem_obj['threads'][tid] += 1
         debug_print("Signal:", c_thread['name'],' signalled ', sem, "from", old_val, "to", sem_obj['value'])
         if not sem in self.semWaitLists:
-            return
+            return VizconErrorCode.VC_SUCCESS
         while sem_obj['value'] > 0:
             if len(self.semWaitLists[sem]) == 0:
-                return
+                return VizconErrorCode.VC_SUCCESS
             sem_obj['value'] -= 1
             # TODO: there's an api to just choose k. no need to loop
             woken_thread = thread_scheduler_rng.choice(self.semWaitLists[sem])
-            #tid = self.__getThreadID(woken_thread)
-            #if tid not in sem_obj['threads']:
-            #    sem_obj['threads'][tid] = 0
-            #sem_obj['threads'][tid] -= 1
             self.semWaitLists[sem].remove(woken_thread)
             debug_print("\tAdding back", woken_thread['name'], "to the ready list")
             self.ready_list2.append(woken_thread)
             woken_thread['state'] = 'ready'
-    def onCloseSem(self, lldb_thread, sem):
+        return VizconErrorCode.VC_SUCCESS
+    def onCloseSem(self, lldb_thread, sem) -> None:
         del self.semaphoreMap[sem]
         if sem in self.semWaitLists:
             del self.semWaitLists[sem]
         debug_print("Semaphore closed")
-    def onCreateThread(self, thread):
+    def onCreateThread(self, thread) -> None:
         thread['state'] = 'ready'
         self.managed_threads.append(thread)
         self.ready_list2.append(thread)
         debug_print("Created thread:", thread['name'])
-    def onFreeThread(self, calling_thread, thread_ptr):
+    def onFreeThread(self, calling_thread, thread_ptr) -> None:
         freed_thread = self.__lookupFromCSThreadPtr(thread_ptr)
         freed_thread['csthread_ptr'] = 'N/A (freed)'
         debug_print("Thread freed")
 
-    def onSleepThread(self, lldb_thread, millis):
+    def onSleepThread(self, lldb_thread, millis) -> None:
         c_thread = self.__lookupFromLLDB(lldb_thread)
         debug_print("Thread sleep:", c_thread['name'], "is sleeping for", millis)
         c_thread['state'] = 'sleeping'
@@ -180,7 +169,7 @@ class ThreadManager:
         chosen_thread = thread_scheduler_rng.choice(self.ready_list2)
         return chosen_thread
 
-    def onExitThread(self, lldb_thread):
+    def onExitThread(self, lldb_thread) -> None:
         t = self.__lookupFromLLDB(lldb_thread)
         thread_id = self.__getThreadID(t)
         self.exited_threads.add(thread_id)
@@ -197,39 +186,40 @@ class ThreadManager:
         else:
             debug_print("\tNo thread is waiting on it")
         #self.managed_threads.remove(t)
-    def registerSem(self, sem, new_sem_initial_value, new_sem_max_value):
+    def registerSem(self, sem, new_sem_initial_value, new_sem_max_value) -> None:
         self.semaphoreMap[sem] = {'value': new_sem_initial_value, 'max_value': new_sem_max_value}
         #self.semaphoreMap[sem] = {'value': new_sem_initial_value, 'max_value': new_sem_max_value, 'threads': {}}
 
 
 
     # Mutexes
-    def registerMutex(self, mutex):
+    def registerMutex(self, mutex) -> None:
         self.mutexMap[mutex] = {'locked_by': None, 'waiting': []}
     def getMutexOwner(self, mutex):
         if mutex not in self.mutexMap:
             return None
         return self.mutexMap[mutex]['locked_by']
-    def onLockMutex(self, lldb_thread, mutex):
+    def onLockMutex(self, lldb_thread, mutex) -> VizconErrorCode:
         c_thread = self.__lookupFromLLDB(lldb_thread)
         debug_print("Mutex lock:", c_thread['name'], "waited on", mutex)
         mutex_obj = self.mutexMap[mutex]
         if mutex_obj['locked_by'] is None:
             mutex_obj['locked_by'] = c_thread
             debug_print("lockMutex: immediately acquired unlocked mutex")
-            return
+            return VizconErrorCode.VC_SUCCESS
         if mutex_obj['locked_by'] == c_thread:
             debug_print("A thread attempted to lock a mutex that it already owns")
-            sys.exit(1)
+            return VizconErrorCode.VC_ERROR_DOUBLELOCK
         mutex_obj['waiting'].append(c_thread)
         self.ready_list2.remove(c_thread)
         c_thread['state'] = 'waiting (mutex)'
-    def onUnlockMutex(self, lldb_thread, mutex):
+        return VizconErrorCode.VC_SUCCESS
+    def onUnlockMutex(self, lldb_thread, mutex) -> VizconErrorCode:
         c_thread = self.__lookupFromLLDB(lldb_thread)
         mutex_obj = self.mutexMap[mutex]
         if mutex_obj['locked_by'] != c_thread:
             debug_print("A thread attempted to unlock a mutex that it does not own")
-            sys.exit(1)
+            return VizconErrorCode.VC_ERROR_CROSSTHREADUNLOCK
         debug_print("unlockMutex: Mutex unlocked")
         mutex_obj['locked_by'] = None
         if len(mutex_obj['waiting']) >= 1:
@@ -239,7 +229,8 @@ class ThreadManager:
             debug_print("\tAdding back", woken_thread['name'], "to the ready list")
             self.ready_list2.append(woken_thread)
             woken_thread['state'] = 'ready'
-    def onTryLockMutex(self, lldb_thread, mutex):
+        return VizconErrorCode.VC_SUCCESS
+    def onTryLockMutex(self, lldb_thread, mutex) -> bool:
         c_thread = self.__lookupFromLLDB(lldb_thread)
         debug_print("Mutex tryLock:", c_thread['name'], "waited on", mutex)
         mutex_obj = self.mutexMap[mutex]
@@ -250,7 +241,7 @@ class ThreadManager:
             #debug_print("A thread attempted to tryLock a mutex that it already owns")
             return True
         return False
-    def onCloseMutex(self, lldb_thread, mutex):
+    def onCloseMutex(self, lldb_thread, mutex) -> None:
         debug_print("Mutex closed")
         del self.mutexMap[mutex]
     

@@ -8,6 +8,25 @@ interface VisualizerControllerOptions {
   onRunStateChange: (newRunState: VisualizerRunState) => void;
 }
 
+const vcErrorMap: VC_ErrorMap = {
+  VC_ERROR_DOUBLELOCK: -12,
+  VC_ERROR_CROSSTHREADUNLOCK: -13,
+  VC_ERROR_SEMVALUELIMIT: -14,
+  VC_ERROR_DEADLOCK: 15,
+};
+
+function assertUnreachable(e: never): never {
+  throw new Error('Unhandled case detected (assertUnreachable)');
+}
+
+function getErrorMsg(state: VC_ErrorCode): string {
+  if (state === vcErrorMap.VC_ERROR_DEADLOCK) return 'All threads are waiting. Deadlock?';
+  if (state === vcErrorMap.VC_ERROR_CROSSTHREADUNLOCK) return 'A thread attempted to unlock an mutex that was locked by another thread.';
+  if (state === vcErrorMap.VC_ERROR_SEMVALUELIMIT) return 'A thread attempted to signal a semaphore that was already at its maximum value.';
+  if (state === vcErrorMap.VC_ERROR_DOUBLELOCK) return 'A thread attempted to lock a mutex that it already locked.';
+  assertUnreachable(state);
+}
+
 export default class VisualizerController {
   private status: VisualizerRunState = 'not_started';
   private readonly exeFile: string;
@@ -45,6 +64,7 @@ export default class VisualizerController {
     this.status = 'pausing';
     this.onRunStateChange('pausing');
   }
+
   resume(): void {
     if (this.status !== 'paused') {
       console.error('The visualizer can only be resumed of it is in the paused state.');
@@ -58,12 +78,20 @@ export default class VisualizerController {
   }
 
   private async startAsync() {
-    this.debuggerHandle = await window.platform.launchProgram(this.exeFile, data => {
+    const handle = await window.platform.launchProgram(this.exeFile, data => {
       //console.log("Console stdout output", data);
       this.onConsoleOutput([data]);
     });
+    if ('err' in handle) {
+      this.status = 'error';
+      this.onRunStateChange('error');
+      this.onConsoleOutput(['Error starting application. Perhaps you forgot to compile it?\n']);
+      return;
+    }
+    this.debuggerHandle = handle;
     await this.startLoop();
   }
+
   private async startLoop() {
     this.status = 'running';
     this.onRunStateChange('running');
@@ -73,21 +101,24 @@ export default class VisualizerController {
       if (msg.type === 'process_end') {
         this.status = 'finished';
         this.onRunStateChange('finished');
+        this.onConsoleOutput([`Program finished. Exit code: ${msg.code}\n`]);
         return;
       }
       if (msg.type === 'process_killed') {
         console.log('Process was killed.');
         return;
       }
-      if (msg.type === 'error') {
-        if (msg.error === 'deadlock') {
-          this.status = 'deadlock';
-          this.onRunStateChange('deadlock');
-        } else {
-          this.status = 'error';
-          this.onRunStateChange('error');
-        }
+      if (msg.type === 'vc_error') {
+        this.status = 'error';
+        this.onRunStateChange('error');
+        this.onConsoleOutput([`Program crashed. Error: ${getErrorMsg(msg.errCode)}\n`]);
         //TODO: this.onStateChange(msg);
+        return;
+      }
+      if (msg.type === 'controller_error') {
+        this.status = 'error';
+        this.onRunStateChange('error');
+        this.onConsoleOutput([`${msg.error}\n`]);
         return;
       }
       this.onStateChange(msg);

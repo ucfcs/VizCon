@@ -10,17 +10,20 @@ extern void vcHalt(int exitCode);
 CSSem *vizconSem;
 
 //Used to create a semaphore that manages sem value changes, and errors
-void vizconSemCheck()
+void initVizconSem(void)
 {
-    if(vizconSem != NULL)
+    if(vizconSem == NULL)
+    {
+        vizconSem = platform_semCreate(1);
+    }
+}
+
+void closeVizconSem(void)
+{
+    if (vizconSem != NULL)
     {
         semClose(vizconSem);
         vizconSem = NULL;
-    }
-    else
-    {
-        vizconSem = (void*)-1;
-        vizconSem = semCreate(1);
     }
 }
 
@@ -29,7 +32,10 @@ void vizconSemCheck()
 void vizconError(char* func, int err)
 {
     //Prevent multiple functions from entering error handler
-    platform_semWait(vizconSem);
+    if (vizconSem != NULL)
+    {
+        platform_semWait(vizconSem);
+    }
     
     // Start building the message string.
     char message[MAX_ERROR_MESSAGE_LENGTH];
@@ -47,7 +53,7 @@ void vizconError(char* func, int err)
             message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
             printf("%s", message);
             vcHalt(err);
-            vizconSemCheck();
+            closeVizconSem();
             exit(err);
         }
     #elif __linux__ || __APPLE__ // POSIX version
@@ -58,7 +64,7 @@ void vizconError(char* func, int err)
             errno = err;
             perror(message);
             vcHalt(err);
-            vizconSemCheck();
+            closeVizconSem();
             exit(err);
         }
     #endif
@@ -134,6 +140,6 @@ void vizconError(char* func, int err)
     message[MAX_ERROR_MESSAGE_LENGTH - 1] = '\0';
     printf("%s", message);
     vcHalt(err);
-    vizconSemCheck();
+    closeVizconSem();
     exit(err);
 }

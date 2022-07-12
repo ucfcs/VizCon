@@ -1,4 +1,5 @@
 from time import sleep
+from utils import VizconErrorCode
 from thread_manager import ThreadManager
 import lldb
 import ctypes
@@ -100,6 +101,15 @@ def _start(exe, terminalOutputFile, visualizerMode):
         dataOutputFile.write(json.dumps(msg))
         dataOutputFile.write("\n")
         dataOutputFile.flush()
+    def reportError(error):
+        err_code = error.value
+        respondToVisualizer({'type': 'vc_error', 'errCode': err_code})
+        # This shouldn't ever happen but check just in case there's a bug in the future.
+        # Make sure we never exit with code 0 because that would be hard to debug.
+        if err_code == 0:
+            debug_now("reportError called with exit code 0")
+            sys.exit(10)
+        sys.exit(err_code * -1)
     def isUserCode(thread):
         frame = thread.GetFrameAtIndex(0)
         return isFrameUserCode(frame)
@@ -125,8 +135,6 @@ def _start(exe, terminalOutputFile, visualizerMode):
         if "threads.c" in file:
             return False
         full_file = str(line.GetFileSpec())
-        if "mingw-w64" in full_file or "mingw64" in full_file:
-            return False
         if "platform/zig" in full_file or "platform\zig" in full_file:
             return False
         if "vcuserlibrary" in file:
@@ -154,30 +162,37 @@ def _start(exe, terminalOutputFile, visualizerMode):
     verbose = False
 
     if not target:
-        debug_print("Error creating target")
+        respondToVisualizer({'type': 'start_error', 'error': 'Visualizer launch error: Failed to create target process'})
         sys.exit(2)
 
+    def createBreakpoint(name):
+        bp = target.BreakpointCreateByName(name, target.GetExecutable().GetFilename())
+        assert bp
+        assert bp.IsValid()
+        assert bp.IsEnabled()
+        assert bp.GetNumLocations() == 1
+        return bp
     # If the target is valid set a breakpoint at main
-    main_bp = target.BreakpointCreateByName("userMain", target.GetExecutable().GetFilename())
-    thread_bp = target.BreakpointCreateByName("do_post", target.GetExecutable().GetFilename())
-    hook_createThread_bp = target.BreakpointCreateByName("lldb_hook_createThread", target.GetExecutable().GetFilename())
-    vcJoin_bp = target.BreakpointCreateByName("vcJoin", target.GetExecutable().GetFilename())
-    hook_freeThread_bp = target.BreakpointCreateByName("lldb_hook_freeThread", target.GetExecutable().GetFilename())
-    hook_threadSleep_bp = target.BreakpointCreateByName("lldb_hook_threadSleep", target.GetExecutable().GetFilename())
+    main_bp = createBreakpoint("userMain")
+    thread_bp = createBreakpoint("do_post")
+    hook_createThread_bp = createBreakpoint("lldb_hook_createThread")
+    vcJoin_bp = createBreakpoint("lldb_hook_joinThread")
+    hook_freeThread_bp = createBreakpoint("lldb_hook_freeThread")
+    hook_threadSleep_bp = createBreakpoint("lldb_hook_threadSleep")
 
     # Semaphore breakpoints
-    vc_internal_registerSem_bp = target.BreakpointCreateByName("vc_internal_registerSem", target.GetExecutable().GetFilename())
-    vcWait_bp = target.BreakpointCreateByName("vcWait", target.GetExecutable().GetFilename())
-    vcSignal_bp = target.BreakpointCreateByName("vcSignal", target.GetExecutable().GetFilename())
-    hook_semTryWait_bp = target.BreakpointCreateByName("lldb_hook_semTryWait", target.GetExecutable().GetFilename())
-    hook_semClose_bp = target.BreakpointCreateByName("lldb_hook_semClose", target.GetExecutable().GetFilename())
+    vc_internal_registerSem_bp = createBreakpoint("lldb_hook_registerSem")
+    vcWait_bp = createBreakpoint("lldb_hook_semWait")
+    vcSignal_bp = createBreakpoint("lldb_hook_semSignal")
+    hook_semTryWait_bp = createBreakpoint("lldb_hook_semTryWait")
+    hook_semClose_bp = createBreakpoint("lldb_hook_semClose")
 
     # Mutex breakpoints
-    registerMutex_bp = target.BreakpointCreateByName ("lldb_hook_registerMutex", target.GetExecutable().GetFilename())
-    lockMutex_bp = target.BreakpointCreateByName ("lldb_hook_lockMutex", target.GetExecutable().GetFilename())
-    unlockMutex_bp = target.BreakpointCreateByName ("lldb_hook_unlockMutex", target.GetExecutable().GetFilename())
-    hook_mutexTryLock_bp = target.BreakpointCreateByName ("lldb_hook_mutexTryLock", target.GetExecutable().GetFilename())
-    hook_mutexClose_bp = target.BreakpointCreateByName("lldb_hook_mutexClose", target.GetExecutable().GetFilename())
+    registerMutex_bp = createBreakpoint("lldb_hook_registerMutex")
+    lockMutex_bp = createBreakpoint("lldb_hook_lockMutex")
+    unlockMutex_bp = createBreakpoint("lldb_hook_unlockMutex")
+    hook_mutexTryLock_bp = createBreakpoint("lldb_hook_mutexTryLock")
+    hook_mutexClose_bp = createBreakpoint("lldb_hook_mutexClose")
 
     launch_info = target.GetLaunchInfo()
 
@@ -190,12 +205,15 @@ def _start(exe, terminalOutputFile, visualizerMode):
     process = target.Launch(launch_info, error)
     debug_print("Launch info:", error.Success(), error, error.GetCString())
 
+    main_thread = None
     for t in process:
         if isStoppedForBreakpoint(t, main_bp):
             debug_print("Main thread:", t)
             # TODO: probably get an ID for the thread
             main_thread = t
-
+    if main_thread is None:
+        respondToVisualizer({'type': 'start_error', 'error': 'Visualizer launch error: Failed to find main thread'})
+        sys.exit(20)
     thread_man = ThreadManager(main_thread)
     # LLDB on Windows has a bug where it reaches MAXIMUM_SUSPEND_COUNT after calling SuspendThread too many times.
     # Periodically making calls to fixSuspendBug serves as a quick hack to hide the issue by draining the counter
@@ -226,22 +244,30 @@ def _start(exe, terminalOutputFile, visualizerMode):
             loc = desc.index(" = ")
             var_value = desc[loc + len(" = "):]
         return {'name': lldb_var.GetName(), 'type': type_name, 'value': var_value}
+    def returnIntFromFrame(thread, frame, int_val):
+        # CreateValueFromData is an instance method, so we need a valid SBValue to start with.
+        # There's probably another way to do this, but this is easy
+        lldbActiveValue = thread.GetFrameAtIndex(0).GetModule().FindFirstGlobalVariable(target, "isLldbActive")
+        assert lldbActiveValue.IsValid()
+        
+        result_sbdata = lldb.SBData.CreateDataFromSInt32Array(lldb.eByteOrderLittle, 8, [int_val])
+        result_sbvalue = lldbActiveValue.CreateValueFromData("retval", result_sbdata, target.GetBasicType(lldb.eBasicTypeInt))
+        thread.ReturnFromFrame(frame, result_sbvalue)
 
     ignore_set = set()
     respondToVisualizer({'type': 'hello'})
     while True:
-        if process.state == lldb.eStateExited:
-            debug_print("Process state is", process)
-            break
-
         waitForVisualizer()
+        if process.state == lldb.eStateExited:
+            respondToVisualizer({'type': 'process_end', 'code': process.GetExitStatus()})
+            sys.exit(0)
+            break
         fixSuspendBug()
         chosen_cthread = thread_man.chooseThread()
 
         if chosen_cthread is None:
             debug_print("Ready list is empty! No more runnable threads! Deadlock?")
-            respondToVisualizer({'type': 'error', 'error': 'deadlock'})
-            sys.exit(1)
+            reportError(VizconErrorCode.VC_ERROR_DEADLOCK)
         running_thread = chosen_cthread['thread']
         #debug_print("Selected", chosen_cthread['name'], running_thread.GetFrameAtIndex(0), running_thread, running_thread.GetStopReason(), running_thread.GetStopDescription(1024))
         for t in getThreads():
@@ -277,6 +303,8 @@ def _start(exe, terminalOutputFile, visualizerMode):
             for t in process:
                 t.Resume()
             process.Continue()
+            while process.state != lldb.eStateExited:
+                process.Continue()
             respondToVisualizer({'type': 'process_end', 'code': process.GetExitStatus()})
             sys.exit(0)
         else:
@@ -297,7 +325,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
                     new_sem_initial_value = t.GetFrameAtIndex(0).FindVariable("initialValue").GetValueAsSigned()
                     new_sem_max_value = t.GetFrameAtIndex(0).FindVariable("maxValue").GetValueAsSigned()
-                    #debug_print("Registering new semaphore:", new_sem, new_sem_initial_value, new_sem_max_value)
+                    #debug_print("Registering new semaphore:", new_sem, new_sem_name, new_sem_initial_value, new_sem_max_value)
                     thread_man.registerSem(str(new_sem), new_sem_initial_value, new_sem_max_value)
                     process.Continue()
                     handledBreakpoint = True
@@ -310,21 +338,15 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     continue
                 if isStoppedForBreakpoint(t, vcSignal_bp):
                     new_sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                    thread_man.onSignalSem(t, str(new_sem))
-                    process.Continue()
+                    vc_res = thread_man.onSignalSem(t, str(new_sem))
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), vc_res.value)
+                    t.StepOut()
                     handledBreakpoint = True
                     continue
                 if isStoppedForBreakpoint(t, hook_semTryWait_bp):
                     sem = t.GetFrameAtIndex(0).FindVariable("sem").GetValue()
-                    while True:
-                        val = t.GetFrameAtIndex(0).FindVariable("res")
-                        if val.IsValid():
-                            break
-                        t.StepInstruction(False)
-                    
                     result = thread_man.onTryWaitSem(t, str(sem))
-                    val.SetValueFromCString("1" if result else "0")
-                    t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), 1 if result else 0)
                     t.StepOut()
                     handledBreakpoint = True
                     continue
@@ -343,26 +365,22 @@ def _start(exe, terminalOutputFile, visualizerMode):
                     continue
                 if isStoppedForBreakpoint(t, lockMutex_bp):
                     mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                    thread_man.onLockMutex(t, str(mutex_ptr))
-                    t.StepInstruction(False)
+                    vc_res = thread_man.onLockMutex(t, str(mutex_ptr))
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), vc_res.value)
+                    t.StepInstruction(False) # returnFromFrame doesn't reset the stop reason
                     handledBreakpoint = True
                     continue
                 if isStoppedForBreakpoint(t, unlockMutex_bp):
                     mutex_ptr = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                    thread_man.onUnlockMutex(t, str(mutex_ptr))
-                    process.Continue()
+                    vc_res = thread_man.onUnlockMutex(t, str(mutex_ptr))
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), vc_res.value)
+                    t.StepOut()
                     handledBreakpoint = True
                     continue
                 if isStoppedForBreakpoint(t, hook_mutexTryLock_bp):
                     mutex = t.GetFrameAtIndex(0).FindVariable("mutex").GetValue()
-                    while True:
-                        val = t.GetFrameAtIndex(0).FindVariable("res")
-                        if val.IsValid():
-                            break
-                        t.StepInstruction(False)
                     result = thread_man.onTryLockMutex(t, str(mutex))
-                    val.SetValueFromCString("1" if result else "0")
-                    t.ReturnFromFrame(t.GetFrameAtIndex(0), val)
+                    returnIntFromFrame(t, t.GetFrameAtIndex(0), 1 if result else 0)
                     t.StepOut()
                     handledBreakpoint = True
                     continue
@@ -400,7 +418,7 @@ def _start(exe, terminalOutputFile, visualizerMode):
                             break
                     if new_thread_lldb is None:
                         debug_print("Couldn't locate new thread")
-                        sys.exit(1)
+                        sys.exit(10)
                     
                     for other_thread in getThreads():
                         if other_thread != new_thread_lldb:

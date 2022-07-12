@@ -31,5 +31,8 @@ int semTryWait(CSSem* sem);                          // Tries to get a permit wi
 void semSignal(CSSem* sem);                          // Signals the semaphore.
 void semClose(CSSem* sem);                           // Closes the semaphore and frees memory.
 
+CSSem* allocSem(SEM_VALUE maxValue);
+CSSem* platform_semCreate(SEM_VALUE maxValue);
+CSSem* lldb_semCreate(SEM_VALUE maxValue);
 void platform_semSignal(CSSem* sem);
 void platform_semWait(CSSem* sem);

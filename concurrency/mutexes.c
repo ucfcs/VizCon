@@ -71,7 +71,9 @@ void mutexLock(CSMutex* mutex)
         DWORD ret;
         if (isLldbActive)
         {
-            lldb_hook_lockMutex(mutex);
+            int res = lldb_hook_lockMutex(mutex);
+            if (res != VC_SUCCESS)
+                vizconError("vcMutexLock", res);
             ret = WAIT_OBJECT_0;
         }
         else
@@ -118,7 +120,9 @@ void mutexLock(CSMutex* mutex)
         int ret;
         if (isLldbActive)
         {
-            lldb_hook_lockMutex(mutex);
+            int res = lldb_hook_lockMutex(mutex);
+            if (res != VC_SUCCESS)
+                vizconError("vcMutexLock", res);
             ret = 0;
         }
         else
@@ -259,7 +263,9 @@ void mutexUnlock(CSMutex* mutex)
         mutex->holderID = (THREAD_ID_TYPE) 0;
         if (isLldbActive)
         {
-            lldb_hook_unlockMutex(mutex);
+            int res = lldb_hook_unlockMutex(mutex);
+            if (res != VC_SUCCESS)
+                vizconError("vcMutexUnlock", res);
             return;
         }
         if(!ReleaseMutex(mutex->mutex))
@@ -278,7 +284,9 @@ void mutexUnlock(CSMutex* mutex)
         int ret;
         if (isLldbActive)
         {
-            lldb_hook_unlockMutex(mutex);
+            int res = lldb_hook_unlockMutex(mutex);
+            if (res != VC_SUCCESS)
+                vizconError("vcMutexUnlock", res);
             ret = 0;
         }
         else
