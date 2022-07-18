@@ -37,31 +37,6 @@ function updateLastSuccessfulFile(files: string[]): void {
   }
 }
 
-ipcMain.handle('minimize', e => {
-  const window = BrowserWindow.fromWebContents(e.sender);
-  window.minimize();
-});
-
-ipcMain.handle('maximize', e => {
-  const window = BrowserWindow.fromWebContents(e.sender);
-  window.maximize();
-});
-
-ipcMain.handle('restore', e => {
-  const window = BrowserWindow.fromWebContents(e.sender);
-  window.restore();
-});
-
-ipcMain.handle('close', e => {
-  const window = BrowserWindow.fromWebContents(e.sender);
-  window.close();
-});
-
-ipcMain.handle('isMaximized', e => {
-  const window = BrowserWindow.fromWebContents(e.sender);
-  return window.isMaximized();
-});
-
 ipcMain.handle('openFileDialog', e => {
   const window = BrowserWindow.fromWebContents(e.sender);
   const results = dialog.showOpenDialogSync(window, {
@@ -246,44 +221,4 @@ ipcMain.on('launchProgram', (event, msg) => {
   const port = event.ports[0];
   port.start();
   launchProgram(msg.path, port);
-});
-
-ipcMain.handle('showUnsavedSaveDialog', async (e, name: string): Promise<UnsavedChangesResponse> => {
-  const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(e.sender), {
-    message: 'Do you want to save the changes you made to ' + name + '?',
-    detail: 'Your changes will be lost if you dont save them.',
-    title: 'VizCon',
-    buttons: ['Save', "Don't Save", 'Cancel'],
-    type: 'warning',
-    noLink: true,
-  });
-
-  switch (result.response) {
-    case 0:
-      return 'save';
-    case 1:
-      return 'dontsave';
-    default:
-      return 'cancel';
-  }
-});
-
-ipcMain.handle('showUnsavedCompileDialog', async (e, name: string): Promise<UnsavedChangesResponse> => {
-  const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(e.sender), {
-    message: 'Do you want to save the changes you made to ' + name + ' before you compile?',
-    detail: "Your changes will be not be compiled if you don't save them.",
-    title: 'VizCon',
-    buttons: ['Save', "Don't Save", 'Cancel'],
-    type: 'warning',
-    noLink: true,
-  });
-
-  switch (result.response) {
-    case 0:
-      return 'save';
-    case 1:
-      return 'dontsave';
-    default:
-      return 'cancel';
-  }
 });
