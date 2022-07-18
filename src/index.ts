@@ -101,4 +101,6 @@ app.on('activate', () => {
 
 // import the ipc handlers setup in other files
 import './main/platform.ts';
+import './main/ipcs/window.ts';
+import './main/ipcs/dialog.ts';
 import './main/macMenu.ts';
